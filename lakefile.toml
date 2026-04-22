@@ -1,0 +1,10 @@
+name = "kruskal"
+version = "0.1.0"
+defaultTargets = ["kruskal"]
+
+[[lean_lib]]
+name = "Kruskal"
+
+[[lean_exe]]
+name = "kruskal"
+root = "Main"
