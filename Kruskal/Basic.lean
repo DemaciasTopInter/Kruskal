@@ -56,6 +56,13 @@ structure graph where
 
 
 
+structure update where
+  mk ::
+  nodes : List (node (n := n))
+  nLenN : nodes.length = n
+  nIdEqPos {i: Fin n} : nodes[i].id = i
+
+
 -- Union Find
 structure unionFind where
   mk::
@@ -95,10 +102,10 @@ def find_connected_component {i: Fin n.succ} (x : node (n := n.succ)) (nodes : L
   termination_by x.id
 
 -- union
-def unite_connected_component (nodes : List (node (n := n.succ))) (ccId1 ccId2 : Fin n.succ) : List (node (n := n.succ)) :=
+def unite_connected_component {i: Fin n.succ}  (nodes : List (node (n := n.succ))) (ccId1 ccId2 : Fin n.succ) (nLenN : nodes.length = n.succ) (nIdEqPos : nodes[i].id = i) : update (n := n.succ) :=
   if ccId1 > ccId2
   then
-    unite_connected_component nodes ccId2 ccId1
+    unite_connected_component nodes ccId2 ccId1 nLenN nIdEqPos
   else
     -- match nodes with
     -- | [] => []
@@ -108,7 +115,7 @@ def unite_connected_component (nodes : List (node (n := n.succ))) (ccId1 ccId2 :
     --     ⟨x.id, ccId1⟩::(unite_connected_component xs ccId1 ccId2)
     --   else
     --     x::(unite_connected_component xs ccId1 ccId2)
-    update_node_list nodes ccId2 ccId1
+    ⟨update_node_list nodes ccId2 ccId1, , ⟩
 
 
 

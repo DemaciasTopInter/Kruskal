@@ -8,3 +8,7 @@ name = "Kruskal"
 [[lean_exe]]
 name = "kruskal"
 root = "Main"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
