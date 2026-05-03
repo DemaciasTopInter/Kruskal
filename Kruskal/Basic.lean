@@ -136,7 +136,7 @@ def connected (G : Graph α β) : Prop :=
 -- l.set (l.idxOf x) y
 
 -- funktion von Node auf Zusammenhangskomponennte
-structure unionFind (nodes : List node) : Type where
+structure unionFindLink (nodeSet : Finset node) : Type where
   mk ::
   /--
   The `id` of the node it belongs to.
@@ -151,21 +151,41 @@ structure unionFind (nodes : List node) : Type where
   /--
   The number of nodes pointing at this one.
   -/
-  rank : Fin nodes.length
+  rank : Fin nodeSet.card
 
+structure unionFind (nodeSet : Finset node) : Type where
+  mk ::
+  linkList : List (unionFindLink nodeSet)
+  matching_nodeId : ∀ x ∈ nodeSet, ∃! y ∈ linkList, x.id = y.nodeId
+  matching_ccId : ∀ y ∈ linkList, ∃! x ∈ nodeSet, x.id = y.ccId
+  matching_length : nodeSet.card = linkList.length
+  -- matching_rank : ∀ y ∈ linkList, y.nodeId = y.ccId ∨ y.rank < (List.choose (fun x => x.nodeId = y.ccId) linkList h?).rank -- irgentwie sowas
 
-def init_unionFind_helper (nodes : List node) (h : nodes.length ≠ 0) : List (unionFind (nodes : List node)) :=
+noncomputable def init_unionFind_helper (nodeSet : Finset node) (h : nodeSet.card ≠ 0) : List (unionFindLink (nodeSet : Finset node)) :=
+  let nodes := nodeSet.toList
   helper nodes where
     helper
       | [] => []
       | x::xs => ⟨x.id, x.id, ⟨0, zero_lt_iff.mpr h⟩⟩ :: (helper xs)
 
-def init_unionFind (nodes : List node) : List (unionFind (nodes : List node)) :=
-  if h : nodes.length ≠ 0
+def init_unionFind (nodeSet : Finset node) : unionFind (nodeSet : Finset node) :=
+  if h : nodeSet.card ≠ 0
     then
-      init_unionFind_helper nodes h
+      let a : List (unionFindLink nodeSet) := (init_unionFind_helper nodeSet h)
+      ⟨a, by
+        intro x h_in
+        simp [a, init_unionFind_helper]
+        sorry
+      , by
+        simp [a]
+        sorry
+      , by
+        simp at h; simp [h, a]
+        sorry
+      ⟩
     else
-      []
+      let a : List (unionFindLink nodeSet) := []
+      ⟨a, by simp at h; simp [h], by simp [a], by simp at h; simp [h, a]⟩
 
 -- def init_unionFind (nodes : List node) (h : nodes.length ≠ 0) : List (unionFind (nodes : List node)) :=
 --   helper nodes where
@@ -174,17 +194,46 @@ def init_unionFind (nodes : List node) : List (unionFind (nodes : List node)) :=
 --       | x::xs => ⟨x.id, x.id, ⟨0, zero_lt_iff.mpr h⟩⟩ :: (helper xs)
 
 
-def connected_component_of_unionFind_of_id {nodeList : List node} (unionFindList : List (unionFind nodeList)) (id : Nat) : Nat :=
-  let x? := unionFindList.find? (fun u => u.nodeId = id)
-  match x? with
-  | none => nodeList.length
-  | some x =>
-    if x.nodeId = x.ccId
+def connected_component_of_unionFind_of_id_hlper {nodeSet : Finset node} (u : unionFind nodeSet) (id : Nat) (h : ∃ x ∈ nodeSet, x.id = id) (r : Fin (nodeSet.card)): Nat :=
+  have h' : ∃ x ∈ u.linkList, x.nodeId = id := by
+    rcases h with ⟨x, h_in, h_eq⟩
+    have h'' := u.matching_nodeId x h_in
+    rw [h_eq] at h''
+    rcases h'' with ⟨y, h_in', h_unique⟩
+    refine ⟨y, ?_⟩
+    simp [h_in']
+  let x := List.choose (fun x => x.nodeId = id) u.linkList h'
+  if x.ccId = x.nodeId
     then
       x.ccId
     else
-      connected_component_of_unionFind_of_id unionFindList x.ccId
-  termination_by x?.rank
+      have h'' := u.matching_ccId x sorry
+      have h''' : ∃ x_1 ∈ nodeSet, x_1.id = x.ccId := by
+        rcases h'' with ⟨y, h_in_and_eq, h_rest⟩
+        refine ⟨y, ?_⟩
+        simp [h_in_and_eq]
+      connected_component_of_unionFind_of_id_hlper u x.ccId h''' x.rank -- TODO fix
+termination_by r
+
+def connected_component_of_unionFind_of_id {nodeSet : Finset node} (u : unionFind nodeSet) (id : Nat) (h : ∃ x ∈ nodeSet, x.id = id): Nat :=
+  have h' : ∃ x ∈ u.linkList, x.nodeId = id := by
+    rcases h with ⟨x, h_in, h_eq⟩
+    have h'' := u.matching_nodeId x h_in
+    rw [h_eq] at h''
+    rcases h'' with ⟨y, h_in', h_unique⟩
+    refine ⟨y, ?_⟩
+    simp [h_in']
+  let x := List.choose (fun x => x.nodeId = id) u.linkList h'
+  if x.ccId = x.nodeId
+    then
+      x.ccId
+    else
+      have h'' := u.matching_ccId x sorry
+      have h''' : ∃ x_1 ∈ nodeSet, x_1.id = x.ccId := by
+        rcases h'' with ⟨y, h_in_and_eq, h_rest⟩
+        refine ⟨y, ?_⟩
+        simp [h_in_and_eq]
+      connected_component_of_unionFind_of_id_hlper u x.ccId h''' x.rank
 
 
 
