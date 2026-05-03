@@ -194,7 +194,7 @@ def init_unionFind (nodeSet : Finset node) : unionFind (nodeSet : Finset node) :
 --       | x::xs => ⟨x.id, x.id, ⟨0, zero_lt_iff.mpr h⟩⟩ :: (helper xs)
 
 
-def connected_component_of_unionFind_of_id_hlper {nodeSet : Finset node} (u : unionFind nodeSet) (id : Nat) (h : ∃ x ∈ nodeSet, x.id = id) (r : Fin (nodeSet.card)): Nat :=
+def connected_component_of_unionFind_of_id_helper {nodeSet : Finset node} (u : unionFind nodeSet) (id : Nat) (h : ∃ x ∈ nodeSet, x.id = id) (r : Fin (nodeSet.card)): Nat :=
   have h' : ∃ x ∈ u.linkList, x.nodeId = id := by
     rcases h with ⟨x, h_in, h_eq⟩
     have h'' := u.matching_nodeId x h_in
@@ -212,8 +212,9 @@ def connected_component_of_unionFind_of_id_hlper {nodeSet : Finset node} (u : un
         rcases h'' with ⟨y, h_in_and_eq, h_rest⟩
         refine ⟨y, ?_⟩
         simp [h_in_and_eq]
-      connected_component_of_unionFind_of_id_hlper u x.ccId h''' x.rank -- TODO fix
-termination_by r
+      have h_r : x.rank > r := by sorry
+      connected_component_of_unionFind_of_id_helper u x.ccId h''' x.rank -- TODO fix
+termination_by {z : Fin (nodeSet.card) | z > r}.toFinset.card
 
 def connected_component_of_unionFind_of_id {nodeSet : Finset node} (u : unionFind nodeSet) (id : Nat) (h : ∃ x ∈ nodeSet, x.id = id): Nat :=
   have h' : ∃ x ∈ u.linkList, x.nodeId = id := by
@@ -233,25 +234,29 @@ def connected_component_of_unionFind_of_id {nodeSet : Finset node} (u : unionFin
         rcases h'' with ⟨y, h_in_and_eq, h_rest⟩
         refine ⟨y, ?_⟩
         simp [h_in_and_eq]
-      connected_component_of_unionFind_of_id_hlper u x.ccId h''' x.rank
+      connected_component_of_unionFind_of_id_helper u x.ccId h''' x.rank
 
 
 
 
-def kruskal_helper (edgeList : List edge) (nodeList : List node) (unionFindList : List (unionFind nodeList)) : List edge :=
+def kruskal_helper (edgeList : List edge) (nodeSet : Finset node) (uF : unionFind nodeSet) : List edge :=
   match edgeList with
   | [] => []
-  | e::es => if connected_component_of_unionFind_of_id unionFindList e.node1 = connected_component_of_unionFind_of_id unionFindList e.node2
-    then
-      kruskal_helper es nodeList unionFindList
-    else
-      e::(kruskal_helper es nodeList unionFindList)
+  | e::es =>
+    let x := (connected_component_of_unionFind_of_id uF e.node1 sorry)
+    let y := (connected_component_of_unionFind_of_id uF e.node2 sorry)
+    if x = y
+      then
+        kruskal_helper es nodeSet uF
+      else
+        -- let updated_uF := update_unionFind uF x y
+        e::(kruskal_helper es nodeSet uF)
 
 def kruskal (edgeList : List edge) : Set edge :=
     let edgeListSorted := edgeList.mergeSort
     let edgeSet : Finset edge := edgeList.toFinset
     let G := graph_of_edges edgeSet
-    let nodeSet := G.vertexSet
-    let nodeList : List node := sorry -- nodeSet.toList
-    let init : List (unionFind nodeList) := init_unionFind nodeList
-    {e | e ∈ edgeList}
+    let nodeSet := G.vertexSet.toFinset
+    -- let nodeList : List node := sorry -- nodeSet.toList
+    let init : unionFind nodeSet := init_unionFind nodeSet
+    {e | e ∈ kruskal_helper edgeList nodeSet init}
