@@ -73,7 +73,7 @@ def init_unionFind_helper (nodeList : List node) (h : nodeList.length ≠ 0) : L
       | [] => []
       | x::xs => ⟨x.id, x.id, ⟨0, zero_lt_iff.mpr h⟩⟩ :: (helper xs)
 
-theorem init_unionFind_helper.helper_split (nodeList l₁ l₂ : List node) (x : node) (h : nodeList.length ≠ 0) : init_unionFind_helper.helper nodeList h (l₁ ++ (x :: l₂)) = (init_unionFind_helper.helper nodeList h l₁) ++ (init_unionFind_helper.helper nodeList h (x :: l₂)) := by
+theorem init_unionFind_helper.helper_split (nodeList l₁ l₂ : List node) (h : nodeList.length ≠ 0) : init_unionFind_helper.helper nodeList h (l₁ ++ l₂) = (init_unionFind_helper.helper nodeList h l₁) ++ (init_unionFind_helper.helper nodeList h l₂) := by
   induction l₁ with
   | nil =>
     simp [init_unionFind_helper.helper]
@@ -102,7 +102,107 @@ theorem init_unionFind_helper.helper_all_rank_zero (nodeList l : List node) (h :
     · simp [h_eq]
     · exact ih h_in
 
-def init_unionFind (nodeList : List node) (h₁ : nodeList.SortedLT) (h₂ : nodeList.Nodup) : unionFind (nodeList : List node) :=
+theorem init_unionFind_helper.helper_eq_length (nodeList : List node) (h : nodeList.length ≠ 0) (l : List node) : (init_unionFind_helper.helper nodeList h l).length = l.length := by
+  induction l with
+  | nil =>
+    simp [init_unionFind_helper.helper]
+  | cons x xs ih =>
+    simp [init_unionFind_helper.helper, ih]
+
+theorem init_unionFind_helper.helper_eq_input (nodeList : List node) (h₁ : nodeList.length ≠ 0) (l₁ l₂ : List node) (h₂ : init_unionFind_helper.helper nodeList h₁ l₁ = init_unionFind_helper.helper nodeList h₁ l₂) : l₁ = l₂ := by
+  have h_eq_length : l₁.length = l₂.length := by
+    have h := init_unionFind_helper.helper_eq_length nodeList h₁
+    simp [← h l₁, ← h l₂, h₂]
+  induction l₁ generalizing l₂ with
+  | nil =>
+    induction l₂ with
+    | nil =>
+      rfl
+    | cons y ys ih₂ =>
+      simp [init_unionFind_helper.helper] at h₂
+  | cons x xs ih =>
+    cases l₂ with
+    | nil =>
+      simp [init_unionFind_helper.helper] at h₂
+    | cons y ys =>
+      simp [init_unionFind_helper.helper] at h₂
+      have h_eq : ⟨x.id⟩ = y := by
+        simp [h₂.left]
+      simp
+      constructor
+      · simp [← h_eq]
+      · simp at h_eq_length
+        exact ih ys h₂.right h_eq_length
+
+def nodeList_of_unionFindLinkList (nodeList : List node) : List (unionFindLink nodeList) → List node
+  | [] => []
+  | x::xs => ⟨x.nodeId⟩ :: (nodeList_of_unionFindLinkList nodeList xs)
+
+theorem init_unionFind_helper.helper_split_reverse (nodeList : List node) (h₁ : nodeList.length ≠ 0) (l₁ l₂ : List (unionFindLink nodeList)) (h₂ : init_unionFind_helper.helper nodeList h₁ nodeList = l₁ ++ l₂) : ∃ k₁ k₂, nodeList = k₁ ++ k₂ ∧ init_unionFind_helper.helper nodeList h₁ k₁ = l₁ ∧ init_unionFind_helper.helper nodeList h₁ k₂ = l₂ := by
+  set k₁ := nodeList_of_unionFindLinkList nodeList l₁
+  set k₂ := nodeList_of_unionFindLinkList nodeList l₂
+  refine ⟨k₁, k₂, ?_⟩
+  have h_eq₂ : helper nodeList h₁ k₁ = l₁ := by
+    have h_in : ∀ x ∈ l₁, x ∈ helper nodeList h₁ nodeList := by
+      simp [h₂]
+      intro x h_in
+      left
+      exact h_in
+    clear h₂
+    induction l₁ with
+    | nil =>
+      simp [k₁, nodeList_of_unionFindLinkList, init_unionFind_helper.helper]
+    | cons x xs ih =>
+      simp [k₁, nodeList_of_unionFindLinkList, init_unionFind_helper.helper]
+      constructor
+      · have h_in' : x ∈ helper nodeList h₁ nodeList := by
+          simp [h_in]
+        nth_rewrite 2 [init_unionFind_helper.helper_all_self_connected nodeList nodeList h₁ x h_in']
+        rw [← init_unionFind_helper.helper_all_rank_zero nodeList nodeList h₁ x h_in']
+      · have h_in' : ∀ x ∈ xs, x ∈ helper nodeList h₁ nodeList := by
+          intro y h_y_in
+          have h_y_in' : y ∈ x :: xs := by
+            simp [h_y_in]
+          simp [h_in y h_y_in']
+        simp at ih
+        have ih := ih h_in'
+        exact ih
+
+  have h_eq₃ : helper nodeList h₁ k₂ = l₂ := by
+    have h_in : ∀ x ∈ l₂, x ∈ helper nodeList h₁ nodeList := by
+      simp [h₂]
+      intro x h_in
+      right
+      exact h_in
+    clear h₂
+    induction l₂ with
+    | nil =>
+      simp [k₂, nodeList_of_unionFindLinkList, init_unionFind_helper.helper]
+    | cons x xs ih =>
+      simp [k₂, nodeList_of_unionFindLinkList, init_unionFind_helper.helper]
+      constructor
+      · have h_in' : x ∈ helper nodeList h₁ nodeList := by
+          simp [h_in]
+        nth_rewrite 2 [init_unionFind_helper.helper_all_self_connected nodeList nodeList h₁ x h_in']
+        rw [← init_unionFind_helper.helper_all_rank_zero nodeList nodeList h₁ x h_in']
+      · have h_in' : ∀ x ∈ xs, x ∈ helper nodeList h₁ nodeList := by
+          intro y h_y_in
+          have h_y_in' : y ∈ x :: xs := by
+            simp [h_y_in]
+          simp [h_in y h_y_in']
+        simp at ih
+        have ih := ih h_in'
+        exact ih
+
+  have h_eq₁ : nodeList = k₁ ++ k₂ := by
+    have h := init_unionFind_helper.helper_split nodeList k₁ k₂ h₁
+    rw [h_eq₂, h_eq₃, ← h₂] at h
+    have h_eq := init_unionFind_helper.helper_eq_input nodeList h₁ nodeList (k₁ ++ k₂) h.symm
+    exact h_eq
+
+  refine ⟨h_eq₁, h_eq₂, h_eq₃⟩
+
+def init_unionFind (nodeList : List node) : unionFind (nodeList : List node) :=
   if h : nodeList.length ≠ 0
     then
       let a : List (unionFindLink nodeList) := (init_unionFind_helper nodeList h)
@@ -128,18 +228,42 @@ def init_unionFind (nodeList : List node) (h₁ : nodeList.SortedLT) (h₂ : nod
             rw [← h_z_eq_self]
             exact h_z_eq_id
           have h_z_rank_zero := init_unionFind_helper.helper_all_rank_zero nodeList nodeList h z h_z_in
-          -- have h_z_eq : z = {nodeId := x.id, ccId := x.id, rank := ⟨0, zero_lt_iff.mpr h⟩} := by
           simp [y]
           nth_rewrite 1 [h_z_eq_id]
           rw [h_z_eq_cc, ← h_z_rank_zero]
-      -- TODO h_a₂ und h_a₃
-      ⟨a, h_a₁, by
-        simp [a]
-        sorry
-      , by
-        simp at h; simp [h, a]
-        sorry
-      ⟩
+
+      have h_a₂ : ∀ y ∈ a, ∃! x, x ∈ nodeList ∧ x.id = y.ccId := by
+        intro y h_in
+        set x : node := ⟨y.nodeId⟩
+        refine ⟨x, ?_⟩
+        constructor
+        · simp
+          constructor
+          · rcases (mem_split h_in) with ⟨l₁,l₂, h_a_eq, h_nin⟩
+            simp [a, init_unionFind_helper] at h_a_eq
+            have h_split := init_unionFind_helper.helper_split_reverse nodeList h l₁ (y::l₂) h_a_eq
+            rcases h_split with ⟨k₁, k₂, h_eq₁, h_eq₂,h_eq₃⟩
+            cases k₂ with
+            | nil =>
+              simp [init_unionFind_helper.helper] at h_eq₃
+            | cons z k₂ =>
+              simp [init_unionFind_helper.helper] at h_eq₃
+              rcases h_eq₃ with ⟨h_y_eq, h_eq₃⟩
+              have h_x_eq : x = z := by
+                simp [x, ← h_y_eq]
+              rw [h_x_eq]
+              simp [h_eq₁]
+          · simp [a, init_unionFind_helper] at h_in
+            simp [x, init_unionFind_helper.helper_all_self_connected nodeList nodeList h y h_in]
+        · simp
+          intro z h_z_in h_z_eq
+          simp [x, init_unionFind_helper.helper_all_self_connected nodeList nodeList h y h_in, ← h_z_eq]
+
+      have h_a₃ : nodeList.length = a.length := by
+        simp [a, init_unionFind_helper]
+        exact (init_unionFind_helper.helper_eq_length nodeList h nodeList).symm
+
+      ⟨a, h_a₁, h_a₂, h_a₃⟩
     else
       let a : List (unionFindLink nodeList) := []
       ⟨a, by simp at h; simp [h], by simp [a], by simp at h; simp [h, a]⟩
