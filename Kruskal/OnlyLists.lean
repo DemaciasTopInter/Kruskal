@@ -336,22 +336,140 @@ def connected_component_of_unionFind_of_id {nodeList : List node} (u : unionFind
 
 
 
+def matching_edge  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x ∈ edgeList, (∃ y ∈ nodeList, x.node1 = y.id) ∧ (∃ z ∈ nodeList, x.node2 = z.id)
 
-def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) : List edge :=
+
+
+def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (matching_edge : matching_edge edgeList nodeList) : List edge :=
   match edgeList with
   | [] => []
   | e::es =>
-    let x := (connected_component_of_unionFind_of_id uF e.node1 sorry)
-    let y := (connected_component_of_unionFind_of_id uF e.node2 sorry)
+    have h : ∃ x ∈ nodeList, x.id = e.node1 := by
+      have h : (∃ x ∈ nodeList, e.node1 = x.id) → (∃ x ∈ nodeList, x.id = e.node1) := by simp [eq_comm]
+      simp [h (matching_edge e List.mem_cons_self).left]
+    let x := (connected_component_of_unionFind_of_id uF e.node1 h)
+    have h' : ∃ x ∈ nodeList, x.id = e.node2 := by
+      have h' : (∃ x ∈ nodeList, e.node2 = x.id) → (∃ x ∈ nodeList, x.id = e.node2) := by simp [eq_comm]
+      simp [h' (matching_edge e List.mem_cons_self).right]
+    let y := (connected_component_of_unionFind_of_id uF e.node2 h')
+    have matching_edge' : ∀ x ∈ es, (∃ y ∈ nodeList, x.node1 = y.id) ∧ ∃ z ∈ nodeList, x.node2 = z.id := by
+      intro z h_in
+      simp [matching_edge z (List.mem_cons_of_mem e h_in)]
     if x = y
       then
-        kruskal_helper es nodeList uF
+        kruskal_helper es nodeList uF matching_edge'
       else
         -- let updated_uF := update_unionFind uF x y
-        e::(kruskal_helper es nodeList uF)
+        e::(kruskal_helper es nodeList uF matching_edge')
 
-def kruskal (edgeList : List edge) : Set edge :=
+def kruskal (edgeList : List edge) (nodeList : List node) (matching_edge : matching_edge edgeList nodeList): List edge :=
     let edgeListSorted := edgeList.mergeSort
-    let nodeList : List node := sorry
-    let init : unionFind nodeList := init_unionFind nodeList
-    {e | e ∈ kruskal_helper edgeList nodeList init}
+    let uF : unionFind nodeList := init_unionFind nodeList
+    kruskal_helper edgeList nodeList uF matching_edge
+
+
+
+
+
+def nodeList_of_edgeList_helper (edgeList : List edge) (nodeList : List node) : List node :=
+  match edgeList with
+  | [] => nodeList
+  | e::es =>
+    let x : node := ⟨e.node1⟩
+    let y : node := ⟨e.node2⟩
+    if x ∈ nodeList ∧ y ∈ nodeList
+      then
+        nodeList_of_edgeList_helper es nodeList
+      else
+        if x ∈ nodeList
+          then
+            nodeList_of_edgeList_helper es (y::nodeList)
+          else
+            if y ∈ nodeList
+              then
+                nodeList_of_edgeList_helper es (x::nodeList)
+              else
+                if x = y
+                  then
+                    nodeList_of_edgeList_helper es (x::nodeList)
+                  else
+                    nodeList_of_edgeList_helper es (x::y::nodeList)
+
+def nodeList_of_edgeList (edgeList : List edge) : List node :=
+  nodeList_of_edgeList_helper edgeList []
+
+theorem mem_nodeList_of_edgeList_helper_iff_node_in_edgeList (edgeList : List edge) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList [] ↔ ∃ y ∈ edgeList, y.node1 = x.id ∨ y.node2 = x.id := by
+  sorry
+
+theorem mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList (edgeList : List edge) (nodeList : List node) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList nodeList ↔ x ∈ nodeList_of_edgeList_helper edgeList [] ∨ x ∈ nodeList := by
+  constructor
+  · intro h_in
+    have h := (mem_nodeList_of_edgeList_helper_iff_node_in_edgeList edgeList x).mpr
+    sorry
+  · sorry
+
+theorem matching_edge_for_nodeList_of_edgeList (edgeList : List edge) : matching_edge edgeList (nodeList_of_edgeList edgeList) := by
+  simp [matching_edge]
+  intro e h_e_in
+  constructor
+  · simp [nodeList_of_edgeList]
+    let x : node := ⟨e.node1⟩
+    refine ⟨x, ?_, by simp [x]⟩
+    induction edgeList with
+    | nil =>
+      simp at h_e_in
+    | cons f es ih =>
+      by_cases h_eq : e = f
+      · simp [nodeList_of_edgeList_helper]
+        by_cases h : f.node1 = f.node2
+        · simp [h]
+          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node2 }] x).mpr
+          right
+          rw [← h]
+          simp [← h_eq, x]
+        · simp [h]
+          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node1 }, { id := f.node2 }] x).mpr
+          right
+          simp [← h_eq, x]
+      · simp [h_eq] at h_e_in
+        simp [h_e_in] at ih
+        simp [nodeList_of_edgeList_helper]
+        by_cases h : f.node1 = f.node2
+        · simp [h]
+          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node2 }] x).mpr
+          left
+          exact ih
+        · simp [h]
+          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node1 }, { id := f.node2 }] x).mpr
+          left
+          exact ih
+  · simp [nodeList_of_edgeList]
+    let x : node := ⟨e.node2⟩
+    refine ⟨x, ?_, by simp [x]⟩
+    induction edgeList with
+    | nil =>
+      simp at h_e_in
+    | cons f es ih =>
+      by_cases h_eq : e = f
+      · simp [nodeList_of_edgeList_helper]
+        by_cases h : f.node1 = f.node2
+        · simp [h]
+          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node2 }] x).mpr
+          right
+          simp [← h_eq, x]
+        · simp [h]
+          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node1 }, { id := f.node2 }] x).mpr
+          right
+          simp [← h_eq, x]
+      · simp [h_eq] at h_e_in
+        simp [h_e_in] at ih
+        simp [nodeList_of_edgeList_helper]
+        by_cases h : f.node1 = f.node2
+        · simp [h]
+          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node2 }] x).mpr
+          left
+          exact ih
+        · simp [h]
+          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node1 }, { id := f.node2 }] x).mpr
+          left
+          exact ih
