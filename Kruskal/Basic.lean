@@ -11,6 +11,7 @@ variable {m n : Nat} {α β : Type}
 structure node : Type where
   mk ::
   id : Nat
+deriving instance Repr for node
 deriving instance DecidableEq for node
 instance node_LT : LT node where
   lt := (fun x y => x.id < y.id)
@@ -30,6 +31,7 @@ structure edge : Type where
   node2 : Nat
   cost : Nat
   nodesLt : node1 < node2
+deriving instance Repr for edge
 deriving instance DecidableEq for edge
 instance edge_LE : LE edge where
   le a b := LE.le a.cost b.cost
