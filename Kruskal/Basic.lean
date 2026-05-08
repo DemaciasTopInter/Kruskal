@@ -310,7 +310,14 @@ def connected_component_of_unionFind_of_id_helper {nodeList : List node} (u : un
           exact h
 
       connected_component_of_unionFind_of_id_helper u y h_y_in
-termination_by x.rank
+termination_by nodeList.length - x.rank
+  decreasing_by
+  have h : ↑(List.choose (fun y => y.nodeId = x.ccId) u.linkList (exists_parent_link u.linkList u.matching_nodeId u.matching_ccId x h_x_in)).rank = y.rank := by
+    simp [y]
+  simp [h]
+  apply Nat.sub_lt_sub_left
+  · exact x.rank.isLt
+  · exact h_r
 
 def connected_component_of_unionFind_of_id {nodeList : List node} (u : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id): Nat :=
   have h' : ∃ x ∈ u.linkList, x.nodeId = id := by
@@ -339,7 +346,7 @@ def connected_component_of_unionFind_of_id {nodeList : List node} (u : unionFind
 def matching_edge  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x ∈ edgeList, (∃ y ∈ nodeList, x.node1 = y.id) ∧ (∃ z ∈ nodeList, x.node2 = z.id)
 
 
-
+-- Liste mitgeben mit edgesSoFar für bessere Laufzeit siehe nodeList_of_edgeList_helper
 def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (matching_edge : matching_edge edgeList nodeList) : List edge :=
   match edgeList with
   | [] => []
@@ -467,7 +474,63 @@ theorem nodeList_of_edgeList_helper_eq (edgeList : List edge) (nodeList : List n
             simp [h]
 
 theorem mem_nodeList_of_edgeList_helper_iff_node_in_edgeList (edgeList : List edge) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList [] ↔ ∃ y ∈ edgeList, y.node1 = x.id ∨ y.node2 = x.id := by
-  sorry
+  constructor
+  · intro h_x_in
+    induction edgeList with
+    | nil =>
+      simp [nodeList_of_edgeList_helper] at h_x_in
+    | cons e edgeList ih =>
+      simp [nodeList_of_edgeList_helper] at h_x_in
+      by_cases h_eq_or : e.node1 = x.id ∨ e.node2 = x.id
+      · refine ⟨e, List.mem_cons_self, h_eq_or⟩
+      · simp [h_eq_or]
+        by_cases h : e.node1 = e.node2
+        · simp [h] at h_eq_or
+          simp [h, nodeList_of_edgeList_helper_eq edgeList [{ id := e.node2 }]] at h_x_in
+          rcases h_x_in with ⟨h_x_in, h_x_eq⟩ | ⟨h_x_eq⟩
+          · rcases ih h_x_in with ⟨y, h_y_in, h_y_eq_or⟩
+            refine ⟨y, h_y_in, h_y_eq_or⟩
+          · simp [h_x_eq] at h_eq_or
+        · simp [h, nodeList_of_edgeList_helper_eq edgeList [{ id := e.node1 }, { id := e.node2 }]] at h_x_in
+          rcases h_x_in with ⟨h_x_in, h_x_eq_or⟩ | ⟨h_x_eq_or⟩
+          · exact ih h_x_in
+          · by_cases h_x_eq : x = { id := e.node1 }
+            · simp [h_x_eq] at h_eq_or
+            · simp [h_x_eq] at h_x_eq_or
+              simp [h_x_eq_or] at h_eq_or
+
+  · intro h_ex_y
+    rcases h_ex_y with ⟨y, h_y_in, h_y_eq_or⟩
+    induction edgeList with
+    | nil =>
+      simp at h_y_in
+    | cons e edgeList ih =>
+      simp at h_y_in
+      rcases h_y_in with ⟨h_y_eq⟩ | ⟨h_y_in⟩
+      · simp [nodeList_of_edgeList_helper, ← h_y_eq]
+        by_cases h_eq : y.node1 = y.node2
+        · simp [h_eq] at h_y_eq_or
+          simp [h_eq, h_y_eq_or, nodeList_of_edgeList_helper_eq edgeList [{ id := x.id }]]
+        · simp [h_eq, nodeList_of_edgeList_helper_eq edgeList [{ id := y.node1 }, { id := y.node2 }]]
+          right
+          by_cases h_x_eq : y.node1 = x.id
+          · simp [h_x_eq]
+          · simp [h_x_eq] at h_y_eq_or
+            simp [h_y_eq_or]
+      · have ih := ih h_y_in
+        simp [nodeList_of_edgeList_helper]
+        by_cases h_eq : e.node1 = e.node2
+        · simp [h_eq, nodeList_of_edgeList_helper_eq edgeList [{ id := e.node2 }], ih]
+          by_cases h : x = { id := e.node2 }
+          · simp [h]
+          · simp [h]
+        · simp [h_eq, nodeList_of_edgeList_helper_eq edgeList [{ id := e.node1 }, { id := e.node2 }], ih]
+          by_cases h : x = { id := e.node1 }
+          · simp [h]
+          · simp [h]
+            by_cases h' : x = { id := e.node2 }
+            · simp [h']
+            · simp [h']
 
 theorem mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList (edgeList : List edge) (nodeList : List node) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList nodeList ↔ x ∈ nodeList_of_edgeList_helper edgeList [] ∨ x ∈ nodeList := by
   constructor
@@ -562,3 +625,6 @@ theorem matching_edge_for_nodeList_of_edgeList (edgeList : List edge) : matching
           apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node1 }, { id := f.node2 }] x).mpr
           left
           exact ih
+
+def kruskal_of_edgeList (edgeList : List edge) : List edge :=
+  kruskal edgeList (nodeList_of_edgeList edgeList) (matching_edge_for_nodeList_of_edgeList edgeList)
