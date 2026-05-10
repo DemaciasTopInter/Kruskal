@@ -60,6 +60,22 @@ structure unionFindLink (nodeList : List node) : Type where
   The number of nodes pointing at this one.
   -/
   rank : Fin nodeList.length
+deriving instance DecidableEq for unionFindLink
+-- deriving instance BEq for unionFindLink
+instance unionFindLink_BEq {nodeList : List node} : BEq (unionFindLink nodeList) where
+  beq a b := Bool.and (Bool.and (a.nodeId == b.nodeId) (a.ccId == b.ccId)) (a.rank == b.rank)
+-- deriving instance ReflBEq for unionFindLink
+instance unionFindLink_ReflBEq {nodeList : List node} : ReflBEq (unionFindLink nodeList) where
+  rfl {a : unionFindLink nodeList} : a == a := by
+    cases a
+    simp [BEq.beq]
+instance unionFindLink_LawfulBEq {nodeList : List node} : LawfulBEq (unionFindLink nodeList) where
+  eq_of_beq {a b : unionFindLink nodeList} : a == b → a = b := by
+    simp [BEq.beq]
+    intro h_nodeId h_ccId h_rank
+    cases a
+    cases b
+    simp_all
 
 theorem exists_parent_link {nodeList : List node} (linkList : List (unionFindLink nodeList)) (matching_nodeId : ∀ x ∈ nodeList, ∃! y ∈ linkList, x.id = y.nodeId) (matching_ccId : ∀ y ∈ linkList, ∃! x ∈ nodeList, x.id = y.ccId) : ∀ x ∈ linkList, ∃ y ∈ linkList, y.nodeId = x.ccId := by
   intro x h_x_in
@@ -343,12 +359,79 @@ def connected_component_of_unionFind_of_id {nodeList : List node} (u : unionFind
         simp [h_in_and_eq]
       connected_component_of_unionFind_of_id_helper u x h_x_in
 
-
+def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y) a) : unionFind nodeList :=
+  if h_eq : x = y
+  then
+    uF
+  else
+    let uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = x) uF.linkList h₁
+    let uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = y) uF.linkList h₂
+    have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = x) uF.linkList h₁
+    have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = y) uF.linkList h₂
+    have h_idxOf_uFLx : uF.linkList.idxOf uFLx < uF.linkList.length := by
+      simp [List.idxOf, h_uFLx_in]
+      -- refine ⟨uFLx, h_uFLx_in, by simp⟩
+    have h_idxOf_uFLy : uF.linkList.idxOf uFLy < uF.linkList.length := by
+      simp [List.idxOf, h_uFLy_in]
+      -- refine ⟨uFLy, h_uFLy_in, by simp⟩
+    if h_rank_lt : uFLx.rank < uFLy.rank
+      then
+        have h_rank_succ_le : uFLx.rank.val.succ ≤ uFLy.rank.val := by
+          simp [h_rank_lt]
+        have h_rank_succ_isLt : uFLx.rank.val.succ < nodeList.length := by
+          simp [Nat.lt_of_le_of_lt h_rank_succ_le]
+        let uFLx' : unionFindLink nodeList := ⟨uFLx.nodeId, uFLy.ccId, uFLx.rank⟩
+        let uFLy' : unionFindLink nodeList := ⟨uFLy.nodeId, uFLy.ccId, ⟨max uFLy.rank.val uFLx.rank.val.succ, by simp [h_rank_succ_isLt]⟩⟩
+        let linkList' : List (unionFindLink nodeList) := (uF.linkList.set (uF.linkList.idxOf uFLx) uFLx').set (uF.linkList.idxOf uFLy) uFLy'
+        have matching_nodeId' : ∀ x ∈ nodeList, ∃! y ∈ linkList', x.id = y.nodeId := by
+          simp [linkList', ExistsUnique]
+          intro z h_z_in
+          by_cases h_eq_x : z.id = x
+          · refine ⟨uFLx', ?_⟩
+            constructor
+            · constructor
+              · have h : (uF.linkList.set (List.idxOf uFLx uF.linkList) uFLx').length = uF.linkList.length := by
+                  simp
+                have h_eq_iff_beq : ∀ (x y : unionFindLink nodeList), x = y ↔ (x == y) = true := by -- chatGPT fragen
+                  intro a b
+                  by_cases h : a == b
+                  · simp [h]
+                    exact LawfulBEq.eq_of_beq (a := a) (b := b) h
+                  · constructor
+                    · intro h_eq
+                      cases a
+                      simp [h_eq]
+                    · intro h
+                      exact LawfulBEq.eq_of_beq (a := a) (b := b) h
+                -- have := mem_set_of_neq_index (l := (uF.linkList.set (List.idxOf uFLx uF.linkList) uFLx')) (i := (List.idxOf uFLy uF.linkList)) h_eq_iff_beq
+                apply mem_set_of_neq_index
+                · exact h_eq_iff_beq
+                · apply List.mem_set
+                  simp [h_idxOf_uFLx]
+                ·
+                  have h_only_one_x : ∀ (j : ℕ) (h₂ : j < List.idxOf uFLx uF.linkList), uF.linkList[j]'sorry ≠ uFLx' := sorry
+                  simp [idxOf_set h_idxOf_uFLx h_only_one_x]
+                induction uF.linkList with
+                | nil =>
+                  simp at h_uFLx_in ----------------------------------------------------------------------        HÄÄÄÄ??????
+                | cons uFL linkList ih =>
+                  simp [List.set]
+                  sorry
+              · simp [uFLx', uFLx, h_eq_x]
+                exact (List.choose_property (fun a => a.nodeId = x) uF.linkList h₁).symm
+            · sorry
+          · sorry
+        have matching_ccId' : ∀ y ∈ linkList', ∃! x ∈ nodeList, x.id = y.ccId := sorry
+        have matching_length' : nodeList.length = linkList'.length := sorry
+        have matching_rank' (y : unionFindLink nodeList) (h : y ∈ linkList') : y.nodeId = y.ccId ∨ y.rank < (List.choose (fun x => x.nodeId = y.ccId) linkList' (exists_parent_link linkList' matching_nodeId' matching_ccId' y h)).rank := sorry
+        ⟨linkList', matching_nodeId', matching_ccId', matching_length', matching_rank'⟩
+      else
+        ⟨uF.linkList, uF.matching_nodeId, uF.matching_ccId, uF.matching_length, uF.matching_rank⟩
 
 def matching_edge  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x ∈ edgeList, (∃ y ∈ nodeList, x.node1 = y.id) ∧ (∃ z ∈ nodeList, x.node2 = z.id)
 
-
 -- Liste mitgeben mit edgesSoFar für bessere Laufzeit siehe nodeList_of_edgeList_helper
+-- update funktion fehlt
 def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (matching_edge : matching_edge edgeList nodeList) : List edge :=
   match edgeList with
   | [] => []
@@ -368,8 +451,8 @@ def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind
       then
         kruskal_helper es nodeList uF matching_edge'
       else
-        -- let updated_uF := update_unionFind uF x y
-        e::(kruskal_helper es nodeList uF matching_edge')
+        let updated_uF := update_unionFind uF x y sorry sorry
+        e::(kruskal_helper es nodeList updated_uF matching_edge')
 
 def kruskal (edgeList : List edge) (nodeList : List node) (matching_edge : matching_edge edgeList nodeList): List edge :=
     let edgeListSorted := edgeList.mergeSort
