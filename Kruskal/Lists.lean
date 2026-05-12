@@ -66,7 +66,17 @@ theorem prop_split (hprop : α → Prop) (h : ∃ a, a ∈ l ∧ hprop a) : ∃ 
 
 
 
-theorem mem_set_of_neq_index [BEq α] [ReflBEq α] [DecidableEq α] (h_eq_iff_beq : ∀ (x : α) (y : α), x = y ↔ x == y) : a ∈ l → l.idxOf a ≠ i → a ∈ l.set i b := by
+theorem mem_set_of_neq_index [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] : a ∈ l → l.idxOf a ≠ i → a ∈ l.set i b := by
+  have h_eq_iff_beq : ∀ (x y : α ), x = y ↔ (x == y) = true := by
+    intro a b
+    by_cases h : a == b
+    · simp [h]
+      exact LawfulBEq.eq_of_beq (a := a) (b := b) h
+    · constructor
+      · intro h_eq
+        simp [h_eq]
+      · intro h
+        exact LawfulBEq.eq_of_beq (a := a) (b := b) h
   intro h_a_in h_idx_neq
   induction i generalizing l with
   | zero =>
@@ -93,7 +103,6 @@ theorem mem_set_of_neq_index [BEq α] [ReflBEq α] [DecidableEq α] (h_eq_iff_be
           intro h_beq
           simp [h_beq] at h'
           simp [h'] at h
-        simp at h_beq
         simp [h] at h_a_in
         simp [h_a_in] at ih₂
         have h_idx_neq' := List.idxOf_cons (x := c) (xs := as) (y := a)
@@ -127,3 +136,76 @@ theorem idxOf_set (h₁ : i < l.length) (h₃ : ∀ j, (h₂ : j < i) → l[j]'(
           simp at h
           exact h
         · exact h₁
+
+theorem mem_or_eq_of_mem_set [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] : a ∈ l.set i b → a ∈ l ∨ a = b := by
+  intro h_a_in
+  induction l generalizing i with
+  | nil =>
+    simp at h_a_in
+  | cons c as ih₁ =>
+    induction i with
+    | zero =>
+      simp at h_a_in
+      rcases h_a_in with ⟨h_a_eq⟩ | ⟨h_a_in⟩
+      · right
+        exact h_a_eq
+      · left
+        simp [h_a_in]
+    | succ i ih₂ =>
+      simp at h_a_in
+      rcases h_a_in with ⟨h_a_eq⟩ | ⟨h_a_in⟩
+      · left
+        simp [h_a_eq]
+      · have h_a_in := ih₁ h_a_in
+        rcases h_a_in with ⟨h_a_in⟩ | ⟨h_a_eq⟩
+        · left
+          simp [h_a_in]
+        · right
+          exact h_a_eq
+
+theorem getElem_idxOf_self_eq_self (h_in : a ∈ l) [DecidableEq α] [LawfulBEq α] : l[List.idxOf a l]'(List.idxOf_lt_length_of_mem h_in) = a := by
+    induction l with
+    | nil =>
+      simp at h_in
+    | cons c as ih =>
+      simp at h_in
+      by_cases h_eq : a = c
+      · simp_all
+      · simp_all
+        have ih := ih True.intro
+        by_cases h_bne : c == a
+          -- apply imp_not_comm.mp LawfulBEq.eq_of_beq
+        · simp [LawfulBEq.eq_of_beq h_bne]
+        · simp [List.idxOf_cons, h_bne, ih]
+
+theorem not_mem_set_idxOf (h_in : a ∈ l) (hneq : b ≠ a) (hnodup : l.Nodup) [DecidableEq α] [LawfulBEq α] : a ∉ l.set (l.idxOf a) b := by
+  have h_a_eq := getElem_idxOf_self_eq_self h_in
+  generalize hidx : l.idxOf a = n
+  induction n generalizing l with
+  | zero =>
+    induction l with
+    | nil =>
+      simp
+    | cons c as ih =>
+      by_cases h_beq : c == a
+      · simp [LawfulBEq.eq_of_beq h_beq] at hnodup
+        simp [ne_comm.mp hneq, hnodup]
+      · simp [hidx] at h_a_eq
+        simp [h_a_eq] at h_beq
+  | succ i ih₁ =>
+    induction l generalizing i with
+    | nil =>
+      simp
+    | cons c as ih₂ =>
+      simp
+      by_cases h_beq : c == a
+      · simp [List.idxOf_cons, h_beq] at hidx
+      · by_cases h_eq : a = c
+        · simp [h_eq] at h_beq
+        · simp [h_eq]
+          simp [h_eq] at h_in
+          simp [List.idxOf_cons, h_beq] at h_a_eq
+          simp [List.idxOf_cons, h_beq] at hidx
+          simp at hnodup
+          have ih₁ := ih₁ h_in hnodup.right h_a_eq hidx
+          exact ih₁
