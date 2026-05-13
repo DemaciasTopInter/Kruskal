@@ -209,3 +209,81 @@ theorem not_mem_set_idxOf (h_in : a ∈ l) (hneq : b ≠ a) (hnodup : l.Nodup) [
           simp at hnodup
           have ih₁ := ih₁ h_in hnodup.right h_a_eq hidx
           exact ih₁
+
+theorem mem_eraseIdx_or_eq_of_mem_set : a ∈ l.set i b → a ∈ List.eraseIdx l i ∨ a = b := by
+  intro h_a_in_set
+  have h_eq : l.eraseIdx i = (l.set i b).eraseIdx i := by
+    simp [List.eraseIdx_set_eq]
+  simp [h_eq]
+  by_cases h_i_lt : i < (l.set i b).length
+  · by_cases h_a_eq_b : a = b
+    · simp [h_a_eq_b]
+    · left
+      simp [List.mem_eraseIdx_iff_getElem]
+      have h := List.getElem_of_mem h_a_in_set
+      rcases h with ⟨j, h, h_a_eq⟩
+      simp at h
+      refine ⟨j, ?_, h, h_a_eq⟩
+      by_cases h_j_eq_i : j = i
+      · simp [h_j_eq_i] at h_a_eq
+        simp [h_a_eq] at h_a_eq_b
+      · exact h_j_eq_i
+  · simp only [Nat.not_lt] at h_i_lt
+    simp [List.eraseIdx_eq_self.mpr h_i_lt, h_a_in_set]
+
+theorem not_mem_erase_of_dodup [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] : l.Nodup → a ∉ l.erase a := by
+  induction l with
+  | nil =>
+    simp
+  | cons b l ih =>
+    intro h_nodup
+    simp_all
+    simp [List.erase_cons]
+    by_cases h_a_eq_b : a = b
+    · simp [h_a_eq_b, h_nodup]
+    · simp [ne_comm.mp h_a_eq_b, h_a_eq_b, ih]
+
+theorem idxOf_eq_idxOf_set [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] (h₁ : a ≠ b) (h₂ : List.idxOf a l ≠ i) : List.idxOf a (l.set i b) = List.idxOf a l := by
+  induction i generalizing l with
+  | zero =>
+    induction l with
+    | nil =>
+      simp
+    | cons c l ih₂ =>
+      simp
+      by_cases h_a_beq_c : c == a
+      · simp [List.idxOf_cons, h_a_beq_c] at h₂
+      · simp [List.idxOf_cons, h_a_beq_c]
+        by_cases h_a_beq_b : b == a
+        · simp [LawfulBEq.eq_of_beq h_a_beq_b] at h₁
+        · simp [h_a_beq_b]
+  | succ i ih₁ =>
+    induction l with
+    | nil =>
+      simp
+    | cons c l ih₂ =>
+      simp
+      by_cases h_a_beq_c : c == a
+      · simp [List.idxOf_cons, h_a_beq_c]
+      · simp [List.idxOf_cons, h_a_beq_c] at h₂
+        have h := ih₁ h₂
+        simp [List.idxOf_cons, h_a_beq_c, h]
+
+theorem nodup_set_of_not_mem [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] (h₁ : l.Nodup) (h₂ : a ∉ l) : (l.set i a).Nodup := by
+  induction i generalizing l a with
+  | zero =>
+    induction l with
+    | nil =>
+      simp
+    | cons b l ih =>
+      simp_all
+  | succ i ih₁ =>
+    induction l with
+    | nil =>
+      simp
+    | cons b l ih₂ =>
+      simp_all
+      intro h
+      have h' := mem_or_eq_of_mem_set h
+      simp [h₁] at h'
+      simp [h'] at h₂
