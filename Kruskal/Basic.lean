@@ -391,17 +391,27 @@ def connected_component_of_unionFind_of_id {nodeList : List node} (u : unionFind
         simp [h_in_and_eq]
       connected_component_of_unionFind_of_id_helper u x h_x_in
 
-def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y) a) : unionFind nodeList :=
+def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : unionFind nodeList :=
   if h_eq : x = y
   then
     uF
   else
-    let uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = x) uF.linkList h₁
-    let uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = y) uF.linkList h₂
-    have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = x) uF.linkList h₁
-    have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = y) uF.linkList h₂
-    have h_uFLx_prop : uFLx.nodeId = x := List.choose_property (fun a => a.nodeId = x) uF.linkList h₁
-    have h_uFLy_prop : uFLy.nodeId = y := List.choose_property (fun a => a.nodeId = y) uF.linkList h₂
+    let uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₁
+    let uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h₂
+    have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₁
+    have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h₂
+    have h_uFLx_prop : uFLx.nodeId = x ∧ uFLx.ccId = x := List.choose_property (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₁
+    have h_uFLx_prop₁ := h_uFLx_prop.left
+    have h_uFLx_prop₂ := h_uFLx_prop.right
+    have h_uFLy_prop : uFLy.nodeId = y ∧ uFLy.ccId = y:= List.choose_property (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h₂
+    have h_uFLy_prop₁ := h_uFLy_prop.left
+    have h_uFLy_prop₂ := h_uFLy_prop.right
+    have h₃ := h₁
+    have h₄ := h₂
+    have h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x) a := by
+      refine ⟨uFLx, h_uFLx_in, h_uFLx_prop₁⟩
+    have h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y) a := by
+      refine ⟨uFLy, h_uFLy_in, h_uFLy_prop₁⟩
     have h_idxOf_uFLx : uF.linkList.idxOf uFLx < uF.linkList.length := by
       simp [List.idxOf, h_uFLx_in]
       -- refine ⟨uFLx, h_uFLx_in, by simp⟩
@@ -427,14 +437,31 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
               · apply mem_set_of_neq_index
                 · apply List.mem_set
                   simp [h_idxOf_uFLx]
-                · have h_only_one_x : ∀ (j : ℕ) (h₂ : j < List.idxOf uFLx uF.linkList), uF.linkList[j]'sorry ≠ uFLx' := sorry
+                · have h_only_one_x : ∀ (j : ℕ) (h₂ : j < List.idxOf uFLx uF.linkList), uF.linkList[j]'(Nat.lt_trans h₂ h_idxOf_uFLx) ≠ uFLx' := by
+                    intro j h_lt h_getElem_eq
+                    have h := uF.matching_nodeId z h_z_in
+                    simp [ExistsUnique] at h
+                    rcases h with ⟨w, h_w, h_unique⟩
+                    have h_uFLx'_eq_w := h_unique (uF.linkList[j]'(Nat.lt_trans h_lt h_idxOf_uFLx))
+                    simp at h_uFLx'_eq_w
+                    have h_uFLx'_eq : uFLx' = { nodeId := uFLx.nodeId, ccId := uFLy.ccId, rank := uFLx.rank } := by
+                      simp [uFLx']
+                    simp [h_getElem_eq, h_uFLx'_eq] at h_uFLx'_eq_w
+                    simp [← h_uFLx'_eq] at h_uFLx'_eq_w
+                    simp [h_uFLx_prop₁,h_z_eq_x] at h_uFLx'_eq_w
+                    have h_uFLx_eq_w := h_unique uFLx h_uFLx_in
+                    simp [h_z_eq_x, h_uFLx_prop₁] at h_uFLx_eq_w
+                    simp [h_uFLx'_eq_w, ← h_uFLx_eq_w] at h_getElem_eq
+                    have h := List.Nodup.idxOf_getElem uF.nodup j (Nat.lt_trans h_lt h_idxOf_uFLx)
+                    simp [h_getElem_eq] at h
+                    simp [h] at h_lt
                   simp [idxOf_set h_idxOf_uFLx h_only_one_x]
                   have h_idxOf_inj : List.idxOf uFLx uF.linkList = List.idxOf uFLy uF.linkList ↔ uFLx = uFLy := List.idxOf_inj h_uFLx_in
                   apply (Iff.ne h_idxOf_inj).mpr
                   intro h_uFL_eq
                   simp [h_uFL_eq] at h_rank_lt
               · simp [uFLx', uFLx, h_z_eq_x]
-                exact (List.choose_property (fun a => a.nodeId = x) uF.linkList h₁).symm
+                exact (List.choose_property (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₃).left.symm
             · intro w h_w_in h_w_eq
               have h_w_in := mem_or_eq_of_mem_set h_w_in
               rcases h_w_in with ⟨h_w_in⟩ | ⟨h_w_eq_uFLy'⟩
@@ -451,15 +478,15 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
                   have h_unique := uF.matching_nodeId z h_z_in
                   simp [ExistsUnique] at h_unique
                   rcases h_unique with ⟨v, h_v, h_unique⟩
-                  simp [← h_z_eq_x] at h_uFLx_prop
-                  have h_v_eq_uFLx := h_unique uFLx h_uFLx_in h_uFLx_prop.symm
+                  simp [← h_z_eq_x] at h_uFLx_prop₁
+                  have h_v_eq_uFLx := h_unique uFLx h_uFLx_in h_uFLx_prop₁.symm
                   have h_v_eq_w := h_unique w (List.mem_of_mem_erase h_w_in) h_w_eq
                   simp [h_v_eq_w, ← h_v_eq_uFLx] at h_w_in
                   simp [h_uFLx_not_mem_erase] at h_w_in
                 · exact h_w_eq_uFLx'
               · cases w
                 simp [h_z_eq_x] at h_w_eq
-                simp [← h_w_eq, uFLy', uFLy, h_uFLy_prop, h_eq] at h_w_eq_uFLy'
+                simp [← h_w_eq, uFLy', uFLy, h_uFLy_prop₁, h_eq] at h_w_eq_uFLy'
           · by_cases h_z_eq_y : z.id = y
             · refine ⟨uFLy', ?_⟩
               constructor
@@ -468,7 +495,7 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
                     simp
                   rw [← h] at h_idxOf_uFLy
                   exact List.mem_set h_idxOf_uFLy uFLy'
-                · simp [uFLy', h_uFLy_prop, h_z_eq_y]
+                · simp [uFLy', h_uFLy_prop₁, h_z_eq_y]
               · intro w h_w_in h_w_eq
                 have h_w_in := mem_eraseIdx_or_eq_of_mem_set h_w_in
                 rcases h_w_in with ⟨h_w_in⟩ | ⟨h_w_eq_uFLy'⟩
@@ -477,41 +504,50 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
                     apply List.erase_eq_eraseIdx_of_idxOf
                     have h_ne : uFLy ≠ uFLx' := by
                       intro h
-                      simp [h] at h_uFLy_prop
-                      simp [uFLx', h_uFLx_prop] at h_uFLy_prop
-                      simp [h_uFLy_prop] at h_eq
+                      simp [h] at h_uFLy_prop₁
+                      simp [uFLx', h_uFLx_prop₁] at h_uFLy_prop₁
+                      simp [h_uFLy_prop₁] at h_eq
                     have h_idx : List.idxOf uFLy uF.linkList ≠ List.idxOf uFLx uF.linkList := by
                       intro h_idx_eq
                       have h : uFLy = uFLx := by
                         rw [← (List.getElem_idxOf h_idxOf_uFLx)]
                         simp [← h_idx_eq]
-                      simp [h, h_uFLx_prop] at h_uFLy_prop
-                      simp [h_uFLy_prop] at h_eq
+                      simp [h, h_uFLx_prop₁] at h_uFLy_prop₁
+                      simp [h_uFLy_prop₁] at h_eq
                     simp [idxOf_eq_idxOf_set h_ne h_idx]
                   simp [h_erase] at h_w_in
 
                   have h_x' := uF.matching_ccId uFLx h_uFLx_in
                   simp [ExistsUnique] at h_x'
                   rcases h_x' with ⟨x', h_x', h_unique_x'⟩
-                  have h_unique_x := uF.matching_nodeId x' h_x'.left
-                  simp [ExistsUnique] at h_unique_x
-                  rcases h_unique_x with ⟨u, h_u, h_unique_x⟩
-
-                  -- hier bräuchte ich jetzt, dass uFLx.nodeId = uFLx.ccId
+                  have h_unique_u := uF.matching_nodeId x' h_x'.left
+                  simp [ExistsUnique] at h_unique_u
+                  rcases h_unique_u with ⟨u, h_u, h_unique_u⟩
+                  simp [h_x'.right, h_uFLx_prop₂] at h_unique_u
 
                   have h_nodup : (uF.linkList.set (List.idxOf uFLx uF.linkList) uFLx').Nodup := by
-                    have h_not_in : uFLx' ∉ uF.linkList := by sorry -- um das hier zu lösen
+                    have h_not_in : uFLx' ∉ uF.linkList := by
+                      intro h
+                      have h_uFLx'_nodeId_eq : uFLx'.nodeId = x := by
+                        simp [uFLx', h_uFLx_prop₁]
+                      have h_uFLx'_eq_u := h_unique_u uFLx' h h_uFLx'_nodeId_eq.symm
+                      have h_uFLx_eq_u := h_unique_u uFLx h_uFLx_in h_uFLx_prop₁.symm
+                      simp [← h_uFLx'_eq_u] at h_uFLx_eq_u
+                      have h_ccId_eq : uFLx'.ccId = uFLx.ccId := by
+                        simp [h_uFLx_eq_u]
+                      simp [uFLx', h_uFLy_prop₂, h_uFLx_prop₂] at h_ccId_eq
+                      simp [h_ccId_eq] at h_eq
                     simp [nodup_set_of_not_mem uF.nodup h_not_in]
                   have h_uFLy_not_mem_erase := List.Nodup.not_mem_erase h_nodup (a := uFLy)
                   have h_unique := uF.matching_nodeId z h_z_in
                   simp [ExistsUnique] at h_unique
                   rcases h_unique with ⟨v, h_v, h_unique⟩
-                  simp [← h_z_eq_y] at h_uFLy_prop
+                  simp [← h_z_eq_y] at h_uFLy_prop₁
                   have h_unique : ∀ y ∈ (uF.linkList.set (List.idxOf uFLx uF.linkList) uFLx'), z.id = y.nodeId → y = v := by
                     intro t h_t_in
                     rcases (mem_or_eq_of_mem_set h_t_in) with ⟨h_t_in⟩ | ⟨h_t_eq⟩
                     · exact h_unique t h_t_in
-                    · simp [uFLx', h_uFLx_prop] at h_t_eq
+                    · simp [uFLx', h_uFLx_prop₁] at h_t_eq
                       simp [h_t_eq, h_z_eq_x]
                   have h_uFLy_in : uFLy ∈ (uF.linkList.set (List.idxOf uFLx uF.linkList) uFLx') := by
                     apply mem_set_of_neq_index
@@ -520,9 +556,9 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
                       have h_uFL_eq : uFLx = uFLy := by
                         rw [← List.getElem_idxOf h_idxOf_uFLy]
                         simp [h_idx_eq]
-                      simp [h_uFL_eq, h_uFLy_prop] at h_uFLx_prop
-                      simp [h_uFLx_prop] at h_z_eq_x
-                  have h_v_eq_uFLy := h_unique uFLy h_uFLy_in h_uFLy_prop.symm
+                      simp [h_uFL_eq, h_uFLy_prop₁] at h_uFLx_prop₁
+                      simp [h_uFLx_prop₁] at h_z_eq_x
+                  have h_v_eq_uFLy := h_unique uFLy h_uFLy_in h_uFLy_prop₁.symm
                   have h_v_eq_w := h_unique w (List.mem_of_mem_erase h_w_in) h_w_eq
                   simp [h_v_eq_w, ← h_v_eq_uFLy] at h_w_in
                   simp [h_uFLy_not_mem_erase] at h_w_in
@@ -536,33 +572,33 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
                 have h_uFL_eq : w = uFLx := by
                   rw [← List.getElem_idxOf h_idxOf_uFLx]
                   simp [← h_idx_eq]
-                simp [← h_uFL_eq, ← h_w.right] at h_uFLx_prop
-                simp [h_uFLx_prop] at h_z_eq_x
+                simp [← h_uFL_eq, ← h_w.right] at h_uFLx_prop₁
+                simp [h_uFLx_prop₁] at h_z_eq_x
               have h_w_in := mem_set_of_neq_index h_w.left h_idx_w_ne_idx_uFLx (b := uFLx')
               have h_uFLy_ne_uFLx' : uFLy ≠ uFLx' := by
                 intro h
-                simp [h] at h_uFLy_prop
-                simp [uFLx'] at h_uFLy_prop
-                simp [h_uFLx_prop, h_eq] at h_uFLy_prop
+                simp [h] at h_uFLy_prop₁
+                simp [uFLx'] at h_uFLy_prop₁
+                simp [h_uFLx_prop₁, h_eq] at h_uFLy_prop₁
               have h_w_ne_uFLx' : w ≠ uFLx' := by
                 intro h
                 simp [uFLx'] at h
-                simp [h, h_uFLx_prop, h_z_eq_x] at h_w
+                simp [h, h_uFLx_prop₁, h_z_eq_x] at h_w
               have h_idx_uFLy_ne_idx_uFLx : List.idxOf uFLy uF.linkList ≠ List.idxOf uFLx uF.linkList := by
                 intro h_idx_eq
                 have h_uFL_eq : uFLy = uFLx := by
                   rw [← List.getElem_idxOf h_idxOf_uFLx]
                   simp [← h_idx_eq]
-                simp [← h_uFL_eq, h_uFLy_prop] at h_uFLx_prop
-                simp [h_uFLx_prop] at h_eq
+                simp [← h_uFL_eq, h_uFLy_prop₁] at h_uFLx_prop₁
+                simp [h_uFLx_prop₁] at h_eq
               have h_idx_w_ne_idx_uFLy : List.idxOf w (uF.linkList.set (List.idxOf uFLx uF.linkList) uFLx') ≠ List.idxOf uFLy (uF.linkList.set (List.idxOf uFLx uF.linkList) uFLx') := by
                 intro h_idx_eq
                 simp [idxOf_eq_idxOf_set h_w_ne_uFLx' h_idx_w_ne_idx_uFLx, idxOf_eq_idxOf_set h_uFLy_ne_uFLx' h_idx_uFLy_ne_idx_uFLx] at h_idx_eq
                 have h_uFL_eq : w = uFLy := by
                   rw [← List.getElem_idxOf h_idxOf_uFLy]
                   simp [← h_idx_eq]
-                simp [← h_uFL_eq, ← h_w.right] at h_uFLy_prop
-                simp [h_uFLy_prop] at h_z_eq_y
+                simp [← h_uFL_eq, ← h_w.right] at h_uFLy_prop₁
+                simp [h_uFLy_prop₁] at h_z_eq_y
               have h_w_in := mem_set_of_neq_index h_w_in h_idx_w_ne_idx_uFLy (b := uFLy')
               simp [idxOf_eq_idxOf_set h_uFLy_ne_uFLx' h_idx_uFLy_ne_idx_uFLx] at h_w_in
               simp [h_w_in, h_w.right]
@@ -573,9 +609,9 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
               · have h_v_in := mem_or_eq_of_mem_set h_v_in
                 rcases h_v_in with ⟨h_v_in⟩ | ⟨h_v_eq⟩
                 · exact h_unique v h_v_in
-                · simp [uFLx', h_uFLx_prop] at h_v_eq
+                · simp [uFLx', h_uFLx_prop₁] at h_v_eq
                   simp [h_v_eq, h_z_eq_x]
-              · simp [uFLy', h_uFLy_prop] at h_v_eq
+              · simp [uFLy', h_uFLy_prop₁] at h_v_eq
                 simp [h_v_eq, h_z_eq_y]
 
         have matching_ccId' : ∀ y ∈ linkList', ∃! x ∈ nodeList, x.id = y.ccId := sorry
@@ -585,7 +621,7 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
         have matching_rank' (y : unionFindLink nodeList) (h : y ∈ linkList') : y.nodeId = y.ccId ∨ y.rank < (List.choose (fun x => x.nodeId = y.ccId) linkList' (exists_parent_link linkList' matching_nodeId' matching_ccId' y h)).rank := sorry
 
         have nodup' : linkList'.Nodup := by sorry
-        
+
         ⟨linkList', matching_nodeId', matching_ccId', matching_length', matching_rank', nodup'⟩
       else
         uF -- ⟨uF.linkList, uF.matching_nodeId, uF.matching_ccId, uF.matching_length, uF.matching_rank, uF.nodup⟩
