@@ -66,7 +66,7 @@ theorem prop_split (hprop : α → Prop) (h : ∃ a, a ∈ l ∧ hprop a) : ∃ 
 
 
 
-theorem mem_set_of_neq_index [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] : a ∈ l → l.idxOf a ≠ i → a ∈ l.set i b := by
+theorem mem_set_of_ne_index [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] : a ∈ l → l.idxOf a ≠ i → a ∈ l.set i b := by
   have h_eq_iff_beq : ∀ (x y : α ), x = y ↔ (x == y) = true := by
     intro a b
     by_cases h : a == b
@@ -287,3 +287,19 @@ theorem nodup_set_of_not_mem [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq �
       have h' := mem_or_eq_of_mem_set h
       simp [h₁] at h'
       simp [h'] at h₂
+
+theorem set_eq_self [BEq α] [ReflBEq α] [LawfulBEq α] : List.set l (List.idxOf a l) a = l := by
+  induction l with
+  | nil =>
+    simp
+  | cons b l ih =>
+    by_cases h : b == a
+    · simp [h, List.idxOf_cons]
+      have h' := LawfulBEq.eq_of_beq h
+      simp [h']
+    · simp [h, List.idxOf_cons]
+      exact ih
+
+theorem idxOf_ne [BEq α] : List.idxOf a l ≠ List.idxOf b l → a ≠ b := by -- unused
+  intro h h'
+  simp [h'] at h
