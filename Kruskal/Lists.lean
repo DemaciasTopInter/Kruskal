@@ -1,6 +1,7 @@
 /-
 This code was written by Johannes Jasper von Spreckelsen.
 -/
+import Mathlib.Data.List.Defs
 
 universe u
 
@@ -66,7 +67,7 @@ theorem prop_split (hprop : α → Prop) (h : ∃ a, a ∈ l ∧ hprop a) : ∃ 
 
 
 
-theorem mem_set_of_ne_index [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] : a ∈ l → l.idxOf a ≠ i → a ∈ l.set i b := by
+theorem mem_set_of_ne_index [BEq α] [ReflBEq α] [LawfulBEq α] : a ∈ l → l.idxOf a ≠ i → a ∈ l.set i b := by
   have h_eq_iff_beq : ∀ (x y : α ), x = y ↔ (x == y) = true := by
     intro a b
     by_cases h : a == b
@@ -137,7 +138,7 @@ theorem idxOf_set (h₁ : i < l.length) (h₃ : ∀ j, (h₂ : j < i) → l[j]'(
           exact h
         · exact h₁
 
-theorem mem_or_eq_of_mem_set [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] : a ∈ l.set i b → a ∈ l ∨ a = b := by
+theorem mem_or_eq_of_mem_set [BEq α] [ReflBEq α] [LawfulBEq α] : a ∈ l.set i b → a ∈ l ∨ a = b := by
   intro h_a_in
   induction l generalizing i with
   | nil =>
@@ -231,7 +232,7 @@ theorem mem_eraseIdx_or_eq_of_mem_set : a ∈ l.set i b → a ∈ List.eraseIdx 
   · simp only [Nat.not_lt] at h_i_lt
     simp [List.eraseIdx_eq_self.mpr h_i_lt, h_a_in_set]
 
-theorem not_mem_erase_of_dodup [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] : l.Nodup → a ∉ l.erase a := by
+theorem not_mem_erase_of_dodup [BEq α] [ReflBEq α] [LawfulBEq α] : l.Nodup → a ∉ l.erase a := by
   induction l with
   | nil =>
     simp
@@ -243,7 +244,7 @@ theorem not_mem_erase_of_dodup [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq
     · simp [h_a_eq_b, h_nodup]
     · simp [ne_comm.mp h_a_eq_b, h_a_eq_b, ih]
 
-theorem idxOf_eq_idxOf_set [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] (h₁ : a ≠ b) (h₂ : List.idxOf a l ≠ i) : List.idxOf a (l.set i b) = List.idxOf a l := by
+theorem idxOf_eq_idxOf_set [BEq α] [ReflBEq α] [LawfulBEq α] (h₁ : a ≠ b) (h₂ : List.idxOf a l ≠ i) : List.idxOf a (l.set i b) = List.idxOf a l := by
   induction i generalizing l with
   | zero =>
     induction l with
@@ -269,7 +270,7 @@ theorem idxOf_eq_idxOf_set [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α]
         have h := ih₁ h₂
         simp [List.idxOf_cons, h_a_beq_c, h]
 
-theorem nodup_set_of_not_mem [BEq α] [ReflBEq α] [DecidableEq α] [LawfulBEq α] (h₁ : l.Nodup) (h₂ : a ∉ l) : (l.set i a).Nodup := by
+theorem nodup_set_of_not_mem [BEq α] [ReflBEq α] [LawfulBEq α] (h₁ : l.Nodup) (h₂ : a ∉ l) : (l.set i a).Nodup := by
   induction i generalizing l a with
   | zero =>
     induction l with
@@ -303,3 +304,141 @@ theorem set_eq_self [BEq α] [ReflBEq α] [LawfulBEq α] : List.set l (List.idxO
 theorem idxOf_ne [BEq α] : List.idxOf a l ≠ List.idxOf b l → a ≠ b := by -- unused
   intro h h'
   simp [h'] at h
+
+theorem prop_erase_of_not_prop (p : α → Prop) (hp : ∃ a, a ∈ l ∧ p a) (h : ¬p a) [BEq α] [ReflBEq α] [LawfulBEq α] : ∃ b, b ∈ (l.erase a) ∧ p b := by
+  induction l with
+  | nil =>
+    simp at hp
+  | cons b l ih =>
+    by_cases h_eq : a = b
+    · simp [h_eq]
+      simp [h_eq] at h
+      simp [h] at hp
+      simp [hp]
+    · simp [ne_comm.mp h_eq]
+      simp at hp
+      by_cases h' : p b
+      · simp [h']
+      · simp [h']
+        simp [h'] at hp
+        simp [hp] at ih
+        exact ih
+
+theorem choose_erase_of_not_prop (p : α → Prop) (hp : ∃ a, a ∈ l ∧ p a) (h : ¬p a) [DecidablePred p] [BEq α] [ReflBEq α] [LawfulBEq α] : List.choose p l hp = List.choose p (l.erase a) (prop_erase_of_not_prop p hp h) := by
+  induction l with
+  | nil =>
+    simp at hp
+  | cons b l ih =>
+    by_cases h_eq : b = a
+    · simp [h_eq]
+      simp [List.choose, List.chooseX, h]
+    · simp [h_eq]
+      simp at hp
+      by_cases h' : p b
+      · simp [List.choose, List.chooseX, h']
+      · simp [List.choose, List.chooseX, h']
+        simp [h'] at hp
+        have ih := ih hp
+        simp [List.choose] at ih
+        exact ih
+
+theorem erase_set_eq_eraseIdx (h_nodup : (l.set i a).Nodup) (h_lt : i < l.length) [BEq α] [ReflBEq α] [LawfulBEq α] : (l.set i a).erase a = l.eraseIdx i := by
+  induction i generalizing l with
+  | zero =>
+    induction l with
+    | nil =>
+      simp
+    | cons b l ih =>
+      simp
+  | succ i ih₁ =>
+    induction l with
+    | nil =>
+      simp
+    | cons b l ih₂ =>
+      by_cases h_eq : b == a
+      · simp [LawfulBEq.eq_of_beq h_eq] at h_nodup
+        simp at h_lt
+        have h := List.mem_set h_lt a
+        simp [h] at h_nodup
+      · simp [h_eq]
+        simp_all
+
+theorem choose_findIdx {p : α → Prop} {hp : ∃ a, a ∈ l ∧ p a} [DecidablePred p] [BEq α] [ReflBEq α] [LawfulBEq α] : List.choose p l hp = l[List.findIdx p l]'(by simp [hp]) := by
+  induction l with
+  | nil =>
+    simp at hp
+  | cons a l ih =>
+    by_cases h : p a
+    · simp [h, List.choose, List.chooseX, List.findIdx_cons]
+    · simp [h] at hp
+      simp [h, List.choose, List.chooseX, List.findIdx_cons]
+      simp [List.choose] at ih
+      rcases hp with ⟨b, hp⟩
+      have ih := ih b hp
+      exact ih
+
+theorem getElem_set_of_ne_index (h_lt : j < (l.set i a).length) (h_ne : i ≠ j) [BEq α] [ReflBEq α] [LawfulBEq α] : (l.set i a)[j] = l[j]'(by simp at h_lt; simp [h_lt]) := by
+  induction l generalizing j i with
+  | nil =>
+    simp
+  | cons b l ih₁ =>
+    induction j with
+    | zero =>
+      simp [h_ne]
+    | succ j ih₂ =>
+      cases i with
+      | zero =>
+        simp
+      | succ i =>
+        simp at h_ne
+        simp [- List.length_set] at h_lt
+        have ih₁ := ih₁ h_lt h_ne
+        simp [ih₁]
+
+theorem prop_getElem_findIdx {p : α → Prop} {hp : ∃ a, a ∈ l ∧ p a} [DecidablePred p] : p (l[List.findIdx p l]'(by simp [hp])) := by
+  induction l with
+  | nil =>
+    simp at hp
+  | cons a l ih =>
+    by_cases h : p a
+    · simp [h, List.findIdx_cons]
+    · simp [h, List.findIdx_cons]
+      simp [h] at hp
+      simp [hp] at ih
+      simp [ih]
+
+theorem findIdx_set_of_not_prop {p : α → Prop} (h_lt : i < l.length) (h₁ : ¬p a) (h₂ : ¬p (l[i]'h_lt)) [DecidablePred p] : List.findIdx p (l.set i a) = List.findIdx p l := by
+  induction l generalizing i with
+  | nil =>
+    simp
+  | cons b l ih =>
+    cases i with
+    | zero =>
+      simp at h₂
+      simp [h₁, h₂, List.findIdx_cons]
+    | succ i =>
+      simp [List.findIdx_cons]
+      by_cases h : p b
+      · simp [h]
+      · simp [h]
+        apply ih
+        · simp at h₂
+          exact h₂
+
+theorem findIdx_set_of_prop {p : α → Prop} (h_lt : i < l.length) (h₁ : p a) (h₂ : p (l[i]'h_lt)) [DecidablePred p] : List.findIdx p (l.set i a) = List.findIdx p l := by
+  induction l generalizing i with
+  | nil =>
+    simp
+  | cons b l ih =>
+    cases i with
+    | zero =>
+      simp at h₂
+      simp [h₁, h₂, List.findIdx_cons]
+    | succ i =>
+      simp [List.findIdx_cons]
+      by_cases h : p b
+      · simp [h]
+      · simp [h]
+        apply ih
+        · simp at h₂
+          exact h₂
