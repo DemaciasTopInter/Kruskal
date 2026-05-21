@@ -391,13 +391,34 @@ def connected_component_of_unionFind_of_id {nodeList : List node} (uF : unionFin
         simp [h_in_and_eq]
       connected_component_of_unionFind_of_id_helper uF x h_x_in
 
+theorem exist_unionFindLink_of_connected_component_of_unionFind_of_id_helper {nodeList : List node} (uF : unionFind nodeList) (x : unionFindLink nodeList) (h_x_in : x ∈ uF.linkList) : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id_helper uF x h_x_in ∧ uFL.ccId = connected_component_of_unionFind_of_id_helper uF x h_x_in := by
+  induction x, h_x_in using connected_component_of_unionFind_of_id_helper.induct with
+  | case1 x h_x_in h =>
+    unfold connected_component_of_unionFind_of_id_helper
+    simp [h]
+    refine ⟨x, h_x_in, rfl, h⟩
+  | case2 x h_x_in h y h_y_in h_r ih =>
+    unfold connected_component_of_unionFind_of_id_helper
+    simp [h]
+    exact ih
+
 theorem exist_unionFindLink_of_connected_component_of_unionFind_of_id {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF id h ∧ uFL.ccId = connected_component_of_unionFind_of_id uF id h := by
-  induction nodeList with
-  | nil =>
-    simp at h
-  | cons x nodeList ih =>
-    simp [connected_component_of_unionFind_of_id]
-    sorry
+  have h' : ∃ x ∈ uF.linkList, x.nodeId = id := by
+    rcases h with ⟨x, h_in, h_eq⟩
+    have h'' := uF.matching_nodeId x h_in
+    rw [h_eq] at h''
+    rcases h'' with ⟨y, h_in', h_unique⟩
+    refine ⟨y, ?_⟩
+    simp [h_in']
+  let x := List.choose (fun x => x.nodeId = id) uF.linkList h'
+  have h_x_in : x ∈ uF.linkList := List.choose_mem (fun x => x.nodeId = id) uF.linkList h'
+
+  simp [connected_component_of_unionFind_of_id]
+  by_cases h_eq_id : x.ccId = x.nodeId
+  · refine ⟨x, ?_⟩
+    simp [x, h_eq_id, h_x_in]
+  · simp [x, h_eq_id]
+    simp [exist_unionFindLink_of_connected_component_of_unionFind_of_id_helper]
 
 theorem update_unionFind_matching_nodeId
   (nodeList : List node)
