@@ -436,7 +436,6 @@ theorem update_unionFind_matching_nodeId
   (h_uFLy_prop₂ : uFLy.ccId = y)
   (h_idxOf_uFLx : uF.linkList.idxOf uFLx < uF.linkList.length)
   (h_idxOf_uFLy : uF.linkList.idxOf uFLy < uF.linkList.length)
-  (h_rank_lt : uFLx.rank < uFLy.rank)
   (h_rank_succ_isLt : uFLx.rank.val.succ < nodeList.length)
 
 
@@ -475,8 +474,8 @@ theorem update_unionFind_matching_nodeId
           have h_idxOf_inj : List.idxOf uFLx uF.linkList = List.idxOf uFLy uF.linkList ↔ uFLx = uFLy := List.idxOf_inj h_uFLx_in
           apply (Iff.ne h_idxOf_inj).mpr
           intro h_uFL_eq
-          simp [h_uFL_eq] at h_rank_lt
-      -- · simp [uFLx', uFLx, h_z_eq_x]
+          simp [h_uFL_eq, h_uFLy_prop₁] at h_uFLx_prop₁
+          simp [h_uFLx_prop₁] at h_eq
       · simp [h_uFLx'_eq, h_z_eq_x, h_uFLx_prop₁]
     · intro w h_w_in h_w_eq
       have h_w_in := mem_or_eq_of_mem_set h_w_in
@@ -1034,6 +1033,10 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
       -- refine ⟨uFLy, h_uFLy_in, by simp⟩
     if h_rank_lt : uFLx.rank < uFLy.rank
       then
+
+
+
+
         have h_rank_succ_le : uFLx.rank.val.succ ≤ uFLy.rank.val := by
           simp [h_rank_lt]
         have h_rank_succ_isLt : uFLx.rank.val.succ < nodeList.length := by
@@ -1054,7 +1057,7 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
             simp [h_idxOf_uFLy]
           simp [List.mem_set h]
 
-        have matching_nodeId' : ∀ x ∈ nodeList, ∃! y ∈ linkList', x.id = y.nodeId := update_unionFind_matching_nodeId nodeList linkList' uF uFLx uFLy uFLx' uFLy' x y h_eq h_uFLx_in h_uFLy_in h_uFLx_prop₁ h_uFLx_prop₂ h_uFLy_prop₁ h_uFLy_prop₂ h_idxOf_uFLx h_idxOf_uFLy h_rank_lt h_rank_succ_isLt h_linkList'_eq h_uFLx'_eq h_uFLy'_eq
+        have matching_nodeId' : ∀ x ∈ nodeList, ∃! y ∈ linkList', x.id = y.nodeId := update_unionFind_matching_nodeId nodeList linkList' uF uFLx uFLy uFLx' uFLy' x y h_eq h_uFLx_in h_uFLy_in h_uFLx_prop₁ h_uFLx_prop₂ h_uFLy_prop₁ h_uFLy_prop₂ h_idxOf_uFLx h_idxOf_uFLy h_rank_succ_isLt h_linkList'_eq h_uFLx'_eq h_uFLy'_eq
 
         have matching_ccId' : ∀ y ∈ linkList', ∃! x ∈ nodeList, x.id = y.ccId := update_unionFind_matching_ccId nodeList linkList' uF uFLx uFLy uFLx' uFLy' h_uFLy_in h_rank_succ_isLt h_linkList'_eq h_uFLx'_eq h_uFLy'_eq
 
@@ -1065,8 +1068,86 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
         have matching_rank' : (z : unionFindLink nodeList) → (h_z_in : z ∈ linkList') → z.nodeId = z.ccId ∨ z.rank < (List.choose (fun x => x.nodeId = z.ccId) linkList' (exists_parent_link linkList' matching_nodeId' matching_ccId' z h_z_in)).rank := update_unionFind_matching_rank nodeList linkList' uF uFLx uFLy uFLx' uFLy' x y h_eq h_uFLx_in h_uFLy_in h_uFLx_prop₁ h_uFLx_prop₂ h_uFLy_prop₁ h_uFLy_prop₂ h_idxOf_uFLx h_idxOf_uFLy h_rank_lt h_rank_succ_isLt h_uFLx'_in h_uFLy'_in h_linkList'_eq h_uFLx'_eq h_uFLy'_eq matching_nodeId' matching_ccId' nodup'
 
         ⟨linkList', matching_nodeId', matching_ccId', matching_length', matching_rank', nodup'⟩
+
+
+
+
+
       else
-        sorry -- ⟨uF.linkList, uF.matching_nodeId, uF.matching_ccId, uF.matching_length, uF.matching_rank, uF.nodup⟩
+        if h_rank_lt' : uFLy.rank < uFLx.rank
+          then
+
+
+            have h_rank_succ_le : uFLy.rank.val.succ ≤ uFLx.rank.val := by
+              simp [h_rank_lt']
+            have h_rank_succ_isLt : uFLy.rank.val.succ < nodeList.length := by
+              simp [Nat.lt_of_le_of_lt h_rank_succ_le]
+            let uFLy' : unionFindLink nodeList := ⟨uFLy.nodeId, uFLx.ccId, uFLy.rank⟩
+            let uFLx' : unionFindLink nodeList := ⟨uFLx.nodeId, uFLx.ccId, ⟨max uFLx.rank.val uFLy.rank.val.succ, by simp [h_rank_succ_isLt]⟩⟩
+            let linkList' : List (unionFindLink nodeList) := (uF.linkList.set (uF.linkList.idxOf uFLy) uFLy').set (uF.linkList.idxOf uFLx) uFLx'
+            have h_linkList'_eq : linkList' = (uF.linkList.set (uF.linkList.idxOf uFLy) uFLy').set (uF.linkList.idxOf uFLx) uFLx' := by
+              simp [linkList']
+            have h_uFLy'_eq : uFLy' = { nodeId := uFLy.nodeId, ccId := uFLx.ccId, rank := uFLy.rank } := by
+              simp [uFLy']
+            have h_uFLx'_eq : uFLx' = { nodeId := uFLx.nodeId, ccId := uFLx.ccId, rank := ⟨max uFLx.rank.val uFLy.rank.val.succ, by simp [h_rank_succ_isLt]⟩ } := by
+              simp [uFLx']
+            have h_uFLy'_in : uFLy' ∈ linkList' := update_unionFind_h_uFLx'_in nodeList linkList' uF uFLy uFLx uFLy' uFLx' y x (ne_comm.mp h_eq) h_uFLy_in h_uFLy_prop₁ h_uFLy_prop₂ h_uFLx_prop₁ h_uFLx_prop₂ h_idxOf_uFLy h_linkList'_eq h_uFLy'_eq
+            have h_uFLx'_in : uFLx' ∈ linkList' := by
+              simp [h_linkList'_eq]
+              have h : List.idxOf uFLx uF.linkList < (uF.linkList.set (List.idxOf uFLy uF.linkList) uFLy').length := by
+                simp [h_idxOf_uFLx]
+              simp [List.mem_set h]
+
+            have matching_nodeId' : ∀ x ∈ nodeList, ∃! y ∈ linkList', x.id = y.nodeId := update_unionFind_matching_nodeId nodeList linkList' uF uFLy uFLx uFLy' uFLx' y x (ne_comm.mp h_eq) h_uFLy_in h_uFLx_in h_uFLy_prop₁ h_uFLy_prop₂ h_uFLx_prop₁ h_uFLx_prop₂ h_idxOf_uFLy h_idxOf_uFLx h_rank_succ_isLt h_linkList'_eq h_uFLy'_eq h_uFLx'_eq
+
+            have matching_ccId' : ∀ y ∈ linkList', ∃! x ∈ nodeList, x.id = y.ccId := update_unionFind_matching_ccId nodeList linkList' uF uFLy uFLx uFLy' uFLx' h_uFLx_in h_rank_succ_isLt h_linkList'_eq h_uFLy'_eq h_uFLx'_eq
+
+            have matching_length' : nodeList.length = linkList'.length := update_unionFind_matching_length nodeList linkList' uF uFLy uFLx uFLy' uFLx' h_linkList'_eq
+
+            have nodup' : linkList'.Nodup := update_unionFind_nodup nodeList linkList' uF uFLy uFLx uFLy' uFLx' y x (ne_comm.mp h_eq) h_uFLy_in h_uFLx_in h_uFLy_prop₁ h_uFLy_prop₂ h_uFLx_prop₁ h_uFLx_prop₂ h_idxOf_uFLy h_rank_succ_isLt h_linkList'_eq h_uFLy'_eq h_uFLx'_eq
+
+            have matching_rank' : (z : unionFindLink nodeList) → (h_z_in : z ∈ linkList') → z.nodeId = z.ccId ∨ z.rank < (List.choose (fun x => x.nodeId = z.ccId) linkList' (exists_parent_link linkList' matching_nodeId' matching_ccId' z h_z_in)).rank := update_unionFind_matching_rank nodeList linkList' uF uFLy uFLx uFLy' uFLx' y x (ne_comm.mp h_eq) h_uFLy_in h_uFLx_in h_uFLy_prop₁ h_uFLy_prop₂ h_uFLx_prop₁ h_uFLx_prop₂ h_idxOf_uFLy h_idxOf_uFLx h_rank_lt' h_rank_succ_isLt h_uFLy'_in h_uFLx'_in h_linkList'_eq h_uFLy'_eq h_uFLx'_eq matching_nodeId' matching_ccId' nodup'
+
+            ⟨linkList', matching_nodeId', matching_ccId', matching_length', matching_rank', nodup'⟩
+
+
+
+          else
+
+
+
+            have h_rank_eq : uFLx.rank = uFLy.rank := by
+              simp at h_rank_lt h_rank_lt'
+              apply eq_of_le_of_ge h_rank_lt' h_rank_lt
+            have h_rank_succ_isLt : uFLx.rank.val.succ < nodeList.length := by
+              sorry
+            let uFLx' : unionFindLink nodeList := ⟨uFLx.nodeId, uFLy.ccId, uFLx.rank⟩
+            let uFLy' : unionFindLink nodeList := ⟨uFLy.nodeId, uFLy.ccId, ⟨max uFLy.rank.val uFLx.rank.val.succ, by simp [h_rank_succ_isLt]⟩⟩
+            let linkList' : List (unionFindLink nodeList) := (uF.linkList.set (uF.linkList.idxOf uFLx) uFLx').set (uF.linkList.idxOf uFLy) uFLy'
+            have h_linkList'_eq : linkList' = (uF.linkList.set (uF.linkList.idxOf uFLx) uFLx').set (uF.linkList.idxOf uFLy) uFLy' := by
+              simp [linkList']
+            have h_uFLx'_eq : uFLx' = { nodeId := uFLx.nodeId, ccId := uFLy.ccId, rank := uFLx.rank } := by
+              simp [uFLx']
+            have h_uFLy'_eq : uFLy' = { nodeId := uFLy.nodeId, ccId := uFLy.ccId, rank := ⟨max uFLy.rank.val uFLx.rank.val.succ, by simp [h_rank_succ_isLt]⟩ } := by
+              simp [uFLy']
+            have h_uFLx'_in : uFLx' ∈ linkList' := update_unionFind_h_uFLx'_in nodeList linkList' uF uFLx uFLy uFLx' uFLy' x y h_eq h_uFLx_in h_uFLx_prop₁ h_uFLx_prop₂ h_uFLy_prop₁ h_uFLy_prop₂ h_idxOf_uFLx h_linkList'_eq h_uFLx'_eq
+            have h_uFLy'_in : uFLy' ∈ linkList' := by
+              simp [h_linkList'_eq]
+              have h : List.idxOf uFLy uF.linkList < (uF.linkList.set (List.idxOf uFLx uF.linkList) uFLx').length := by
+                simp [h_idxOf_uFLy]
+              simp [List.mem_set h]
+
+            have matching_nodeId' : ∀ x ∈ nodeList, ∃! y ∈ linkList', x.id = y.nodeId := update_unionFind_matching_nodeId nodeList linkList' uF uFLx uFLy uFLx' uFLy' x y h_eq h_uFLx_in h_uFLy_in h_uFLx_prop₁ h_uFLx_prop₂ h_uFLy_prop₁ h_uFLy_prop₂ h_idxOf_uFLx h_idxOf_uFLy h_rank_succ_isLt h_linkList'_eq h_uFLx'_eq h_uFLy'_eq
+
+            have matching_ccId' : ∀ y ∈ linkList', ∃! x ∈ nodeList, x.id = y.ccId := update_unionFind_matching_ccId nodeList linkList' uF uFLx uFLy uFLx' uFLy' h_uFLy_in h_rank_succ_isLt h_linkList'_eq h_uFLx'_eq h_uFLy'_eq
+
+            have matching_length' : nodeList.length = linkList'.length := update_unionFind_matching_length nodeList linkList' uF uFLx uFLy uFLx' uFLy' h_linkList'_eq
+
+            have nodup' : linkList'.Nodup := update_unionFind_nodup nodeList linkList' uF uFLx uFLy uFLx' uFLy' x y h_eq h_uFLx_in h_uFLy_in h_uFLx_prop₁ h_uFLx_prop₂ h_uFLy_prop₁ h_uFLy_prop₂ h_idxOf_uFLx h_rank_succ_isLt h_linkList'_eq h_uFLx'_eq h_uFLy'_eq
+
+            have matching_rank' : (z : unionFindLink nodeList) → (h_z_in : z ∈ linkList') → z.nodeId = z.ccId ∨ z.rank < (List.choose (fun x => x.nodeId = z.ccId) linkList' (exists_parent_link linkList' matching_nodeId' matching_ccId' z h_z_in)).rank := update_unionFind_matching_rank nodeList linkList' uF uFLx uFLy uFLx' uFLy' x y h_eq h_uFLx_in h_uFLy_in h_uFLx_prop₁ h_uFLx_prop₂ h_uFLy_prop₁ h_uFLy_prop₂ h_idxOf_uFLx h_idxOf_uFLy h_rank_lt h_rank_succ_isLt h_uFLx'_in h_uFLy'_in h_linkList'_eq h_uFLx'_eq h_uFLy'_eq matching_nodeId' matching_ccId' nodup'
+
+            ⟨linkList', matching_nodeId', matching_ccId', matching_length', matching_rank', nodup'⟩
 
 def matching_edge  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x ∈ edgeList, (∃ y ∈ nodeList, x.node1 = y.id) ∧ (∃ z ∈ nodeList, x.node2 = z.id)
 
