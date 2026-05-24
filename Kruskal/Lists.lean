@@ -442,3 +442,32 @@ theorem findIdx_set_of_prop {p : α → Prop} (h_lt : i < l.length) (h₁ : p a)
         apply ih
         · simp at h₂
           exact h₂
+
+theorem filter_erase_eq_self_of_not_prop {p : α → Prop} [DecidablePred p] [BEq α] [ReflBEq α] [LawfulBEq α] : ¬p a → List.filter p l = List.filter p (l.erase a) := by
+  intro h_not_p_a
+  induction l with
+  | nil =>
+    simp
+  | cons b l ih =>
+    by_cases h_b_beq_a : b == a
+    · simp [List.erase, LawfulBEq.eq_of_beq h_b_beq_a, h_not_p_a]
+    · simp [List.filter_cons, List.erase, h_b_beq_a]
+      by_cases h_p_b : p b
+      · simp [h_p_b, ih]
+      · simp [h_p_b, ih]
+
+theorem length_filter_erase_le_length_filter {p : α → Prop} [DecidablePred p] [BEq α] [ReflBEq α] [LawfulBEq α] : (List.filter p (l.erase a)).length ≤ (List.filter p l).length := by
+  induction l with
+  | nil =>
+    simp
+  | cons b l ih =>
+    by_cases h_b_beq_a : b == a
+    · by_cases h_p_a : p a
+      · simp [List.erase, LawfulBEq.eq_of_beq h_b_beq_a, h_p_a]
+      · simp [List.erase, LawfulBEq.eq_of_beq h_b_beq_a, h_p_a]
+    · simp [List.filter_cons, List.erase, h_b_beq_a]
+      by_cases h_p_b : p b
+      · simp [h_p_b, ih]
+      · simp [h_p_b, ih]
+
+-- exact?
