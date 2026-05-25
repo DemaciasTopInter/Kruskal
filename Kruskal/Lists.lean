@@ -470,4 +470,71 @@ theorem length_filter_erase_le_length_filter {p : α → Prop} [DecidablePred p]
       · simp [h_p_b, ih]
       · simp [h_p_b, ih]
 
+theorem length_le_of_subset [DecidableEq α] {l₁ l₂ : List α} (h_nodup : l₁.Nodup) (h_sub : ∀ x, x ∈ l₁ → x ∈ l₂) : l₁.length ≤ l₂.length := by
+  induction l₁ generalizing l₂ with
+  | nil =>
+    simp
+  | cons a l₁ ih =>
+    simp at h_nodup h_sub
+    have h : (∀ (x : α), x ∈ l₁ → x ∈ l₂.erase a) := by
+      intro b h_b_in₁
+      have h_b_in₂ := h_sub.right b h_b_in₁
+      have h_b_ne_a : ¬b = a := by
+        intro h_eq
+        simp [h_eq, h_nodup.left] at h_b_in₁
+      simp [List.mem_erase_of_ne h_b_ne_a, h_b_in₂]
+    have ih := ih (l₂ := l₂.erase a) h_nodup.right h
+    simp [List.length_erase_of_mem h_sub.left] at ih
+    simp
+    have ih := Nat.succ_le_succ ih
+    cases l₂ with
+    | nil =>
+      simp at h_sub
+    | cons b l₂ =>
+      have h' : (b :: l₂).length ≥ 1 := by
+        simp
+      simp at ih
+      simp [ih]
+
+theorem length_eq_of_subset [DecidableEq α] {l₁ l₂ : List α} (h_nodup₁ : l₁.Nodup) (h_nodup₂ : l₂.Nodup) (h_sub₁ : ∀ x, x ∈ l₁ → x ∈ l₂) (h_sub₂ : ∀ x, x ∈ l₂ → x ∈ l₁) : l₁.length = l₂.length := by -- unused
+  have h₁ := length_le_of_subset h_nodup₁ h_sub₁
+  have h₂ := length_le_of_subset h_nodup₂ h_sub₂
+  exact Nat.le_antisymm h₁ h₂
+
+theorem length_lt_of_subset [DecidableEq α] {l₁ l₂ : List α} (h_nodup₁ : l₁.Nodup) (h_nodup₂ : l₂.Nodup) (h_sub : ∀ x, x ∈ l₁ → x ∈ l₂) (h_ex : ∃ x, x ∈ l₂ ∧ x ∉ l₁) : l₁.length < l₂.length := by
+  induction l₁ generalizing l₂ with
+  | nil =>
+    cases l₂ with
+    | nil =>
+      simp at h_ex
+    | cons a l₂ =>
+      simp
+  | cons a l₁ ih =>
+    simp at h_nodup₁ h_sub
+    have h : (∀ (x : α), x ∈ l₁ → x ∈ l₂.erase a) := by
+      intro b h_b_in₁
+      have h_b_in₂ := h_sub.right b h_b_in₁
+      have h_b_ne_a : ¬b = a := by
+        intro h_eq
+        simp [h_eq, h_nodup₁.left] at h_b_in₁
+      simp [List.mem_erase_of_ne h_b_ne_a, h_b_in₂]
+    have h' : ∃ x, x ∈ l₂.erase a ∧ ¬x ∈ l₁ := by
+      rcases h_ex with ⟨b, h_b_in, h_b_not_in⟩
+      simp at h_b_not_in
+      refine ⟨b, ?_, h_b_not_in.right⟩
+      simp [List.mem_erase_of_ne h_b_not_in.left, h_b_in]
+    have ih := ih (l₂ := l₂.erase a) h_nodup₁.right (List.Nodup.erase a h_nodup₂) h h'
+    simp [List.length_erase_of_mem h_sub.left] at ih
+    simp
+    have ih := Nat.succ_le_succ ih
+    cases l₂ with
+    | nil =>
+      simp at h_sub
+    | cons b l₂ =>
+      have h' : (b :: l₂).length ≥ 1 := by
+        simp
+      simp at ih
+      simp
+      apply Nat.lt_of_lt_of_eq ih rfl
+
 -- exact?
