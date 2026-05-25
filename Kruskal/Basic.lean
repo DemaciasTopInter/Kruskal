@@ -1,5 +1,9 @@
-import Mathlib
+-- import Mathlib
 import «Kruskal».Lists
+
+import Mathlib.Algebra.Order.Ring.Nat
+import Mathlib.Data.Nat.Lattice
+import Mathlib.Data.Nat.SuccPred
 
 -- set_option trace.Meta.synthInstance true
 
@@ -32,6 +36,8 @@ structure edge : Type where
   cost : Nat
   nodesLt : node1 < node2
 deriving instance Repr for edge
+instance edge_ToString : ToString edge where
+  toString := fun e => s!"{'{'} id = {e.id}, node1 = {e.node1}, node2 = {e.node2}, cost = {e.cost}, nodesLt = … {'}'}\n"
 deriving instance DecidableEq for edge
 instance edge_LE : LE edge where
   le a b := LE.le a.cost b.cost
@@ -60,6 +66,9 @@ structure unionFindLink (nodeList : List node) : Type where
   The number of nodes pointing at this one.
   -/
   rank : Fin nodeList.length
+deriving instance Repr for unionFindLink
+instance unionFindLink_ToString {nodeList : List node} : ToString (unionFindLink nodeList) where
+  toString := fun uFL => s!"{'{'} nodeId = {uFL.nodeId}, ccId = {uFL.ccId}, rank = {uFL.rank} {'}'}\n"
 deriving instance DecidableEq for unionFindLink
 -- deriving instance BEq for unionFindLink
 instance unionFindLink_BEq {nodeList : List node} : BEq (unionFindLink nodeList) where
@@ -353,10 +362,16 @@ def init_unionFind (nodeList : List node) (h_nodup : nodeList.Nodup) : unionFind
         simp [a, init_unionFind_helper]
         apply init_unionFind_helper.helper_nodup_of_nodup nodeList h nodeList h_nodup
 
-      ⟨a, h_a₁, h_a₂, h_a₃, h_a₄, h_a₅⟩
+      have h_a₆ : (z : unionFindLink nodeList) → z ∈ a → (a.filter (fun y => y.rank < z.rank ∧ ¬y.nodeId = y.ccId)).length ≥ z.rank := by
+        simp [a, init_unionFind_helper]
+        intro z h_z_in
+        have h_z_rank := init_unionFind_helper.helper_all_rank_zero nodeList nodeList h z h_z_in
+        simp [h_z_rank]
+
+      ⟨a, h_a₁, h_a₂, h_a₃, h_a₄, h_a₅, h_a₆⟩
     else
       let a : List (unionFindLink nodeList) := []
-      ⟨a, by simp at h; simp [h], by simp [a], by simp at h; simp [h, a], by intro y h_y_in; simp [a] at h_y_in, by simp [a]⟩
+      ⟨a, by simp at h; simp [h], by simp [a], by simp at h; simp [h, a], by intro y h_y_in; simp [a] at h_y_in, by simp [a], by simp [a]⟩
 
 theorem self_connected_of_max_rank {nodeList : List node} (u : unionFind nodeList) (x : unionFindLink nodeList) (h_x_in : x ∈ u.linkList) : x.rank.succ = nodeList.length → x.nodeId = x.ccId := by
   rcases u.matching_rank x h_x_in with ⟨h_eq⟩ | ⟨h_lt⟩
@@ -1513,6 +1528,8 @@ def matching_edge  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x
 
 -- Liste mitgeben mit edgesSoFar für bessere Laufzeit siehe nodeList_of_edgeList_helper
 def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
+  dbg_trace s!"edgeList = {edgeList}"
+  dbg_trace s!"uF.linkList = {uF.linkList}"
   match edgeList with
   | [] => []
   | e::es =>
@@ -1527,6 +1544,7 @@ def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind
     have matching_edge' : ∀ x ∈ es, (∃ y ∈ nodeList, x.node1 = y.id) ∧ ∃ z ∈ nodeList, x.node2 = z.id := by
       intro z h_in
       simp [matching_edge z (List.mem_cons_of_mem e h_in)]
+    dbg_trace s!"{x} = {y}"
     if x = y
       then
         kruskal_helper es nodeList uF matching_edge' h_nodup
@@ -1536,10 +1554,15 @@ def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind
         let updated_uF := update_unionFind uF x y h_x h_y
         e::(kruskal_helper es nodeList updated_uF matching_edge' h_nodup)
 
-def kruskal (edgeList : List edge) (nodeList : List node) (matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
-    let edgeListSorted := edgeList.mergeSort
+def kruskal (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
+    let edgeListSorted : List edge := edgeList.mergeSort
     let uF : unionFind nodeList := init_unionFind nodeList h_nodup
-    kruskal_helper edgeList nodeList uF matching_edge h_nodup
+    have h_matching_edge : matching_edge edgeListSorted nodeList := by
+      intro e h_e_in
+      simp [edgeListSorted] at h_e_in
+      simp [matching_edge] at h_matching_edge
+      exact h_matching_edge e h_e_in
+    kruskal_helper edgeListSorted nodeList uF h_matching_edge h_nodup
 
 
 
@@ -1812,3 +1835,5 @@ theorem nodeList_of_edgeList_nodup (edgeList : List edge) : (nodeList_of_edgeLis
 
 def kruskal_of_edgeList (edgeList : List edge) : List edge :=
   kruskal edgeList (nodeList_of_edgeList edgeList) (matching_edge_for_nodeList_of_edgeList edgeList) (nodeList_of_edgeList_nodup edgeList)
+
+#min_imports
