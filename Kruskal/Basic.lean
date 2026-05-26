@@ -1527,11 +1527,11 @@ def update_unionFind {nodeList : List node} (uF : unionFind nodeList) (x y : Nat
 def matching_edge  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x ∈ edgeList, (∃ y ∈ nodeList, x.node1 = y.id) ∧ (∃ z ∈ nodeList, x.node2 = z.id)
 
 -- Liste mitgeben mit edgesSoFar für bessere Laufzeit siehe nodeList_of_edgeList_helper
-def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
+def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
   dbg_trace s!"edgeList = {edgeList}"
   dbg_trace s!"uF.linkList = {uF.linkList}"
   match edgeList with
-  | [] => []
+  | [] => edgesSoFar
   | e::es =>
     have h : ∃ x ∈ nodeList, x.id = e.node1 := by
       have h : (∃ x ∈ nodeList, e.node1 = x.id) → (∃ x ∈ nodeList, x.id = e.node1) := by simp [eq_comm]
@@ -1547,12 +1547,12 @@ def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind
     dbg_trace s!"{x} = {y}"
     if x = y
       then
-        kruskal_helper es nodeList uF matching_edge' h_nodup
+        kruskal_helper es nodeList uF edgesSoFar matching_edge' h_nodup
       else
         have h_x := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF e.node1 h
         have h_y := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF e.node2 h'
         let updated_uF := update_unionFind uF x y h_x h_y
-        e::(kruskal_helper es nodeList updated_uF matching_edge' h_nodup)
+        kruskal_helper es nodeList updated_uF (e :: edgesSoFar) matching_edge' h_nodup
 
 def kruskal (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
     let edgeListSorted : List edge := edgeList.mergeSort
@@ -1562,7 +1562,7 @@ def kruskal (edgeList : List edge) (nodeList : List node) (h_matching_edge : mat
       simp [edgeListSorted] at h_e_in
       simp [matching_edge] at h_matching_edge
       exact h_matching_edge e h_e_in
-    kruskal_helper edgeListSorted nodeList uF h_matching_edge h_nodup
+    kruskal_helper edgeListSorted nodeList uF [] h_matching_edge h_nodup
 
 
 
