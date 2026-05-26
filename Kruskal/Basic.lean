@@ -27,6 +27,8 @@ instance node_Preorder : Preorder node where
   le_trans _ _ _ h₁ h₂ := Nat.le_trans h₁ h₂
   lt x y := x.id < y.id
   lt_iff_le_not_ge _ _ := Nat.lt_iff_le_and_not_ge
+instance node_Max : Max node where
+  max := fun a b => if a ≥ b then a else b
 
 structure edge : Type where
   mk ::

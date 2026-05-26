@@ -7,28 +7,40 @@ namespace Kruskal
 
 variable {m n : Nat} {α β : Type}
 
+open SimpleGraph
 
-def spanninTree (G : SimpleGraph α) (H : SimpleGraph α) : Prop := H ≤ G ∧ H.IsAcyclic ∧ (∀ (x y : α), G.Reachable x y ↔ H.Reachable x y)
+def SimpleGraph.IsSpanningTree (G : SimpleGraph α) (H : SimpleGraph α) : Prop := H ≤ G ∧ H.IsAcyclic ∧ (∀ (x y : α), G.Reachable x y ↔ H.Reachable x y)
 
-theorem spanninTree_connected_iff_connected (G : SimpleGraph α) (H : SimpleGraph α) (h : spanninTree G H) : G.Connected ↔ H.Connected := by sorry
+theorem spanninTree_connected_iff_connected (G : SimpleGraph α) (H : SimpleGraph α) (h : SimpleGraph.IsSpanningTree G H) : G.Connected ↔ H.Connected := by sorry
 
-def SimpleGraph_of_edgeSet (edgeSet : Set edge) : SimpleGraph node := sorry
+theorem nodeList_of_edgeList_nonempty (edgeList : List edge) (h : edgeList ≠ []) : nodeList_of_edgeList edgeList ≠ [] := by sorry
 
-def SimpleGraph_of_edgeList (edgeList : List edge) : SimpleGraph node := SimpleGraph_of_edgeSet {e | e ∈ edgeList}
+def nodeList_of_edgeList_max (edgeList : List edge) (h : edgeList ≠ []) : node := (nodeList_of_edgeList edgeList).max (nodeList_of_edgeList_nonempty edgeList h)
 
-theorem spanninTree_of_kruskal (edgeList : List edge) : spanninTree (SimpleGraph_of_edgeList edgeList) (SimpleGraph_of_edgeList (kruskal_of_edgeList edgeList)) := by sorry
+def fin_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : Type := Fin (nodeList_of_edgeList_max edgeList h).id.succ
+
+def SimpleGraph_of_edgeSet (edgeSet : Set edge) : SimpleGraph (Fin n) := sorry
+
+def SimpleGraph_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : SimpleGraph (fin_of_edgeList edgeList h) := SimpleGraph_of_edgeSet {e | e ∈ edgeList}
+
+theorem kruskal_nonempty (edgeList : List edge) (h : edgeList ≠ []) : kruskal_of_edgeList edgeList ≠ [] := by sorry
+
+def SimpleGraph_of_kruskal (edgeList : List edge) (h : edgeList ≠ []) := SimpleGraph_of_edgeList (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)
+
+theorem nodeList_of_kruskal_perm (edgeList : List edge) : List.Perm (nodeList_of_edgeList (kruskal_of_edgeList edgeList)) (nodeList_of_edgeList edgeList) := by sorry
+
+theorem SimpleGraph_of_kruskal_IsSubgraph (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_kruskal edgeList h) ≤ (SimpleGraph_of_edgeList edgeList h) := by sorry
+
+theorem SimpleGraph_of_kruskal_IsAcyclic (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_kruskal edgeList h).IsAcyclic := by sorry
+
+theorem SimpleGraph_of_kruskal_IsEqReachable (edgeList : List edge) (h : edgeList ≠ []) : ∀ (x y), (SimpleGraph_of_edgeList edgeList h).Reachable x y ↔ (SimpleGraph_of_kruskal edgeList h).Reachable x y := by sorry
+
+theorem SimpleGraph_of_kruskal_IsSpanningTree (edgeList : List edge) (h : edgeList ≠ []) : SimpleGraph.IsSpanningTree (SimpleGraph_of_kruskal edgeList h) (SimpleGraph_of_edgeList edgeList h) := by sorry
 
 def cost_of_edgeList : List edge → Nat
   | [] => 0
   | e :: edgeList => e.cost + cost_of_edgeList edgeList
 
-def cost_of_edgeSet (edgeSet : Finset edge) : Nat :=
-  Finset.fold (fun a b => a + b) 0 (fun e => e.cost) edgeSet
+def minimalSpanninTree_of_edgeList (edgeList : List edge) (h₁ : edgeList ≠ []) (G := SimpleGraph_of_edgeList edgeList h₁) (minEdgeList : List edge) (h₂ : minEdgeList ≠ []) (h₃ : SimpleGraph.IsSpanningTree G (SimpleGraph_of_edgeList minEdgeList h₂)) (h₄ : ∀ x ∈ minEdgeList, x ∈ edgeList) : Prop := ∀ (el : List edge), (h₅ : el ≠ []) → (h₆ : ∀ x ∈ el, x ∈ edgeList) → SimpleGraph.IsSpanningTree G (SimpleGraph_of_edgeList el h₅) → (cost_of_edgeList el) ≥ (cost_of_edgeList minEdgeList)
 
-def minimalSpanninTree_of_edgeList (edgeList : List edge) : Set (Set edge) :=
-  let p := {e | e ∈ edgeList}.powerset
-  let s := {s | s ∈ p ∧ (spanninTree (SimpleGraph_of_edgeList edgeList) (SimpleGraph_of_edgeSet s))}
-  have h_isMin := Minimal (fun x => x ∈ (Finset.map (fun x => cost_of_edgeSet x) s))
-  {r | r ∈ s ∧ h_isMin (cost_of_edgeSet r)}
-
-theorem kruskal_minimal (edgeList : List edge) : {e | e ∈ (kruskal_of_edgeList edgeList)} ∈ (minimalSpanninTree_of_edgeList edgeList) := by sorry
+theorem kruskal_minimalSpanninTree_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : minimalSpanninTree_of_edgeList edgeList h (SimpleGraph_of_edgeList edgeList h₁) (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) := by sorry
