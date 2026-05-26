@@ -11,15 +11,67 @@ open SimpleGraph
 
 def SimpleGraph.IsSpanningTree (G : SimpleGraph α) (H : SimpleGraph α) : Prop := H ≤ G ∧ H.IsAcyclic ∧ (∀ (x y : α), G.Reachable x y ↔ H.Reachable x y)
 
-theorem spanninTree_connected_iff_connected (G : SimpleGraph α) (H : SimpleGraph α) (h : SimpleGraph.IsSpanningTree G H) : G.Connected ↔ H.Connected := by sorry
+theorem spanninTree_connected_iff_connected (G : SimpleGraph α) (H : SimpleGraph α) (h : SimpleGraph.IsSpanningTree G H) : G.Connected ↔ H.Connected := by
+  simp [SimpleGraph.connected_iff_exists_forall_reachable]
+  simp [SimpleGraph.IsSpanningTree] at h
+  rcases h with ⟨_, _, h⟩
+  simp [h]
 
-theorem nodeList_of_edgeList_nonempty (edgeList : List edge) (h : edgeList ≠ []) : nodeList_of_edgeList edgeList ≠ [] := by sorry
+theorem nodeList_of_edgeList_helper_nonempty {nodeList : List node} (edgeList : List edge) : nodeList ≠ [] → nodeList_of_edgeList_helper edgeList nodeList ≠ [] := by
+  intro h'
+  induction edgeList generalizing nodeList with
+  | nil =>
+    simp [nodeList_of_edgeList_helper, h']
+  | cons e edgeList ih =>
+    by_cases h_eq : e.node1 = e.node2
+    · simp [nodeList_of_edgeList_helper, h_eq]
+      by_cases h_in : { id := e.node2 } ∈ nodeList
+      · simp [h_in]
+        apply ih h'
+      · simp [h_in]
+        apply ih
+        · simp
+    · simp [nodeList_of_edgeList_helper, h_eq]
+      by_cases h_in₁ : { id := e.node1 } ∈ nodeList
+      · by_cases h_in₂ : { id := e.node2 } ∈ nodeList
+        · simp [h_in₁, h_in₂]
+          apply ih h'
+        · simp [h_in₁, h_in₂]
+          apply ih
+          · simp
+      · by_cases h_in₂ : { id := e.node2 } ∈ nodeList
+        · simp [h_in₁, h_in₂]
+          apply ih
+          · simp
+        · simp [h_in₁, h_in₂]
+          apply ih
+          · simp
+
+theorem nodeList_of_edgeList_nonempty (edgeList : List edge) (h : edgeList ≠ []) : nodeList_of_edgeList edgeList ≠ [] := by
+  cases edgeList with
+  | nil =>
+    simp at h
+  | cons e edgeList =>
+    simp [nodeList_of_edgeList, nodeList_of_edgeList_helper]
+    by_cases h_eq : e.node1 = e.node2
+    · simp [h_eq, nodeList_of_edgeList_helper_nonempty]
+    · simp [h_eq, nodeList_of_edgeList_helper_nonempty]
 
 def nodeList_of_edgeList_max (edgeList : List edge) (h : edgeList ≠ []) : node := (nodeList_of_edgeList edgeList).max (nodeList_of_edgeList_nonempty edgeList h)
 
 def fin_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : Type := Fin (nodeList_of_edgeList_max edgeList h).id.succ
 
-def SimpleGraph_of_edgeSet (edgeSet : Set edge) : SimpleGraph (Fin n) := sorry
+def SimpleGraph_of_edgeSet (edgeSet : Set edge) : SimpleGraph (Fin n) where
+  Adj (a b) := ∃ e ∈ edgeSet, (e.node1 = a.val ∧ e.node2 = b.val) ∨ (e.node1 = b.val ∧ e.node2 = a.val)
+  symm := by
+    simp [Symmetric]
+    intro a b e h_e_in h_adj
+    refine ⟨e, h_e_in, h_adj.symm⟩
+  loopless := by
+    simp [irrefl_def]
+    intro a e h_e h_eq₁ h_eq₂
+    have h_lt := e.nodesLt
+    simp [h_eq₁, h_eq₂] at h_lt
 
 def SimpleGraph_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : SimpleGraph (fin_of_edgeList edgeList h) := SimpleGraph_of_edgeSet {e | e ∈ edgeList}
 
