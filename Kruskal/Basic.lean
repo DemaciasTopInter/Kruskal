@@ -43,9 +43,39 @@ instance edge_ToString : ToString edge where
 deriving instance DecidableEq for edge
 instance edge_LE : LE edge where
   le a b := LE.le a.cost b.cost
-
-
-
+instance edge_Preorder : Preorder edge where
+  le_refl := by
+    intro a
+    have h : a.cost ≤ a.cost := by
+      simp
+    exact h
+  le_trans := by
+    intro a b c h1 h2
+    have h3 : a.cost ≤ b.cost := by
+      exact h1
+    have h4 : b.cost ≤ c.cost := by
+      exact h2
+    exact le_trans h3 h4
+-- instance edge_LinearOrder : LinearOrder edge where
+--   le_antisymm := by
+--     intro a b h1 h2
+--     have h3 : a.cost ≤ b.cost := by
+--       exact h1
+--     have h4 : b.cost ≤ a.cost := by
+--       exact h2
+--     exact le_antisymm h3 h4 -- falsch
+--   le_total := by sorry
+--   toDecidableLE := by sorry
+theorem edge_LinearOrder.le_total : ∀ (a b : edge), a ≤ b ∨ b ≤ a := by
+  intro a b
+  by_cases h : a.cost ≤ b.cost
+  · left
+    exact h
+  · right
+    have h' : b.cost ≤ a.cost := by
+      simp at h
+      exact le_of_lt h
+    exact h'
 
 
 -- l : List α
@@ -59,7 +89,7 @@ structure unionFindLink (nodeList : List node) : Type where
   -/
   nodeId : Nat
   /--
-  The `id` of the first node in the connected component.
+  The `id` of the parent node in the unionFind strukture.
 
   The `ccId` is initialized with the nod's own `id`.
   -/
@@ -1530,8 +1560,8 @@ def matching_edge  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x
 
 -- Liste mitgeben mit edgesSoFar für bessere Laufzeit siehe nodeList_of_edgeList_helper
 def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
-  dbg_trace s!"edgeList = {edgeList}"
-  dbg_trace s!"uF.linkList = {uF.linkList}"
+  -- dbg_trace s!"edgeList = {edgeList}" -- debug output
+  -- dbg_trace s!"uF.linkList = {uF.linkList}" -- debug output
   match edgeList with
   | [] => edgesSoFar
   | e::es =>
@@ -1546,7 +1576,7 @@ def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind
     have matching_edge' : ∀ x ∈ es, (∃ y ∈ nodeList, x.node1 = y.id) ∧ ∃ z ∈ nodeList, x.node2 = z.id := by
       intro z h_in
       simp [matching_edge z (List.mem_cons_of_mem e h_in)]
-    dbg_trace s!"{x} = {y}"
+    -- dbg_trace s!"{x} = {y}" -- debug output
     if x = y
       then
         kruskal_helper es nodeList uF edgesSoFar matching_edge' h_nodup
