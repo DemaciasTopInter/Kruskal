@@ -206,7 +206,7 @@ theorem kruskal_sublist {edgeList : List edge} {nodeList : List node} {h_matchin
   simp at h
   exact h
 
-theorem ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node
+theorem ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node -- besserer Name: kruskal_helper.edgesSoFar_append
   {edgeList : List edge}
   {nodeList : List node}
   {uF : unionFind nodeList}
