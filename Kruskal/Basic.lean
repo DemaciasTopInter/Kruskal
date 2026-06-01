@@ -29,6 +29,35 @@ instance node_Preorder : Preorder node where
   lt_iff_le_not_ge _ _ := Nat.lt_iff_le_and_not_ge
 instance node_Max : Max node where
   max := fun a b => if a ≥ b then a else b
+-- instance node_DecidableLE : DecidableLE node := by
+--   simp
+instance node_LinearOrder : LinearOrder node where
+  le_antisymm := by
+    intro a b
+    cases a
+    cases b
+    rename_i a b
+    intro h₁ h₂
+    have h₁ : a ≤ b := h₁
+    have h₂ : a ≥ b := h₂
+    simp [le_antisymm h₁ h₂]
+  le_total := by
+    intro a b
+    by_cases h : a.id ≤ b.id
+    · left
+      exact h
+    · right
+      simp at h
+      exact le_of_lt h
+  toDecidableLE := fun a b => a ≤ b
+
+  -- by
+  --   simp [DecidableLE, DecidableRel]
+  --   intro a b
+  --   dsimp [node_LE]
+  --   by_cases h : a ≤ b
+  --   · simp [h, Decidable]
+  --     sorry
 
 structure edge : Type where
   mk ::
@@ -1868,4 +1897,4 @@ theorem nodeList_of_edgeList_nodup (edgeList : List edge) : (nodeList_of_edgeLis
 def kruskal_of_edgeList (edgeList : List edge) : List edge :=
   kruskal edgeList (nodeList_of_edgeList edgeList) (matching_edge_for_nodeList_of_edgeList edgeList) (nodeList_of_edgeList_nodup edgeList)
 
-#min_imports
+-- #min_imports
