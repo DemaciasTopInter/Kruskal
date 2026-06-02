@@ -2,10 +2,12 @@
 This code was written by Johannes Jasper von Spreckelsen.
 -/
 import Mathlib.Data.List.Defs
+import Mathlib.Data.List.MinMax
+-- import Mathlib.Data.Nat.SuccPred
 
 universe u
 
-variable {α : Type u} {a b : α} {l : List α} {i j : Nat}
+variable {α : Type u} {a b : α} {l l' : List α} {i j : Nat}
 
 
 /--
@@ -173,11 +175,11 @@ theorem getElem_idxOf_self_eq_self (h_in : a ∈ l) [DecidableEq α] [LawfulBEq 
       by_cases h_eq : a = c
       · simp_all
       · simp_all
-        have ih := ih True.intro
-        by_cases h_bne : c == a
-          -- apply imp_not_comm.mp LawfulBEq.eq_of_beq
-        · simp [LawfulBEq.eq_of_beq h_bne]
-        · simp [List.idxOf_cons, h_bne, ih]
+        -- have ih := ih True.intro
+        -- by_cases h_bne : c == a
+        --   -- apply imp_not_comm.mp LawfulBEq.eq_of_beq
+        -- · simp [LawfulBEq.eq_of_beq h_bne]
+        -- · simp [List.idxOf_cons, h_bne, ih]
 
 theorem not_mem_set_idxOf (h_in : a ∈ l) (hneq : b ≠ a) (hnodup : l.Nodup) [DecidableEq α] [LawfulBEq α] : a ∉ l.set (l.idxOf a) b := by
   have h_a_eq := getElem_idxOf_self_eq_self h_in
@@ -205,7 +207,7 @@ theorem not_mem_set_idxOf (h_in : a ∈ l) (hneq : b ≠ a) (hnodup : l.Nodup) [
         · simp [h_eq] at h_beq
         · simp [h_eq]
           simp [h_eq] at h_in
-          simp [List.idxOf_cons, h_beq] at h_a_eq
+          simp only [List.idxOf_cons, h_beq] at h_a_eq
           simp [List.idxOf_cons, h_beq] at hidx
           simp at hnodup
           have ih₁ := ih₁ h_in hnodup.right h_a_eq hidx
@@ -374,7 +376,7 @@ theorem choose_findIdx {p : α → Prop} {hp : ∃ a, a ∈ l ∧ p a} [Decidabl
       simp [h, List.choose, List.chooseX, List.findIdx_cons]
       simp [List.choose] at ih
       rcases hp with ⟨b, hp⟩
-      have ih := ih b hp
+      have ih := ih b hp.left hp.right
       exact ih
 
 theorem getElem_set_of_ne_index (h_lt : j < (l.set i a).length) (h_ne : i ≠ j) [BEq α] [ReflBEq α] [LawfulBEq α] : (l.set i a)[j] = l[j]'(by simp at h_lt; simp [h_lt]) := by
@@ -537,4 +539,40 @@ theorem length_lt_of_subset [DecidableEq α] {l₁ l₂ : List α} (h_nodup₁ :
       simp
       apply Nat.lt_of_lt_of_eq ih rfl
 
+theorem max_eq_maximum [LinearOrder α] (h : l ≠ []) : l.max h = l.maximum := by
+  rw [eq_comm]
+  -- simp [l.maximum.unbot (List.maximum_ne_bot_of_ne_nil h)]
+  apply List.maximum_eq_coe_iff.mpr
+  let a := l.max h
+  have h_a : l.max h = a := by
+    simp [a]
+  have h' := (List.max_eq_iff h).mp h_a
+  simp [h_a]
+  exact h'
+
+theorem max_eq_maximum_unbot [LinearOrder α] (h : l ≠ []) : l.max h = l.maximum.unbot (List.maximum_ne_bot_of_ne_nil h) := by
+  simp [WithBot.unbot]
+  rw [eq_comm]
+  apply List.maximum_eq_coe_iff.mpr
+  let a := l.max h
+  have h_a : l.max h = a := by
+    simp [a]
+  have h' := (List.max_eq_iff h).mp h_a
+  simp [h_a]
+  exact h'
+
+theorem perm_nonempty (h : l ≠ []) (h_perm : l.Perm l') : l' ≠ [] := by
+  cases l with
+  | nil =>
+    simp at h
+  | cons a l =>
+    intro h_contra
+    simp [h_contra] at h_perm
+
+-- theorem perm_max_eq [Max α] (h : l ≠ []) (h_perm : l.Perm l') : l.max h = l'.max (perm_nonempty h h_perm) := by
+--   set a := l.max h with h_a
+--   set b := l'.max (perm_nonempty h h_perm) with h_b
+--   have h' := (List.max_eq_iff h).mp h_a.symm
+
 -- exact?
+-- #min_imports

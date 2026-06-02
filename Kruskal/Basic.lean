@@ -29,9 +29,7 @@ instance node_Preorder : Preorder node where
   lt_iff_le_not_ge _ _ := Nat.lt_iff_le_and_not_ge
 instance node_Max : Max node where
   max := fun a b => if a ≥ b then a else b
--- instance node_DecidableLE : DecidableLE node := by
---   simp
-instance node_LinearOrder : LinearOrder node where
+instance node_PartialOrder : PartialOrder node where
   le_antisymm := by
     intro a b
     cases a
@@ -41,6 +39,10 @@ instance node_LinearOrder : LinearOrder node where
     have h₁ : a ≤ b := h₁
     have h₂ : a ≥ b := h₂
     simp [le_antisymm h₁ h₂]
+instance node_LinearOrder : LinearOrder node where
+  le_antisymm := by
+    intro a b h₁ h₂
+    exact le_antisymm h₁ h₂
   le_total := by
     intro a b
     by_cases h : a.id ≤ b.id
@@ -49,7 +51,24 @@ instance node_LinearOrder : LinearOrder node where
     · right
       simp at h
       exact le_of_lt h
-  toDecidableLE := fun a b => a ≤ b
+  toDecidableLE := fun a b => inferInstance
+  max_def := by
+    intro a b
+    by_cases h : a ≤ b
+    · simp [h, max]
+      intro h'
+      exact le_antisymm h h'
+    · simp [h, max]
+      intro h'
+      cases a with
+      | mk a =>
+      cases b with
+      | mk b =>
+      have h : ¬a ≤ b := h
+      have h' : ¬b ≤ a := h'
+      have h_contra := Nat.le_total a b
+      simp [h, h'] at h_contra
+
 
   -- by
   --   simp [DecidableLE, DecidableRel]

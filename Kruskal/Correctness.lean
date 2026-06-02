@@ -2,6 +2,8 @@ import Mathlib
 import Kruskal.Basic
 import Kruskal.Lists
 
+-- set_option pp.all true
+
 namespace Kruskal
 
 
@@ -85,6 +87,11 @@ def SimpleGraph_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : Simpl
     have h_lt := e.nodesLt
     simp [h_eq₁, h_eq₂] at h_lt
 
+-- def SimpleGraph_of_n_of_edgeList (n : Nat) (edgeList : List edge) (h : edgeList ≠ []) (h_eq : n = (nodeList_of_edgeList_max edgeList h).id.succ) : SimpleGraph (Fin n) :=
+--   let G := SimpleGraph_of_edgeList edgeList h
+--   let Adj := fun (a b : Fin n) =>
+--     cast a
+--   ⟨by simp [h_eq]; G.Adj, G.symm, G.loopless⟩
 def SimpleGraph_of_n_of_edgeList (n : Nat) (edgeList : List edge) (h : edgeList ≠ []) (h_eq : n = (nodeList_of_edgeList_max edgeList h).id.succ) : SimpleGraph (Fin n) := by
   let G := SimpleGraph_of_edgeList edgeList h
   have h_eq : SimpleGraph (fin_of_edgeList edgeList h) = SimpleGraph (Fin n) := by
@@ -554,10 +561,33 @@ theorem nodeList_of_kruskal_perm (edgeList : List edge) : List.Perm (nodeList_of
     simp [h_f_con_x]
 
 theorem nodeList_of_edgeList_max_eq (edgeList : List edge) (h : edgeList ≠ []) : (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)).id.succ = (nodeList_of_edgeList_max edgeList h).id.succ := by
-  simp [List.Perm.maximum_eq (nodeList_of_kruskal_perm edgeList)]
-  sorry
+  simp [nodeList_of_edgeList_max]
+  have h_edgeList_max := max_eq_maximum (nodeList_of_edgeList_nonempty edgeList h)
+  have h_kruskal_max := max_eq_maximum (nodeList_of_edgeList_nonempty (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h))
+  have h_maximum_eq := List.Perm.maximum_eq (nodeList_of_kruskal_perm edgeList)
+  simp [h_maximum_eq, ← h_edgeList_max] at h_kruskal_max
+  simp [h_kruskal_max]
 
-theorem SimpleGraph_of_kruskal_IsSubgraph (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_kruskal edgeList h) ≤ (SimpleGraph_of_n_of_edgeList (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) _).id.succ edgeList h (nodeList_of_edgeList_max_eq edgeList h)) := by sorry
+theorem SimpleGraph_of_kruskal_IsSubgraph (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_kruskal edgeList h) ≤ (SimpleGraph_of_n_of_edgeList (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) _).id.succ edgeList h (nodeList_of_edgeList_max_eq edgeList h)) := by
+  simp [LE.le]
+  simp [SimpleGraph_of_kruskal, SimpleGraph_of_n_of_edgeList, SimpleGraph_of_edgeList]
+  intro u v
+  have h_goal : ∃ e ∈ kruskal_of_edgeList edgeList, e.node1 = ↑u ∧ e.node2 = ↑v ∨ e.node1 = ↑v ∧ e.node2 = ↑u → ∃ e ∈ edgeList, e.node1 = ↑u ∧ e.node2 = ↑v ∨ e.node1 = ↑v ∧ e.node2 = ↑u := by
+    sorry
+  -- simp [h_goal]
+  -- subst
+  -- simp [← cast]
+  -- have h_cast := SimpleGraph_of_n_of_edgeList._proof_2 ((nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)).id + 1) edgeList h (SimpleGraph_of_n_of_edgeList._proof_1 ((nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)).id + 1) edgeList h (nodeList_of_edgeList_max_eq edgeList h))
+  -- simp [h_cast]
+  -- subst h_cast
+  -- exact ⟨e, h_e_in, h_adj⟩
+  -- simpa [SimpleGraph_of_edgeList]
+  -- refine ⟨e, ?_⟩
+  -- rcases h_adj with h_adj | h_adj
+  -- · refine ⟨e, ?_⟩
+  --   simp [h_adj]
+  -- · sorry
+  sorry
 
 theorem SimpleGraph_of_kruskal_IsAcyclic (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_kruskal edgeList h).IsAcyclic := by sorry
 
