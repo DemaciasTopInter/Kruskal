@@ -550,16 +550,16 @@ theorem max_eq_maximum [LinearOrder α] (h : l ≠ []) : l.max h = l.maximum := 
   simp [h_a]
   exact h'
 
-theorem max_eq_maximum_unbot [LinearOrder α] (h : l ≠ []) : l.max h = l.maximum.unbot (List.maximum_ne_bot_of_ne_nil h) := by
-  simp [WithBot.unbot]
-  rw [eq_comm]
-  apply List.maximum_eq_coe_iff.mpr
-  let a := l.max h
-  have h_a : l.max h = a := by
-    simp [a]
-  have h' := (List.max_eq_iff h).mp h_a
-  simp [h_a]
-  exact h'
+-- theorem max_eq_maximum_unbot [LinearOrder α] (h : l ≠ []) : l.max h = l.maximum.unbot (List.maximum_ne_bot_of_ne_nil h) := by
+--   simp [WithBot.unbot]
+--   rw [eq_comm]
+--   apply List.maximum_eq_coe_iff.mpr
+--   let a := l.max h
+--   have h_a : l.max h = a := by
+--     simp [a]
+--   have h' := (List.max_eq_iff h).mp h_a
+--   simp [h_a]
+--   exact h'
 
 theorem perm_nonempty (h : l ≠ []) (h_perm : l.Perm l') : l' ≠ [] := by
   cases l with

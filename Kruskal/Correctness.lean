@@ -87,17 +87,24 @@ def SimpleGraph_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : Simpl
     have h_lt := e.nodesLt
     simp [h_eq₁, h_eq₂] at h_lt
 
--- def SimpleGraph_of_n_of_edgeList (n : Nat) (edgeList : List edge) (h : edgeList ≠ []) (h_eq : n = (nodeList_of_edgeList_max edgeList h).id.succ) : SimpleGraph (Fin n) :=
---   let G := SimpleGraph_of_edgeList edgeList h
---   let Adj := fun (a b : Fin n) =>
---     cast a
---   ⟨by simp [h_eq]; G.Adj, G.symm, G.loopless⟩
-def SimpleGraph_of_n_of_edgeList (n : Nat) (edgeList : List edge) (h : edgeList ≠ []) (h_eq : n = (nodeList_of_edgeList_max edgeList h).id.succ) : SimpleGraph (Fin n) := by
+def SimpleGraph_of_n_of_edgeList (n : Nat) (edgeList : List edge) (h : edgeList ≠ []) (h_eq : n = (nodeList_of_edgeList_max edgeList h).id.succ) : SimpleGraph (Fin n) :=
   let G := SimpleGraph_of_edgeList edgeList h
-  have h_eq : SimpleGraph (fin_of_edgeList edgeList h) = SimpleGraph (Fin n) := by
-    simp [fin_of_edgeList, h_eq]
-  rw [← h_eq]
-  exact G
+  let Adj := fun (a b : Fin n) => G.Adj ⟨a, by rw [← h_eq]; exact a.isLt⟩ ⟨b, by rw [← h_eq]; exact b.isLt⟩
+  have symm : Symmetric Adj := by
+    simp [Symmetric, Adj]
+    intro a b
+    have h_symm := G.symm
+    simp only [Symmetric] at h_symm
+    exact h_symm (x := ⟨a, by rw [← h_eq]; exact a.isLt⟩) (y := ⟨b, by rw [← h_eq]; exact b.isLt⟩)
+  have loopless : Std.Irrefl Adj := by
+    simp [irrefl_def, Adj]
+  ⟨Adj, symm, loopless⟩
+-- def SimpleGraph_of_n_of_edgeList (n : Nat) (edgeList : List edge) (h : edgeList ≠ []) (h_eq : n = (nodeList_of_edgeList_max edgeList h).id.succ) : SimpleGraph (Fin n) := by
+--   let G := SimpleGraph_of_edgeList edgeList h
+--   have h_eq : SimpleGraph (fin_of_edgeList edgeList h) = SimpleGraph (Fin n) := by
+--     simp [fin_of_edgeList, h_eq]
+--   rw [← h_eq]
+--   exact G
 
 theorem connected_component_of_init_unionFind_of_id_eq_id {nodeList : List node} {h_nodup : nodeList.Nodup} {id : Nat} {h : ∃ x ∈ nodeList, x.id = id} : connected_component_of_unionFind_of_id (init_unionFind nodeList h_nodup) id h = id := by
   simp [init_unionFind]
@@ -571,25 +578,52 @@ theorem nodeList_of_edgeList_max_eq (edgeList : List edge) (h : edgeList ≠ [])
 theorem SimpleGraph_of_kruskal_IsSubgraph (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_kruskal edgeList h) ≤ (SimpleGraph_of_n_of_edgeList (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) _).id.succ edgeList h (nodeList_of_edgeList_max_eq edgeList h)) := by
   simp [LE.le]
   simp [SimpleGraph_of_kruskal, SimpleGraph_of_n_of_edgeList, SimpleGraph_of_edgeList]
-  intro u v
-  have h_goal : ∃ e ∈ kruskal_of_edgeList edgeList, e.node1 = ↑u ∧ e.node2 = ↑v ∨ e.node1 = ↑v ∧ e.node2 = ↑u → ∃ e ∈ edgeList, e.node1 = ↑u ∧ e.node2 = ↑v ∨ e.node1 = ↑v ∧ e.node2 = ↑u := by
-    sorry
-  -- simp [h_goal]
-  -- subst
-  -- simp [← cast]
-  -- have h_cast := SimpleGraph_of_n_of_edgeList._proof_2 ((nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)).id + 1) edgeList h (SimpleGraph_of_n_of_edgeList._proof_1 ((nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)).id + 1) edgeList h (nodeList_of_edgeList_max_eq edgeList h))
-  -- simp [h_cast]
-  -- subst h_cast
-  -- exact ⟨e, h_e_in, h_adj⟩
-  -- simpa [SimpleGraph_of_edgeList]
-  -- refine ⟨e, ?_⟩
-  -- rcases h_adj with h_adj | h_adj
-  -- · refine ⟨e, ?_⟩
-  --   simp [h_adj]
-  -- · sorry
-  sorry
+  intro u v e h_e_in h_adj
+  refine ⟨e, kruskal_sublist e h_e_in, h_adj⟩
 
-theorem SimpleGraph_of_kruskal_IsAcyclic (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_kruskal edgeList h).IsAcyclic := by sorry
+theorem kruskal_helper_IsAcyclic
+  {edgeList : List edge}
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {edgesSoFar : List edge}
+  {h_matching_edge : matching_edge edgeList nodeList}
+  {h_nodup : nodeList.Nodup}
+  {G : SimpleGraph (Fin n)}
+  {h_symm : Symmetric fun (a b : Fin n) => ∃ e ∈ kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a}
+  {h_loopless : Std.Irrefl fun (a b : Fin n) => ∃ e ∈ kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a}
+  {h_G : G = { Adj := fun a b => ∃ e ∈ kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a, symm := h_symm, loopless := h_loopless }}
+  (h_invariant : (h : edgesSoFar ≠ []) → ∀ (a b : fin_of_edgeList edgesSoFar h), (SimpleGraph_of_edgeList edgesSoFar h).Reachable a b)
+  : G.IsAcyclic := by
+  simp [h_G]
+  induction
+    edgeList,
+    uF,
+    edgesSoFar,
+    h_matching_edge
+  using kruskal_helper.induct with
+  | case1 uF edgesSoFar h_matching_edge =>
+    sorry
+  | case2 uF edgesSoFar e es h_matching_edge' h_ex_1 x h_ex_2 y h_matching_edge =>
+    rename_i h_eq ih
+    sorry
+  | case3 uF edgesSoFar e es h_matching_edge h_ex_1 x h_ex_2 y h_matching_edge' h_ne h_ex_uFLx =>
+    rename_i h_ex_uFLy update_uF ih
+    sorry
+
+theorem SimpleGraph_of_kruskal_IsAcyclic (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_kruskal edgeList h).IsAcyclic := by
+  simp [SimpleGraph_of_kruskal, SimpleGraph_of_n_of_edgeList, SimpleGraph_of_edgeList, kruskal_of_edgeList, kruskal]--, SimpleGraph.Walk.isCycle_iff_isPath_tail_and_le_length]
+  set edgeListSorted := edgeList.mergeSort fun a b => decide (a ≤ b) with h_edgeListSorted
+  set nodeList := nodeList_of_edgeList edgeList with h_nodeList
+  set uF := init_unionFind (nodeList_of_edgeList edgeList) (nodeList_of_edgeList_nodup edgeList) with h_uF
+  set edgesSoFar : List edge := [] with h_edgesSoFar
+  simp [h_edgesSoFar] at h
+  have h_matching_edge : matching_edge _ _ := kruskal._proof_1 edgeList (nodeList_of_edgeList edgeList) (matching_edge_for_nodeList_of_edgeList edgeList)
+  have h_nodup := nodeList_of_edgeList_nodup edgeList
+  simp [← h_edgeListSorted, ← h_uF, ← h_edgesSoFar]
+  have h_invariant : (h : edgesSoFar ≠ []) → ∀ (a b : fin_of_edgeList edgesSoFar h), (SimpleGraph_of_edgeList edgesSoFar h).Reachable a b := by
+    simp [edgesSoFar]
+  -- have h_loopless : Std.Irrefl fun (a b : Fin _) => ∃ e ∈ kruskal_helper edgeListSorted nodeList uF edgesSoFar h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a := by sorry
+  exact kruskal_helper_IsAcyclic h_invariant (h_G := rfl) (h_loopless := sorry) (h_symm := sorry) (G := { Adj := fun a b => ∃ e ∈ kruskal_helper edgeListSorted nodeList uF edgesSoFar h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a, symm := sorry, loopless := sorry })
 
 theorem SimpleGraph_of_kruskal_IsEqReachable (edgeList : List edge) (h : edgeList ≠ []) : ∀ (x y), (SimpleGraph_of_edgeList edgeList h).Reachable x y ↔ (SimpleGraph_of_kruskal edgeList h).Reachable x y := by sorry
 
