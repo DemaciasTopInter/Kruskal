@@ -1625,14 +1625,10 @@ def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind
       intro z h_in
       simp [matching_edge z (List.mem_cons_of_mem e h_in)]
     -- dbg_trace s!"{x} = {y}" -- debug output
-    if x = y
-      then
-        kruskal_helper es nodeList uF edgesSoFar matching_edge' h_nodup
-      else
-        have h_x := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF e.node1 h
-        have h_y := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF e.node2 h'
-        let updated_uF := update_unionFind uF x y h_x h_y
-        kruskal_helper es nodeList updated_uF (e :: edgesSoFar) matching_edge' h_nodup
+    have h_x := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF e.node1 h
+    have h_y := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF e.node2 h'
+    let updated_uF := update_unionFind uF x y h_x h_y
+    kruskal_helper es nodeList updated_uF (e :: edgesSoFar) matching_edge' h_nodup
 
 def kruskal (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
     let edgeListSorted : List edge := edgeList.mergeSort
