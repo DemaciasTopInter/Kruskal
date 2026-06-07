@@ -149,7 +149,10 @@ theorem kruskal_helper_nonempty
   | cons e edgeList ih =>
     simp [kruskal_helper, update_unionFind]
     apply ih
-    simp
+    simp [update_edgesSoFar]
+    split_ifs
+    · exact h_nonempty
+    · simp
 
 theorem kruskal_nonempty (edgeList : List edge) (h : edgeList ≠ []) : kruskal_of_edgeList edgeList ≠ [] := by
   simp [kruskal_of_edgeList]
@@ -169,11 +172,11 @@ theorem kruskal_nonempty (edgeList : List edge) (h : edgeList ≠ []) : kruskal_
     | nil =>
       simp [kruskal_helper]
       simp [connected_component_of_init_unionFind_of_id_eq_id]
-      exact kruskal_helper_nonempty (by simp)
+      exact kruskal_helper_nonempty (by simp [update_edgesSoFar, ne_of_lt e.nodesLt])
     | cons f l₁ =>
       simp [kruskal_helper]
       simp [connected_component_of_init_unionFind_of_id_eq_id]
-      exact kruskal_helper_nonempty (by simp)
+      exact kruskal_helper_nonempty (by simp [update_edgesSoFar, ne_of_lt f.nodesLt])
 
 def SimpleGraph_of_kruskal (edgeList : List edge) (h : edgeList ≠ []) := SimpleGraph_of_n_of_edgeList (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) _).id.succ (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) (rfl)
 
@@ -181,11 +184,18 @@ theorem kruskal_helper_sublist {edgeList : List edge} {nodeList : List node} {uF
   induction edgeList, uF, edgesSoFar, h_matching_edge using kruskal_helper.induct with
   | case1 uF edgesSoFar h_matching_edge =>
     simp [kruskal_helper]
-  | case2 uF edgesSoFar e es h_matching_edge h_ex1 x h_ex2 y h_matching_edge' h_eq ih₁ updateUF ih₂ =>
+  | case2 uF edgesSoFar e es h_matching_edge h_ex1 x h_ex2 y h_matching_edge' h_self_con1 h_self_con2 updated_uF updated_edgesSoFar ih =>
     simp [kruskal_helper]
-    -- simp [x, y] at h_eq
-    simp [updateUF, x, y] at ih₂
-    grind
+    simp only [updated_uF, updated_edgesSoFar, x, y] at ih
+    by_cases h_eq : x = y
+    · simp [x, y] at h_eq
+      simp [update_edgesSoFar, h_eq]
+      simp [update_edgesSoFar, h_eq] at ih
+      grind
+    · simp [x, y] at h_eq
+      simp [update_edgesSoFar, h_eq]
+      simp [update_edgesSoFar, h_eq] at ih
+      grind
 
 theorem kruskal_sublist {edgeList : List edge} {nodeList : List node} {h_matching_edge : matching_edge edgeList nodeList} {h_nodup : nodeList.Nodup} : ∀ e ∈ kruskal edgeList nodeList h_matching_edge h_nodup, e ∈ edgeList := by
   simp [kruskal]
@@ -207,10 +217,21 @@ theorem ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node -- besserer N
   induction edgeList, uF, edgesSoFar, h_matching_edge using kruskal_helper.induct nodeList generalizing edgesSoFar₁ with
   | case1 uF edgesSoFar h_matching_edge =>
     simp [kruskal_helper]
-  | case2 uF edgesSoFar e es h_matching_edge h_ex1 x h_ex2 y h_matching_edge' h_eq ih₁ updateUF =>
-    rename_i ih₂ -- strange aber funktioniert so
+  | case2 uF edgesSoFar e es h_matching_edge h_ex1 x h_ex2 y h_matching_edge' h_self_con1 h_self_con2 updated_uF updated_edgesSoFar =>
+    rename_i edgesSoFar' ih -- strange aber funktioniert so
+    intro h_edgesSoFar'
+    simp [updated_edgesSoFar, h_edgesSoFar'] at ih
     simp [kruskal_helper]
-    grind
+    have ih := ih (edgesSoFar₁ := update_edgesSoFar edgesSoFar₁ e x y )
+    by_cases h_eq : x = y
+    · simp [x, y] at h_eq
+      simp [update_edgesSoFar, h_eq]
+      simp [update_edgesSoFar] at ih
+      grind
+    · simp [x, y] at h_eq
+      simp [update_edgesSoFar, h_eq]
+      simp [update_edgesSoFar] at ih
+      grind
 
 theorem kruskal_helper.edgeList_append {edgeList₁ edgeList₂ : List edge} {nodeList : List node} {uF : unionFind nodeList} {edgesSoFar : List edge} {h_matching_edge : matching_edge (edgeList₁ ++ edgeList₂) nodeList} {h_matching_edge₁ : matching_edge edgeList₁ nodeList} {h_matching_edge₂ : matching_edge edgeList₂ nodeList} {h_nodup : nodeList.Nodup} : ∃ (uF' : unionFind nodeList), kruskal_helper (edgeList₁ ++ edgeList₂) nodeList uF edgesSoFar h_matching_edge h_nodup = kruskal_helper edgeList₂ nodeList uF' ((kruskal_helper edgeList₁ nodeList uF [] h_matching_edge₁ h_nodup) ++ edgesSoFar) h_matching_edge₂ h_nodup := by
   induction edgeList₁ generalizing uF edgesSoFar with
@@ -227,16 +248,13 @@ theorem kruskal_helper.edgeList_append {edgeList₁ edgeList₂ : List edge} {no
     · simp [update_unionFind, h_eq]
       have h : [e] = [] ++ [e] := by
         simp
-      rw [h]
-      simp only [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node]
-      simp only [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node] at ih
-      simp
+      simp [update_edgesSoFar]
       exact ih
     · set uF' := update_unionFind uF (connected_component_of_unionFind_of_id uF e.node1 (by grind)) (connected_component_of_unionFind_of_id uF e.node2 (by grind)) _ _
       simp [matching_edge] at h_matching_edge
       have ih := ih (uF := uF') (edgesSoFar := e :: edgesSoFar) (h_matching_edge₁ := h_matching_edge₁.right) (h_matching_edge := by simp [matching_edge]; exact h_matching_edge.right)
       rcases ih with ⟨uF'', ih⟩
-      simp [ih]
+      simp [update_edgesSoFar, h_eq, ih]
       have h_nil_append : [e] = [] ++ [e] := by
         simp
       rw [h_nil_append]
@@ -357,15 +375,19 @@ theorem kruskal_helper_not_con_invariant_append
     simp [← h_x, ← h_y]
     have h : [e] = [] ++ [e] := by
       simp
-    rw [h]
-    simp only [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node]
-    simp
-    simp only [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node] at ih
-    apply ih
-    · exact h_edgeList_not_con.right
-    · by_cases h_eq : x = y
-      · simp [update_unionFind, h_eq]
+    by_cases h_eq : x = y
+    · simp [update_edgesSoFar, h_eq]
+      apply ih
+      · exact h_edgeList_not_con.right
+      · simp [update_unionFind]
         exact h_uF_not_con
+    · simp [update_edgesSoFar, h_eq]
+      rw [h]
+      simp only [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node]
+      simp
+      simp only [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node] at ih
+      apply ih
+      · exact h_edgeList_not_con.right
       · simp [update_unionFind, h_eq]
         have h_x_ne_z : x ≠ z.id := by
           simp at h_edgeList_not_con
@@ -574,32 +596,40 @@ theorem kruskal_helper_Reachable_iff_con
     · intro h_eq
       have h := (h_invariant a b ⟨x, h_x_in, h_x⟩ ⟨y, h_y_in, h_y⟩).mpr h_eq
       simp [h]
-  | case2 uF edgesSoFar e es h_matching_edge' h_ex_1 cce1 h_ex_2 cce2 h_matching_edge =>
-    rename_i h_eq ih
+  | case2 uF edgesSoFar e es h_matching_edge' h_ex_1 cce1 h_ex_2 cce2 h_matching_edge h_self_con1 h_self_con2 =>
+    rename_i updated_uF ih
     simp [kruskal_helper]
     simp at ih h_invariant
-    have h_symm' : Symmetric fun (a b : Fin (nodeList.max h_nonempty).id.succ) => ∃ e ∈ kruskal_helper es nodeList uF edgesSoFar h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a := by
+    have h_symm' : Symmetric fun (a b : Fin (nodeList.max h_nonempty).id.succ) => ∃ e ∈ kruskal_helper es nodeList updated_uF (e :: edgesSoFar) h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a := by
       simp [Symmetric]
       intro u v f h_f_in h_adj
       rw [or_comm] at h_adj
       refine ⟨f, h_f_in, h_adj⟩
-    have h_loopless' : Std.Irrefl fun (a : Fin ((nodeList.max h_nonempty).id + 1)) b => ∃ e ∈ kruskal_helper es nodeList uF edgesSoFar h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a := by
+    have h_loopless' : Std.Irrefl fun (a b : Fin ((nodeList.max h_nonempty).id + 1)) => ∃ e ∈ kruskal_helper es nodeList updated_uF (e :: edgesSoFar) h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a := by
       simp [irrefl_def]
       intro a e h_e h_eq₁ h_eq₂
       have h_lt := e.nodesLt
       simp [h_eq₁, h_eq₂] at h_lt
-    have h := ih h_invariant (h_symm := h_symm') (h_loopless := h_loopless')
-    by_cases h_cc_eq : ccx = ccy
-    · simp [cce1, cce2] at h_eq
-      simp [h_cc_eq, h_eq]
-      simp [ccx, ccy] at h_cc_eq
-      simp [h_cc_eq] at h
-      exact h
-    · simp [cce1, cce2] at h_eq
-      simp [h_cc_eq, h_eq]
-      simp [ccx, ccy] at h_cc_eq
-      simp [h_cc_eq] at h
-      exact h
+    have h_e_not_adj : ∀ (a b : Fin (nodeList.max h_nonempty).id.succ), ¬(e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a) := sorry
+    simp [h_e_not_adj] at ih
+    -- have h := ih h_invariant (h_symm := h_symm') (h_loopless := h_loopless')
+    -- simp [or_comm] at ih h_invariant
+    -- have h := ih h_invariant (h_symm := by simp [Symmetric]; intro u v f h_f_in h_adj; rw [or_comm] at h_adj; refine ⟨f, h_f_in, h_adj⟩) (h_loopless := by simp [irrefl_def]; intro a e h_e h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt)
+    have h := ih sorry (h_symm := by simp [Symmetric]; intro u v f h_f_in h_adj; rw [or_comm] at h_adj; refine ⟨f, h_f_in, h_adj⟩) (h_loopless := by simp [irrefl_def]; intro a e h_e h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt)
+    -- by_cases h_cc_eq : ccx = ccy
+    constructor
+    · intro h_reachable
+      have h' := h.mp h_reachable
+      simp [ccx, ccy]
+      have h_invariant := h_invariant a b x h_x_in h_x y h_y_in h_y
+      by_cases h_cce_eq : cce1 = cce2
+      · simp [updated_uF, update_unionFind, h_cce_eq] at h'
+        exact h'
+      · sorry
+    · intro h_cc_eq
+      simp [updated_uF] at h
+      apply h.mpr
+      sorry
 
 theorem kruskal_helper_IsAcyclic
   {edgeList : List edge}
