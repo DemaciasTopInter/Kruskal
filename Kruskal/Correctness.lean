@@ -599,7 +599,29 @@ theorem connected_component_of_unionFind_of_id_of_update_unionFind_of_not_con
         (exist_unionFindLink_of_connected_component_of_unionFind_of_id uF b h_b)
     ) c h_c
     = connected_component_of_unionFind_of_id uF c h_c := by
-  sorry
+  simp at h_not_con
+  set cca := connected_component_of_unionFind_of_id uF a h_a with h_cca
+  set ccb := connected_component_of_unionFind_of_id uF b h_b with h_ccb
+  set ccc := connected_component_of_unionFind_of_id uF c h_c with h_ccc
+  set uFLa := List.choose (fun a => a.nodeId = cca ∧ a.ccId = cca) uF.linkList (Eq.ndrec (motive := fun p => ∀ [DecidablePred p], ∃ a ∈ uF.linkList, p a) (fun [DecidablePred fun a_1 => a_1.nodeId = connected_component_of_unionFind_of_id uF a h_a ∧ a_1.ccId = connected_component_of_unionFind_of_id uF a h_a] => Eq.refl uF.linkList ▸ exist_unionFindLink_of_connected_component_of_unionFind_of_id uF a h_a) (funext fun a_1 => congr (congrArg And (congrArg (Eq a_1.nodeId) (Eq.symm h_cca))) (congrArg (Eq a_1.ccId) (Eq.symm h_cca))) : ∃ a ∈ uF.linkList, (fun a => a.nodeId = cca ∧ a.ccId = cca) a) with h_uFLa
+  set uFLb := List.choose (fun a => a.nodeId = ccb ∧ a.ccId = ccb) uF.linkList (Eq.ndrec (motive := fun p => ∀ [DecidablePred p], ∃ a ∈ uF.linkList, p a) (fun [DecidablePred fun a_1 => a_1.nodeId = connected_component_of_unionFind_of_id uF b h_b ∧ a_1.ccId = connected_component_of_unionFind_of_id uF b h_b] => Eq.refl uF.linkList ▸ exist_unionFindLink_of_connected_component_of_unionFind_of_id uF b h_b) (funext fun a_1 => congr (congrArg And (congrArg (Eq a_1.nodeId) (Eq.symm h_ccb))) (congrArg (Eq a_1.ccId) (Eq.symm h_ccb))) : ∃ a ∈ uF.linkList, (fun a => a.nodeId = ccb ∧ a.ccId = ccb) a) with h_uFLb
+  simp [← h_cca, ← h_ccb, update_unionFind, ← h_uFLa, ← h_uFLb]
+  have h_c_ne_a : c ≠ a := by
+    intro h_eq
+    simp [cca, ccc, h_eq] at h_not_con
+  have h_c_ne_b : c ≠ b := by
+    intro h_eq
+    simp [ccb, ccc, h_eq] at h_not_con
+  split_ifs with h_eq h_rank_lt h_rank_lt'
+  · rfl
+  · set uFLa' : unionFindLink nodeList := { nodeId := uFLa.nodeId, ccId := uFLb.ccId, rank := uFLa.rank } with h_uFLa'
+    set uFLb' : unionFindLink nodeList := { nodeId := uFLb.nodeId, ccId := uFLb.ccId, rank := ⟨max (↑uFLb.rank) (↑uFLa.rank + 1), sorry⟩ } with h_uFLb'
+    simp [← h_uFLa', ← h_uFLb']
+    simp [connected_component_of_unionFind_of_id]
+    fun_induction connected_component_of_unionFind_of_id
+    sorry
+  · sorry
+  · sorry
 
 def walk_of_subgraph (G H : SimpleGraph α) (h_sub : G ≤ H) (a b : α) (p : G.Walk a b) : H.Walk a b := by
   by_cases h_eq : a = b
@@ -621,6 +643,49 @@ termination_by p.length
   -- have h : p'.length < p.length := by
   --   simp [h_p]
   simp [SimpleGraph.Walk.length_cons]
+  sorry
+
+theorem not_reachable_of_neighbor_not_reachable (G : SimpleGraph α) (a b c : α) (h_adj : G.Adj a b) (h_not_reachable : ¬G.Reachable a c) : ¬G.Reachable b c := by
+  intro h_reachable
+  simp [SimpleGraph.Reachable] at h_reachable h_not_reachable
+  cases h_reachable with
+  | intro p =>
+  let q : G.Walk a c := SimpleGraph.Walk.cons h_adj p
+  cases h_not_reachable with
+  | mk h_not_reachable =>
+  have h_contra := h_not_reachable q
+  contradiction
+
+def walk_of_keine_ahnung
+  (G H : SimpleGraph (Fin n))
+  (a b : (Fin n))
+  (p : G.Walk a b)
+  (edgesSoFar : List edge)
+  (e : edge)
+  (h_G : G.Adj = fun (a b : Fin n) => (e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a) ∨ ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a)
+  (h_H : H.Adj = fun (a b : Fin n) => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a)
+  (h_not_reachable1 : ¬H.Reachable a ⟨e.node1, sorry⟩)
+  (h_not_reachable2 : ¬H.Reachable a ⟨e.node2, sorry⟩)
+  : H.Walk a b := by
+  cases p with
+  | nil =>
+    exact SimpleGraph.Walk.nil
+  | cons h p' =>
+    rename_i c
+    have h_adj' : H.Adj a c := by
+      have h_e1_ne_a : e.node1 ≠ a.val := by
+        intro h_eq
+        simp [h_eq] at h_not_reachable1
+      have h_e2_ne_a : e.node2 ≠ a.val := by
+        intro h_eq
+        simp [h_eq] at h_not_reachable2
+      simp [h_G, h_e1_ne_a, h_e2_ne_a] at h
+      simp [h_H, h]
+    have h_not_reachable_c_e1 := not_reachable_of_neighbor_not_reachable H a c ⟨e.node1, sorry⟩ h_adj' h_not_reachable1
+    have h_not_reachable_c_e2 := not_reachable_of_neighbor_not_reachable H a c ⟨e.node2, sorry⟩ h_adj' h_not_reachable2
+    exact SimpleGraph.Walk.cons h_adj' (walk_of_keine_ahnung G H c b p' edgesSoFar e h_G h_H h_not_reachable_c_e1 h_not_reachable_c_e2)
+termination_by p.length
+  decreasing_by
   sorry
 
 theorem kruskal_helper_Reachable_iff_con
@@ -660,7 +725,19 @@ theorem kruskal_helper_Reachable_iff_con
       constructor
       · intro h_reachable
         apply (h_invariant a b x h_x_in h_x y h_y_in h_y).mp
-        sorry
+        simp [Reachable] at h_reachable
+        simp [Reachable]
+        cases h_reachable with
+        | intro p =>
+        set G :  SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => (e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a) ∨ ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := sorry, loopless := sorry }
+        set H :  SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := sorry, loopless := sorry }
+        simp at h_a_not_con
+        have h_not_reachable1 := h_invariant a ⟨e.node1, sorry⟩ x h_x_in h_x ⟨e.node1⟩ sorry (by simp)
+        simp [ne_comm.mp h_a_not_con.left] at h_not_reachable1
+        have h_not_reachable2 := h_invariant a ⟨e.node2, sorry⟩ x h_x_in h_x ⟨e.node2⟩ sorry (by simp)
+        simp [ne_comm.mp h_a_not_con.right] at h_not_reachable2
+        let q  := walk_of_keine_ahnung G H a b p edgesSoFar e (by simp [G]) (by simp [H]) h_not_reachable1 h_not_reachable2
+        exact ⟨q⟩
       · intro h_cc_eq'
         have h := (h_invariant a b x h_x_in h_x y h_y_in h_y).mpr h_cc_eq'
         simp [SimpleGraph.Reachable]
