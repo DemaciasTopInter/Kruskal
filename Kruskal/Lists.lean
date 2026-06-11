@@ -7,7 +7,7 @@ import Mathlib.Data.List.MinMax
 
 universe u
 
-variable {α : Type u} {a b : α} {l l' : List α} {i j : Nat}
+variable {α β : Type u} {a b : α} {l l' : List α} {i j : Nat}
 
 
 /--
@@ -573,6 +573,45 @@ theorem perm_nonempty (h : l ≠ []) (h_perm : l.Perm l') : l' ≠ [] := by
 --   set a := l.max h with h_a
 --   set b := l'.max (perm_nonempty h h_perm) with h_b
 --   have h' := (List.max_eq_iff h).mp h_a.symm
+
+theorem nil_of_length_zero : l.length = 0 → l = [] := by
+  cases l with
+  | nil =>
+    simp
+  | cons a l =>
+    simp
+
+theorem lenght_ge_of_injectiv {l₁ : List α} {l₂ : List β} {f : α → β} (h_nodup : l₁.Nodup) (h_injectiv : ∀ a ∈ l₁, ∀ b ∈ l₁, f a = f b → a = b) (h_image : ∀ a ∈ l₁, f a ∈ l₂) : l₁.length ≤ l₂.length := by
+  induction l₁ generalizing l₂ with
+  | nil =>
+    simp
+  | cons a l₁ ih =>
+    simp at h_image
+    rcases h_image with ⟨h_a_in, h_image⟩
+    have h_split := mem_split h_a_in
+    rcases h_split with ⟨l₂₁, l₂₂, h_split, h_not_in⟩
+    simp at h_nodup
+    simp [h_split] at h_image
+    have h_image : ∀ (a_1 : α), a_1 ∈ l₁ → f a_1 ∈ l₂₁ ∨ f a_1 ∈ l₂₂ := by
+      intro c h_c_in
+      have h := h_image c h_c_in
+      have h_ne : a ≠ c := by
+        intro h_eq
+        simp [h_eq, h_c_in] at h_nodup
+      have h_f_ne := h_injectiv a (by simp) c (by simp [h_c_in])
+      simp [h_ne] at h_f_ne
+      simp [ne_comm.mp h_f_ne] at h
+      exact h
+    have ih := ih (l₂ := l₂₁ ++ l₂₂) h_nodup.right
+    simp at h_injectiv
+    simp at ih
+    simp [h_split, ← Nat.add_assoc]
+    apply ih
+    · intro a' h_a'_in b h_b_in
+      have h := h_injectiv.right a' h_a'_in
+      have h := h.right b h_b_in
+      exact h
+    · exact h_image
 
 -- exact?
 -- #min_imports
