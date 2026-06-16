@@ -91,6 +91,7 @@ instance edge_ToString : ToString edge where
 deriving instance DecidableEq for edge
 instance edge_LE : LE edge where
   le a b := LE.le a.cost b.cost
+instance edge_DecidableLE : DecidableLE edge := inferInstance
 instance edge_Preorder : Preorder edge where
   le_refl := by
     intro a
