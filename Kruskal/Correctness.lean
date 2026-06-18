@@ -789,6 +789,84 @@ theorem eq_cc
         simp
         exact h_path_in'.right
 
+def get_parent_path
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : List (unionFindLink nodeList) :=
+  if h_self_con : uFL.nodeId = uFL.ccId
+    then
+      (uFL :: [])
+    else
+      (uFL :: (get_parent_path (uFL := parent uFL h_in) (by simp [parent, List.choose_mem]) (uF := uF)))
+termination_by nodeList.length - uFL.rank
+  decreasing_by
+  have h_lt := uFL.rank.isLt
+  have h_increase : uFL.rank.val < (parent uFL h_in).rank.val := by
+    have h := uF.matching_rank uFL h_in
+    simp [h_self_con] at h
+    simp [parent, h]
+  exact Nat.sub_lt_sub_left h_lt h_increase
+
+theorem get_parent_path_in
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : ∀ a ∈ (get_parent_path h_in), a ∈ uF.linkList := by
+  fun_induction get_parent_path with
+  | case1 uFL h_in _ =>
+    simp [h_in]
+  | case2 uFL h_in _ ih =>
+    simp [h_in]
+    exact ih
+
+theorem get_parent_path_is_parent_path
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : parent_path uF (get_parent_path h_in) (get_parent_path_in h_in) := by
+  fun_induction get_parent_path with
+  | case1 uFL h_in h_self_con =>
+    unfold get_parent_path
+    simp [h_self_con, parent_path]
+  | case2 uFL h_in h_not_self_con ih =>
+    unfold get_parent_path
+    simp [h_not_self_con]
+    unfold get_parent_path
+    unfold get_parent_path at ih
+    split_ifs with h_self_con
+    · simp [parent_path]
+    · simp [parent_path]
+      simp [h_self_con] at ih
+      exact ih
+
+theorem get_parent_path_start
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : ∃ p', (get_parent_path h_in) = uFL :: p' := by
+  unfold get_parent_path
+  split_ifs
+  · simp
+  · simp
+
+theorem get_parent_path_end
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : ∃ a ∈ (get_parent_path h_in), a.nodeId = a.ccId := by
+  fun_induction get_parent_path with
+  | case1 uFL h_in h_self_con =>
+    simp [h_self_con]
+  | case2 uFL h_in h_not_self_con ih =>
+    simp [h_not_self_con]
+    exact ih
+
 theorem connected_component_of_unionFind_of_id_of_update_unionFind_of_not_con
   {nodeList : List node}
   {uF : unionFind nodeList}
@@ -859,9 +937,45 @@ theorem connected_component_of_unionFind_of_id_of_update_unionFind_of_not_con
       -- nächster Schritt
       -- connected_component_of_unionFind_of_id updated_uF a h_a = connected_component_of_unionFind_of_id updated_uF c h_c
       -- connected_component_of_unionFind_of_id updated_uF b h_b = connected_component_of_unionFind_of_id updated_uF c h_c
-      induction uF, uFLc, sorry using connected_component_of_unionFind_of_id_helper
-      -- connected_component_of_unionFind_of_id_helper_of_self
-      sorry
+      have h_uFLc_in : uFLc ∈ uF.linkList := by
+        simp [h_uFLc, List.choose_mem]
+      have h_uFLc_in' : uFLc ∈ updated_uF.linkList := by
+        simp [h_rank_lt] at h_uFLb'
+        simp [updated_uF, update_unionFind, ← h_cca, ← h_ccb, h_eq, ← h_uFLa, ← h_uFLb, h_rank_lt, ← h_uFLa', ← h_uFLb', h_uFLc_mem]
+      set p : List (unionFindLink nodeList) := get_parent_path h_uFLc_in with ← h_p
+      let p' : List (unionFindLink nodeList) := get_parent_path h_uFLc_in'
+      have h_p_start := get_parent_path_start h_uFLc_in
+      -- simp [h_p] at h_p_start
+      have h_p_eq_p' : p = p' := by
+        sorry
+      apply eq_cc rfl p
+      · simp [h_p_eq_p', p'] -- kann ich diese beiden auch für p zeigen?
+        exact get_parent_path_is_parent_path h_uFLc_in'
+      · simp [p]
+        exact get_parent_path_is_parent_path h_uFLc_in
+      · simp [p]
+        exact get_parent_path_start h_uFLc_in
+      · simp [p]
+        exact get_parent_path_end h_uFLc_in
+      · simp [p]
+        have h_path :
+          ∀ (z : unionFindLink nodeList)
+            (h_z_in : z ∈ uF.linkList)
+            (h_z_in' : z ∈ updated_uF.linkList)
+            (h_not : ¬(connected_component_of_unionFind_of_id updated_uF a h_a = connected_component_of_unionFind_of_id_helper updated_uF z h_z_in' ∨ connected_component_of_unionFind_of_id updated_uF b h_b = connected_component_of_unionFind_of_id_helper updated_uF z h_z_in')),
+            ∀ a ∈ get_parent_path h_z_in,
+              a ∈ updated_uF.linkList := by
+          intro z h_z_in
+          induction z, h_z_in using get_parent_path.induct with
+          | case1 =>
+            sorry
+          | case2 =>
+            sorry
+        have h_ccc'_eq : connected_component_of_unionFind_of_id updated_uF c h_c = connected_component_of_unionFind_of_id_helper updated_uF uFLc h_uFLc_in' := by sorry
+        simp only [h_ccc'_eq] at h_not_con'
+        exact h_path uFLc h_uFLc_in h_uFLc_in' h_not_con'
+      -- · simp [h_p_eq_p', p'] -- kann ich diese beiden auch für p zeigen?
+      --   exact get_parent_path_in h_uFLc_in'
   · sorry
   · sorry
 
