@@ -1610,7 +1610,7 @@ def matching_edge  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x
 def update_edgesSoFar (edgesSoFar : List edge) (e : edge) (x y : Nat) : List edge := if x = y then edgesSoFar else e :: edgesSoFar
 
 -- Liste mitgeben mit edgesSoFar für bessere Laufzeit siehe nodeList_of_edgeList_helper
-def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
+def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
   -- dbg_trace s!"edgeList = {edgeList}" -- debug output
   -- dbg_trace s!"uF.linkList = {uF.linkList}" -- debug output
   match edgeList with
@@ -1618,21 +1618,21 @@ def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind
   | e::es =>
     have h : ∃ x ∈ nodeList, x.id = e.node1 := by
       have h : (∃ x ∈ nodeList, e.node1 = x.id) → (∃ x ∈ nodeList, x.id = e.node1) := by simp [eq_comm]
-      simp [h (matching_edge e List.mem_cons_self).left]
+      simp [h (h_matching_edge e List.mem_cons_self).left]
     let x := (connected_component_of_unionFind_of_id uF e.node1 h)
     have h' : ∃ x ∈ nodeList, x.id = e.node2 := by
       have h' : (∃ x ∈ nodeList, e.node2 = x.id) → (∃ x ∈ nodeList, x.id = e.node2) := by simp [eq_comm]
-      simp [h' (matching_edge e List.mem_cons_self).right]
+      simp [h' (h_matching_edge e List.mem_cons_self).right]
     let y := (connected_component_of_unionFind_of_id uF e.node2 h')
-    have matching_edge' : ∀ x ∈ es, (∃ y ∈ nodeList, x.node1 = y.id) ∧ ∃ z ∈ nodeList, x.node2 = z.id := by
+    have h_matching_edge' : ∀ x ∈ es, (∃ y ∈ nodeList, x.node1 = y.id) ∧ ∃ z ∈ nodeList, x.node2 = z.id := by
       intro z h_in
-      simp [matching_edge z (List.mem_cons_of_mem e h_in)]
+      simp [h_matching_edge z (List.mem_cons_of_mem e h_in)]
     -- dbg_trace s!"{x} = {y}" -- debug output
     have h_x := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF e.node1 h
     have h_y := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF e.node2 h'
     let updated_uF := update_unionFind uF x y h_x h_y
     let updated_edgesSoFar := update_edgesSoFar edgesSoFar e x y
-    kruskal_helper es nodeList updated_uF updated_edgesSoFar matching_edge' h_nodup
+    kruskal_helper es nodeList updated_uF updated_edgesSoFar h_matching_edge' h_nodup
 
 def kruskal (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
     let edgeListSorted : List edge := edgeList.mergeSort

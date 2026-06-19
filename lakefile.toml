@@ -9,7 +9,12 @@ name = "Kruskal"
 name = "kruskal"
 root = "Main"
 
+# [[require]]
+# name = "mathlib"
+# rev = "v4.30.0-rc2"
+# scope = "leanprover-community"
+
 [[require]]
-name = "mathlib"
-rev = "v4.30.0-rc2"
-scope = "leanprover-community"
+name = "algolean"
+rev = "v4.30.0"
+scope = "Shreyas4991"
