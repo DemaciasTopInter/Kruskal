@@ -186,7 +186,7 @@ theorem kruskal_sublist {edgeList : List edge} {nodeList : List node} {h_matchin
   simp at h
   exact h
 
-theorem ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node -- besserer Name: kruskal_helper.edgesSoFar_append
+theorem kruskal_helper.edgesSoFar_append
   {edgeList : List edge}
   {nodeList : List node}
   {uF : unionFind nodeList}
@@ -240,7 +240,7 @@ theorem kruskal_helper.edgeList_append {edgeList₁ edgeList₂ : List edge} {no
       have h_nil_append : [e] = [] ++ [e] := by
         simp
       rw [h_nil_append]
-      simp only [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node]
+      simp only [kruskal_helper.edgesSoFar_append]
       simp
       refine ⟨uF'', rfl⟩
 
@@ -269,7 +269,7 @@ theorem kruskal_helper_not_con_invariant
     · have h : edgesSoFar = [] ++ edgesSoFar := by
         simp
       rw [h]
-      exact ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node
+      exact kruskal_helper.edgesSoFar_append
     · refine ⟨uF, h_uF_not_con⟩
 
 theorem connected_component_of_unionFind_of_id_not_con
@@ -365,9 +365,9 @@ theorem kruskal_helper_not_con_invariant_append
         exact h_uF_not_con
     · simp [update_edgesSoFar, h_eq]
       rw [h]
-      simp only [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node]
+      simp only [kruskal_helper.edgesSoFar_append]
       simp
-      simp only [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node] at ih
+      simp only [kruskal_helper.edgesSoFar_append] at ih
       apply ih
       · exact h_edgeList_not_con.right
       · simp [update_unionFind, h_eq]
@@ -528,7 +528,7 @@ theorem nodeList_of_kruskal_perm (edgeList : List edge) : List.Perm (nodeList_of
       simp
     rw [h]
     set uF'' := update_unionFind uF' (connected_component_of_unionFind_of_id uF' f.node1 _) (connected_component_of_unionFind_of_id uF' f.node2 _) _ _
-    rw [ex_mem_kruskal_helper_con_node_of_ex_mem_edgeList_con_node (edgeList := l₂) (nodeList := nodeList_of_edgeList_helper edgeList []) (uF := uF'')]
+    rw [kruskal_helper.edgesSoFar_append (edgeList := l₂) (nodeList := nodeList_of_edgeList_helper edgeList []) (uF := uF'')]
     apply (mem_nodeList_of_edgeList_helper_iff_node_in_edgeList (kruskal_helper l₂ (nodeList_of_edgeList_helper edgeList []) uF'' [] _ h_nodup2 ++ f :: k_l₁) x).mpr
     refine ⟨f, ?_⟩
     simp [h_f_con_x]
@@ -1466,14 +1466,31 @@ theorem SimpleGraph_of_kruskal_IsAcyclic (edgeList : List edge) (h : edgeList �
         simp [h_a_eq_b]
       simp [h_a_eq_b]
 
-theorem SimpleGraph_of_kruskal_IsEqReachable (edgeList : List edge) (h : edgeList ≠ []) : ∀ (x y), (SimpleGraph_of_edgeList edgeList h).Reachable x y ↔ (SimpleGraph_of_kruskal edgeList h).Reachable x y := by sorry
+theorem SimpleGraph.IsAcyclic.card_edgeSet_lt_card_vetexSet [Fintype α] {G : SimpleGraph α} (h_acyclic : G.IsAcyclic) : G.edgeFinset.card ≤ Fintype.card α := by
+  induction Fintype.card α with
+  | zero =>
+    sorry
+  | succ n ih =>
+    sorry
 
-theorem SimpleGraph_of_kruskal_IsSpanningTree (edgeList : List edge) (h : edgeList ≠ []) : SimpleGraph.IsSpanningTree (SimpleGraph_of_kruskal edgeList h) (SimpleGraph_of_edgeList edgeList h) := by sorry
+instance (edgeList : List edge) (h : edgeList ≠ []) : Fintype ↑(SimpleGraph_of_edgeList edgeList h).edgeSet := sorry
+
+theorem SimpleGraph_of_edgeList.card_edgeSet (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_edgeList edgeList h).edgeFinset.card ≤ edgeList.length := by
+  induction edgeList with
+  | nil =>
+    simp at h
+  | cons e edgeList ih =>
+    simp [SimpleGraph_of_edgeList, SimpleGraph.edgeFinset, SimpleGraph.edgeSet, SimpleGraph.edgeSetEmbedding, Sym2.fromRel, Sym2.lift]
+    sorry
+
+-- theorem SimpleGraph_of_kruskal_IsEqReachable (edgeList : List edge) (h : edgeList ≠ []) : ∀ (x y), (SimpleGraph_of_edgeList edgeList h).Reachable x y ↔ (SimpleGraph_of_kruskal edgeList h).Reachable x y := by sorry
+
+-- theorem SimpleGraph_of_kruskal_IsSpanningTree (edgeList : List edge) (h : edgeList ≠ []) : SimpleGraph.IsSpanningTree (SimpleGraph_of_kruskal edgeList h) (SimpleGraph_of_edgeList edgeList h) := by sorry
 
 def cost_of_edgeList : List edge → Nat
   | [] => 0
   | e :: edgeList => e.cost + cost_of_edgeList edgeList
 
-def minimalSpanninTree_of_edgeList (edgeList : List edge) (h₁ : edgeList ≠ []) (G := SimpleGraph_of_edgeList edgeList h₁) (minEdgeList : List edge) (h₂ : minEdgeList ≠ []) (h₃ : SimpleGraph.IsSpanningTree G (SimpleGraph_of_edgeList minEdgeList h₂)) (h₄ : ∀ x ∈ minEdgeList, x ∈ edgeList) : Prop := ∀ (el : List edge), (h₅ : el ≠ []) → (h₆ : ∀ x ∈ el, x ∈ edgeList) → SimpleGraph.IsSpanningTree G (SimpleGraph_of_edgeList el h₅) → (cost_of_edgeList el) ≥ (cost_of_edgeList minEdgeList)
+-- def minimalSpanninTree_of_edgeList (edgeList : List edge) (h₁ : edgeList ≠ []) (G := SimpleGraph_of_edgeList edgeList h₁) (minEdgeList : List edge) (h₂ : minEdgeList ≠ []) (h₃ : SimpleGraph.IsSpanningTree G (SimpleGraph_of_edgeList minEdgeList h₂)) (h₄ : ∀ x ∈ minEdgeList, x ∈ edgeList) : Prop := ∀ (el : List edge), (h₅ : el ≠ []) → (h₆ : ∀ x ∈ el, x ∈ edgeList) → SimpleGraph.IsSpanningTree G (SimpleGraph_of_edgeList el h₅) → (cost_of_edgeList el) ≥ (cost_of_edgeList minEdgeList)
 
-theorem kruskal_minimalSpanninTree_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : minimalSpanninTree_of_edgeList edgeList h (SimpleGraph_of_edgeList edgeList h₁) (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) := by sorry
+-- theorem kruskal_minimalSpanninTree_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : minimalSpanninTree_of_edgeList edgeList h (SimpleGraph_of_edgeList edgeList h₁) (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) := by sorry
