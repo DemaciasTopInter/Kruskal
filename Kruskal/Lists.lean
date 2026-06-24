@@ -613,5 +613,13 @@ theorem lenght_ge_of_injectiv {l₁ : List α} {l₂ : List β} {f : α → β} 
       exact h
     · exact h_image
 
+
+theorem mem_le_max (h_in : a ∈ l) (h_nonempty : l ≠ []) [Preorder α] [Max α] [Std.IsLinearOrder α] [Std.LawfulOrderMax α] : a ≤ l.max h_nonempty := by
+  exact List.le_max_of_mem h_in
+  -- set m := l.max h_nonempty with ← h_m
+  -- have h := (List.max_eq_iff h_nonempty).mp h_m
+  -- apply h.right
+  -- exact h_in
+
 -- exact?
 -- #min_imports

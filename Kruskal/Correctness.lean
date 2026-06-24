@@ -1466,16 +1466,114 @@ theorem SimpleGraph_of_kruskal_IsAcyclic (edgeList : List edge) (h : edgeList �
         simp [h_a_eq_b]
       simp [h_a_eq_b]
 
-theorem SimpleGraph.IsAcyclic.card_edgeSet_lt_card_vetexSet [Fintype α] {G : SimpleGraph α} (h_acyclic : G.IsAcyclic) : G.edgeFinset.card ≤ Fintype.card α := by
-  induction Fintype.card α with
-  | zero =>
-    sorry
-  | succ n ih =>
-    sorry
+-- theorem SimpleGraph.IsAcyclic.card_edgeSet_lt_card_vetexSet [Fintype α] {G : SimpleGraph α} (h_acyclic : G.IsAcyclic) : G.edgeFinset.card ≤ Fintype.card α := by
+--   induction Fintype.card α with
+--   | zero =>
+--     sorry
+--   | succ n ih =>
+--     sorry
 
-instance (edgeList : List edge) (h : edgeList ≠ []) : Fintype ↑(SimpleGraph_of_edgeList edgeList h).edgeSet := sorry
+instance (edgeList : List edge) (h : edgeList ≠ []) : Fintype ↑(SimpleGraph_of_edgeList edgeList h).edgeSet :=
+  
+  sorry
 
-theorem SimpleGraph_of_edgeList.card_edgeSet (edgeList : List edge) (h : edgeList ≠ []) : (SimpleGraph_of_edgeList edgeList h).edgeFinset.card ≤ edgeList.length := by
+theorem SimpleGraph_of_edgeList.ex_edge_of_edge (edgeList : List edge) (h : edgeList ≠ []) : ∀ (a b : fin_of_edgeList edgeList h), s(a, b) ∈ (SimpleGraph_of_edgeList edgeList h).edgeFinset → ∃ e ∈ edgeList, e.node1 = a.val ∧ e.node2 = b.val ∨ e.node1 = b.val ∧ e.node2 = a.val := by
+  intro a b h_s_in
+  simp [SimpleGraph_of_edgeList] at h_s_in
+  exact h_s_in
+
+def SimpleGraph_of_edgeList.edge_of_edge (edgeList : List edge) (h : edgeList ≠ []) : ∀ (a b : fin_of_edgeList edgeList h), s(a, b) ∈ (SimpleGraph_of_edgeList edgeList h).edgeFinset → {e // e ∈ edgeList} := by
+  intro a b h_s_in
+  have h_ex_edge_of_edge := SimpleGraph_of_edgeList.ex_edge_of_edge edgeList h a b h_s_in
+  let e := List.choose (fun (e : edge) => e.node1 = a.val ∧ e.node2 = b.val ∨ e.node1 = b.val ∧ e.node2 = a.val) edgeList h_ex_edge_of_edge
+  have h_e_in := List.choose_mem (fun (e : edge) => e.node1 = a.val ∧ e.node2 = b.val ∨ e.node1 = b.val ∧ e.node2 = a.val) edgeList h_ex_edge_of_edge
+  exact ⟨e, h_e_in⟩
+
+theorem SimpleGraph_of_edgeList.edge_of_edge_injective (edgeList : List edge) (h : edgeList ≠ []) (a b c d : fin_of_edgeList edgeList h) (h_edge_in₁ : s(a, b) ∈ (SimpleGraph_of_edgeList edgeList h).edgeFinset) (h_edge_in₂ : s(c, d) ∈ (SimpleGraph_of_edgeList edgeList h).edgeFinset) : SimpleGraph_of_edgeList.edge_of_edge edgeList h a b h_edge_in₁ = SimpleGraph_of_edgeList.edge_of_edge edgeList h c d h_edge_in₂ → s(a, b) = s(c, d) := by
+  intro h_eq
+  simp
+  simp [SimpleGraph_of_edgeList.edge_of_edge] at h_eq
+  set e1 := List.choose (fun (e : edge) => e.node1 = a.val ∧ e.node2 = b.val ∨ e.node1 = b.val ∧ e.node2 = a.val) edgeList (SimpleGraph_of_edgeList.ex_edge_of_edge edgeList h a b h_edge_in₁) with ← h_e1
+  set e2 := List.choose (fun (e : edge) => e.node1 = c.val ∧ e.node2 = d.val ∨ e.node1 = d.val ∧ e.node2 = c.val) edgeList (SimpleGraph_of_edgeList.ex_edge_of_edge edgeList h c d h_edge_in₂) with ← h_e2
+  have h_e1_prop := List.choose_property (fun (e : edge) => e.node1 = a.val ∧ e.node2 = b.val ∨ e.node1 = b.val ∧ e.node2 = a.val) edgeList (SimpleGraph_of_edgeList.ex_edge_of_edge edgeList h a b h_edge_in₁)
+  have h_e2_prop := List.choose_property (fun (e : edge) => e.node1 = c.val ∧ e.node2 = d.val ∨ e.node1 = d.val ∧ e.node2 = c.val) edgeList (SimpleGraph_of_edgeList.ex_edge_of_edge edgeList h c d h_edge_in₂)
+  simp [h_e1, h_e2, h_eq] at h_e1_prop h_e2_prop
+  rcases h_e1_prop with h_e1_prop | h_e1_prop
+  · rcases h_e2_prop with h_e2_prop | h_e2_prop
+    · left
+      cases a
+      cases b
+      cases c
+      cases d
+      simp [h_e1_prop] at h_e2_prop
+      simp [h_e2_prop]
+    · right
+      cases a
+      cases b
+      cases c
+      cases d
+      simp [h_e1_prop] at h_e2_prop
+      simp [h_e2_prop]
+  · rcases h_e2_prop with h_e2_prop | h_e2_prop
+    · right
+      cases a
+      cases b
+      cases c
+      cases d
+      simp [h_e1_prop] at h_e2_prop
+      simp [h_e2_prop]
+    · left
+      cases a
+      cases b
+      cases c
+      cases d
+      simp [h_e1_prop] at h_e2_prop
+      simp [h_e2_prop]
+
+def SimpleGraph_of_edgeList.edge_of_edge_reverse (edgeList : List edge) (h : edgeList ≠ []) : {e // e ∈ edgeList} → (SimpleGraph_of_edgeList edgeList h).edgeFinset := by
+  intro e -- h_e_in
+  rcases e with ⟨e, h_e_in⟩
+  have h_lt1 : e.node1 < (nodeList_of_edgeList_max edgeList h).id.succ := by
+    have h_goal : ⟨e.node1⟩ ≤ nodeList_of_edgeList_max edgeList h := by
+      simp [nodeList_of_edgeList_max]
+      have h_matching_edge := matching_edge_for_nodeList_of_edgeList edgeList
+      simp [matching_edge] at h_matching_edge
+      have h_matching_edge := (h_matching_edge e h_e_in).left
+      rcases h_matching_edge with ⟨x, h_x_in, h_x⟩
+      cases x
+      simp at h_x
+      simp [← h_x] at h_x_in
+      simp [List.le_max_of_mem h_x_in]
+    simp
+    exact h_goal
+  have h_lt2 : e.node2 < (nodeList_of_edgeList_max edgeList h).id.succ := by
+    have h_goal : ⟨e.node2⟩ ≤ nodeList_of_edgeList_max edgeList h := by
+      simp [nodeList_of_edgeList_max]
+      have h_matching_edge := matching_edge_for_nodeList_of_edgeList edgeList
+      simp [matching_edge] at h_matching_edge
+      have h_matching_edge := (h_matching_edge e h_e_in).right
+      rcases h_matching_edge with ⟨x, h_x_in, h_x⟩
+      cases x
+      simp at h_x
+      simp [← h_x] at h_x_in
+      simp [List.le_max_of_mem h_x_in]
+    simp
+    exact h_goal
+  let a : fin_of_edgeList edgeList h := ⟨e.node1, h_lt1⟩
+  let b : fin_of_edgeList edgeList h := ⟨e.node2, h_lt2⟩
+  have h_edge : s(a, b) ∈ (SimpleGraph_of_edgeList edgeList h).edgeFinset := by
+    simp [SimpleGraph_of_edgeList]
+    simp [a, b]
+    refine ⟨e, h_e_in, by simp⟩
+  set s := s(a, b)
+  exact ⟨s, h_edge⟩
+
+theorem SimpleGraph_of_edgeList.edge_of_edge_reverse_injective (edgeList : List edge) (h : edgeList ≠ []) (e1 e2 : edge) (h_edge_in₁ : e1 ∈ edgeList) (h_edge_in₂ : e2 ∈ edgeList) : SimpleGraph_of_edgeList.edge_of_edge_reverse edgeList h ⟨e1, h_edge_in₁⟩ = SimpleGraph_of_edgeList.edge_of_edge_reverse edgeList h ⟨e2, h_edge_in₂⟩ → e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 := by
+  intro h_eq
+  simp [SimpleGraph_of_edgeList.edge_of_edge_reverse] at h_eq
+  grind
+
+theorem SimpleGraph_of_edgeList.card_edgeSet (edgeList : List edge) (h : edgeList ≠ []) (h_nodup_con : ∀ e1 ∈ edgeList, ∀ e2 ∈ edgeList, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2) : (SimpleGraph_of_edgeList edgeList h).edgeFinset.card = edgeList.length := by
   induction edgeList with
   | nil =>
     simp at h
