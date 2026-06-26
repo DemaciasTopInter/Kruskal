@@ -1667,54 +1667,96 @@ theorem SimpleGraph_of_edgeList.card_edgeSet (edgeList : List edge) (h : edgeLis
   apply lt_of_eq_of_lt ?_ h_tantow
   exact (SimpleGraph_of_edgeList.card_edgeSet_eq_edgeList_length edgeList h h_nodup_con h_nodup).symm
 
-theorem kruskal_helper.Nodup (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) (h_invariant₁ : edgesSoFar.Nodup) (h_invariant₂ : matching_edge edgesSoFar nodeList) (h_invariant₃ : ∀ e, (h_e_in : e ∈ edgesSoFar) → connected_component_of_unionFind_of_id uF e.node1 (by simp [matching_edge] at h_invariant₂; grind) = connected_component_of_unionFind_of_id uF e.node2 (by simp [matching_edge] at h_invariant₂; grind)) : (kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup).Nodup := by
+-- geht auch ohne edgeList.Nodup, ist aber aufwändiger
+theorem kruskal_helper.Nodup (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) (h_invariant : (edgeList ++ edgesSoFar).Nodup) : (kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup).Nodup := by
   fun_induction kruskal_helper with
   | case1 uF edgesSoFar h_matching_edge =>
-    exact h_invariant₁
+    exact h_invariant
   | case2 uF edgesSoFar e es h_matching_edge h x h' y h_matching_edge' h_x h_y updated_uF updated_edgesSoFar ih =>
-    have h_invariant₁' : updated_edgesSoFar.Nodup := by
-      simp [updated_edgesSoFar, update_edgesSoFar]
-      split_ifs with h_eq
-      · exact h_invariant₁
-      · simp [h_invariant₁]
-        intro h_in
-        have h_invariant₃ := h_invariant₃ e h_in
-        simp [h_invariant₃, x, y] at h_eq
-    have h_invariant₂' : matching_edge updated_edgesSoFar nodeList := by
-      simp [matching_edge] at h_invariant₂
-      simp [matching_edge, updated_edgesSoFar, update_edgesSoFar]
-      split_ifs with h_eq
-      · exact h_invariant₂
-      · simp
-        constructor
-        · grind
-        · exact h_invariant₂
-    have h_invariant₃' : (∀ e, (h_e_in : e ∈ updated_edgesSoFar) →  connected_component_of_unionFind_of_id updated_uF e.node1 (by simp [matching_edge] at h_invariant₂'; grind) = connected_component_of_unionFind_of_id updated_uF e.node2  (by simp [matching_edge] at h_invariant₂'; grind)) := by
-      simp [updated_edgesSoFar, update_edgesSoFar, updated_uF, update_unionFind]
-      split_ifs with h_eq h_rank_lt
-      · exact h_invariant₃
-      · simp
-        set uFLx' : unionFindLink nodeList := { nodeId := (List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h_x).nodeId, ccId := (List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).ccId, rank := (List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h_x).rank } with ← h_uFLx'
-        set uFLy' : unionFindLink nodeList := { nodeId := (List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).nodeId, ccId := (List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).ccId, rank := ⟨max (↑(List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).rank) (↑(List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h_x).rank + 1), (update_unionFind._proof_9 uF x y h_x h_y (update_unionFind._proof_8 uF x y h_x h_y (update_unionFind._proof_7 uF x y h_x h_y (Eq.mpr_prop (Eq.refl ((List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h_x).rank < (List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).rank)) h_rank_lt))))⟩ } with ← h_uFLy'
-        simp [h_uFLx', h_uFLy']
-        -- rcases h_x with ⟨uFLx, h_uFLx⟩
-        sorry
-      · sorry
-      · sorry
-    have ih := ih h_invariant₁' h_invariant₂' h_invariant₃'
-    exact ih
+    apply ih
+    simp [updated_edgesSoFar, update_edgesSoFar]
+    split_ifs
+    · grind
+    · grind
 
-theorem kruskal_of_edgeList.Nodup (edgeList : List edge) : (kruskal_of_edgeList edgeList).Nodup := by
+-- theorem kruskal_helper.Nodup (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) (h_invariant₁ : edgesSoFar.Nodup) (h_invariant₂ : matching_edge edgesSoFar nodeList) (h_invariant₃ : ∀ e, (h_e_in : e ∈ edgesSoFar) → connected_component_of_unionFind_of_id uF e.node1 (by simp [matching_edge] at h_invariant₂; grind) = connected_component_of_unionFind_of_id uF e.node2 (by simp [matching_edge] at h_invariant₂; grind)) : (kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup).Nodup := by
+--   fun_induction kruskal_helper with
+--   | case1 uF edgesSoFar h_matching_edge =>
+--     exact h_invariant₁
+--   | case2 uF edgesSoFar e es h_matching_edge h x h' y h_matching_edge' h_x h_y updated_uF updated_edgesSoFar ih =>
+--     have h_invariant₁' : updated_edgesSoFar.Nodup := by
+--       simp [updated_edgesSoFar, update_edgesSoFar]
+--       split_ifs with h_eq
+--       · exact h_invariant₁
+--       · simp [h_invariant₁]
+--         intro h_in
+--         have h_invariant₃ := h_invariant₃ e h_in
+--         simp [h_invariant₃, x, y] at h_eq
+--     have h_invariant₂' : matching_edge updated_edgesSoFar nodeList := by
+--       simp [matching_edge] at h_invariant₂
+--       simp [matching_edge, updated_edgesSoFar, update_edgesSoFar]
+--       split_ifs with h_eq
+--       · exact h_invariant₂
+--       · simp
+--         constructor
+--         · grind
+--         · exact h_invariant₂
+--     have h_invariant₃' : (∀ e, (h_e_in : e ∈ updated_edgesSoFar) →  connected_component_of_unionFind_of_id updated_uF e.node1 (by simp [matching_edge] at h_invariant₂'; grind) = connected_component_of_unionFind_of_id updated_uF e.node2 (by simp [matching_edge] at h_invariant₂'; grind)) := by
+--       simp [updated_edgesSoFar, update_edgesSoFar, updated_uF, update_unionFind]
+--       split_ifs with h_eq h_rank_lt
+--       · exact h_invariant₃
+--       · simp
+--         set uFLx' : unionFindLink nodeList := { nodeId := (List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h_x).nodeId, ccId := (List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).ccId, rank := (List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h_x).rank } with ← h_uFLx'
+--         set uFLy' : unionFindLink nodeList := { nodeId := (List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).nodeId, ccId := (List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).ccId, rank := ⟨max (↑(List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).rank) (↑(List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h_x).rank + 1), (update_unionFind._proof_9 uF x y h_x h_y (update_unionFind._proof_8 uF x y h_x h_y (update_unionFind._proof_7 uF x y h_x h_y (Eq.mpr_prop (Eq.refl ((List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h_x).rank < (List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h_y).rank)) h_rank_lt))))⟩ } with ← h_uFLy'
+--         simp [h_uFLx', h_uFLy']
+--         -- rcases h_x with ⟨uFLx, h_uFLx⟩
+--         sorry
+--       · sorry
+--       · sorry
+--     have ih := ih h_invariant₁' h_invariant₂' h_invariant₃'
+--     exact ih
+
+-- geht auch ohne edgeList.Nodup, abhängig von kruskal_helper.Nodup
+theorem kruskal_of_edgeList.Nodup (edgeList : List edge) (h_nodup : edgeList.Nodup) : (kruskal_of_edgeList edgeList).Nodup := by
   simp [kruskal_of_edgeList, kruskal]
   apply kruskal_helper.Nodup
-  · simp
-  · simp
-  · simp [matching_edge]
+  simp [h_nodup]
 
-theorem kruskal_of_edgeList.h_nodup_con (edgeList : List edge) : ∀ e1 ∈ kruskal_of_edgeList edgeList, ∀ e2 ∈ kruskal_of_edgeList edgeList, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2 := by
-  sorry
+-- geht auch ohne edgeList.nodup_con, ist aber aufwändiger
+theorem kruskal_helper.nodup_con (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) (h_invariant : ∀ e1 ∈ edgeList ++ edgesSoFar, ∀ e2 ∈ edgeList ++ edgesSoFar, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2) : ∀ e1 ∈ (kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup), ∀ e2 ∈ (kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup), e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2 := by
+  fun_induction kruskal_helper with
+  | case1 uF edgesSoFar h_matching_edge =>
+    exact h_invariant
+  | case2 uF edgesSoFar e es h_matching_edge h x h' y h_matching_edge' h_x h_y updated_uF updated_edgesSoFar ih =>
+    apply ih
+    simp [updated_edgesSoFar, update_edgesSoFar]
+    split_ifs
+    · grind
+    · grind
 
-theorem kruskal_of_edgeList.card_edgeSet (edgeList : List edge) (h : edgeList ≠ []) : (kruskal_of_edgeList edgeList).length < (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)).id.succ := SimpleGraph_of_edgeList.card_edgeSet (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) (kruskal_of_edgeList.h_nodup_con edgeList) (kruskal_of_edgeList.Nodup edgeList) (by exact SimpleGraph_of_kruskal.IsAcyclic edgeList h)
+-- theorem kruskal_helper.nodup_con (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) (h_invariant₁ : ∀ e1 ∈ edgesSoFar, ∀ e2 ∈ edgesSoFar, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2) (h_invariant₂ : matching_edge edgesSoFar nodeList) (h_invariant₃ : ∀ e, (h_e_in : e ∈ edgesSoFar) → connected_component_of_unionFind_of_id uF e.node1 (by simp [matching_edge] at h_invariant₂; grind) = connected_component_of_unionFind_of_id uF e.node2 (by simp [matching_edge] at h_invariant₂; grind)) : ∀ e1 ∈ (kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup), ∀ e2 ∈ (kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup), e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2 := by
+--   fun_induction kruskal_helper with
+--   | case1 uF edgesSoFar h_matching_edge =>
+--     exact h_invariant₁
+--   | case2 uF edgesSoFar e es h_matching_edge h x h' y h_matching_edge' h_x h_y updated_uF updated_edgesSoFar ih =>
+--     have h_invariant₁' : ∀ e1 ∈ updated_edgesSoFar, ∀ e2 ∈ updated_edgesSoFar, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2 := by
+--       sorry
+--     have h_invariant₂' : matching_edge updated_edgesSoFar nodeList := by
+--       sorry
+--     have h_invariant₃' : ∀ e, (h_e_in : e ∈ updated_edgesSoFar) → connected_component_of_unionFind_of_id updated_uF e.node1 (by simp [matching_edge] at h_invariant₂'; grind) = connected_component_of_unionFind_of_id updated_uF e.node2 (by simp [matching_edge] at h_invariant₂'; grind) := by
+--       sorry
+--     apply ih h_invariant₁' h_invariant₂' h_invariant₃'
+
+-- geht auch ohne edgeList.nodup_con, abhängig von kruskal_helper.nodup_con
+theorem kruskal_of_edgeList.nodup_con (edgeList : List edge) (h_nodup_con : ∀ e1 ∈ edgeList, ∀ e2 ∈ edgeList, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2) : ∀ e1 ∈ kruskal_of_edgeList edgeList, ∀ e2 ∈ kruskal_of_edgeList edgeList, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2 := by
+  simp [kruskal_of_edgeList, kruskal]
+  apply kruskal_helper.nodup_con
+  simp
+  exact h_nodup_con
+
+-- geht auch ohne edgeList.Nodup, abhängig von kruskal_helper.Nodup
+-- geht auch ohne edgeList.nodup_con, abhängig von kruskal_helper.nodup_con
+theorem kruskal_of_edgeList.card_edgeSet (edgeList : List edge) (h : edgeList ≠ []) (h_nodup : edgeList.Nodup) (h_nodup_con : ∀ e1 ∈ edgeList, ∀ e2 ∈ edgeList, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2) : (kruskal_of_edgeList edgeList).length < (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)).id.succ := SimpleGraph_of_edgeList.card_edgeSet (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) (kruskal_of_edgeList.nodup_con edgeList h_nodup_con) (kruskal_of_edgeList.Nodup edgeList h_nodup) (by exact SimpleGraph_of_kruskal.IsAcyclic edgeList h)
 
 -- theorem SimpleGraph_of_kruskal_IsEqReachable (edgeList : List edge) (h : edgeList ≠ []) : ∀ (x y), (SimpleGraph_of_edgeList edgeList h).Reachable x y ↔ (SimpleGraph_of_kruskal edgeList h).Reachable x y := by sorry
 
