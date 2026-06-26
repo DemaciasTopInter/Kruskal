@@ -1,8 +1,11 @@
-import Mathlib
-import Kruskal.Basic
-import Kruskal.Lists
+-- import Mathlib
+-- import Kruskal.Basic
+-- import Kruskal.Lists
+-- import Kruskal.Correctness
+-- import Algolean
+import Algolean.QueryModel
 import Kruskal.Correctness
-import Algolean
+import Mathlib.Algebra.Order.Monoid.Prod
 
 namespace Kruskal
 
@@ -221,3 +224,5 @@ theorem kruskal_time2 (edgeList : List edge) (nodeList : List node) (h_matching_
   have h := kruskal_helper_time2 (edgeList.mergeSort fun a b => decide (a ≤ b)) nodeList (init_unionFind nodeList h_nodup) [] (by simp [matching_edge]; exact h_matching_edge) h_nodup h_nonempty h_lt
   apply le_of_le_of_eq h
   simp
+
+-- #min_imports

@@ -1,6 +1,6 @@
-import Mathlib
+-- import Mathlib
 import Kruskal.Basic
-import Kruskal.Lists
+-- import Kruskal.Lists
 import Kruskal.Tantow
 
 -- set_option pp.all true
@@ -1708,8 +1708,8 @@ theorem kruskal_of_edgeList.Nodup (edgeList : List edge) : (kruskal_of_edgeList 
   simp [kruskal_of_edgeList, kruskal]
   apply kruskal_helper.Nodup
   · simp
-  · simp [matching_edge]
   · simp
+  · simp [matching_edge]
 
 theorem kruskal_of_edgeList.h_nodup_con (edgeList : List edge) : ∀ e1 ∈ kruskal_of_edgeList edgeList, ∀ e2 ∈ kruskal_of_edgeList edgeList, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2 := by
   sorry
@@ -1727,3 +1727,5 @@ def cost_of_edgeList : List edge → Nat
 -- def minimalSpanninTree_of_edgeList (edgeList : List edge) (h₁ : edgeList ≠ []) (G := SimpleGraph_of_edgeList edgeList h₁) (minEdgeList : List edge) (h₂ : minEdgeList ≠ []) (h₃ : SimpleGraph.IsSpanningTree G (SimpleGraph_of_edgeList minEdgeList h₂)) (h₄ : ∀ x ∈ minEdgeList, x ∈ edgeList) : Prop := ∀ (el : List edge), (h₅ : el ≠ []) → (h₆ : ∀ x ∈ el, x ∈ edgeList) → SimpleGraph.IsSpanningTree G (SimpleGraph_of_edgeList el h₅) → (cost_of_edgeList el) ≥ (cost_of_edgeList minEdgeList)
 
 -- theorem kruskal_minimalSpanninTree_of_edgeList (edgeList : List edge) (h : edgeList ≠ []) : minimalSpanninTree_of_edgeList edgeList h (SimpleGraph_of_edgeList edgeList h₁) (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) := by sorry
+
+-- #min_imports
