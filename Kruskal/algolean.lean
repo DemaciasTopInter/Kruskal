@@ -185,9 +185,9 @@ theorem kruskal_helper_time2_right (edgeList : List edge) (nodeList : List node)
       simp [← h_eq]
       exact ih
 
-theorem kruskal_helper_time2 (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) (h_nonempty : nodeList ≠ [])
-  : (kruskal_helper_prog edgeList nodeList uF edgesSoFar h_matching_edge h_nodup).time (kruskal_model2 nodeList) ≤ (2 * edgeList.length, (nodeList.max h_nonempty).id) := by
-  set n := (nodeList.max h_nonempty).id with ← h_n
+theorem kruskal_helper_time2 (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) (h_nonempty : nodeList ≠ []) (h_length_lt : (kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup).length < (nodeList.max h_nonempty).id.succ)
+  : (kruskal_helper_prog edgeList nodeList uF edgesSoFar h_matching_edge h_nodup).time (kruskal_model2 nodeList) ≤ (2 * edgeList.length, (nodeList.max h_nonempty).id.succ) := by
+  set n := (nodeList.max h_nonempty).id.succ with ← h_n
   constructor
   · simp
     induction edgeList generalizing uF edgesSoFar with
@@ -199,21 +199,25 @@ theorem kruskal_helper_time2 (edgeList : List edge) (nodeList : List node) (uF :
       set updated_uF := update_unionFind uF (connected_component_of_unionFind_of_id uF e.node1 (kruskal_helper._proof_1 nodeList e edgeList h_matching_edge)) (connected_component_of_unionFind_of_id uF e.node2 (kruskal_helper._proof_2 nodeList e edgeList h_matching_edge)) (kruskal_helper._proof_4 nodeList uF e (kruskal_helper._proof_1 nodeList e edgeList h_matching_edge)) (kruskal_helper._proof_5 nodeList uF e (kruskal_helper._proof_2 nodeList e edgeList h_matching_edge))
       set updated_edgesSoFar := update_edgesSoFar edgesSoFar e (connected_component_of_unionFind_of_id uF e.node1 (kruskal_helper._proof_1 nodeList e edgeList h_matching_edge)) (connected_component_of_unionFind_of_id uF e.node2 (kruskal_helper._proof_2 nodeList e edgeList h_matching_edge))
       simp [matching_edge] at h_matching_edge ih
-      have ih := ih updated_uF updated_edgesSoFar h_matching_edge.right
+      have ih := ih updated_uF updated_edgesSoFar h_matching_edge.right sorry
       apply le_of_eq_of_le ?_ ih
       simp [kruskal_model2]
       split_ifs
       · simp
       · simp
   · simp
-    have h_lt : (kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup).length < n := by
-      sorry
-    exact kruskal_helper_time2_right edgeList nodeList uF edgesSoFar h_matching_edge h_nodup n h_lt
+    exact kruskal_helper_time2_right edgeList nodeList uF edgesSoFar h_matching_edge h_nodup n h_length_lt
 
-theorem kruskal_time2 (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup)(h_nonempty : nodeList ≠ [])
-  : (kruskal_prog edgeList nodeList h_matching_edge h_nodup).time (kruskal_model2 nodeList) ≤ (2 * edgeList.length, (nodeList.max h_nonempty).id) := by
+theorem kruskal_time2 (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) (h_nonempty : nodeList ≠ []) (h_nonempty' : edgeList ≠ []) (h_nodeList : nodeList = nodeList_of_edgeList edgeList)
+  : (kruskal_prog edgeList nodeList h_matching_edge h_nodup).time (kruskal_model2 nodeList) ≤ (2 * edgeList.length, (nodeList.max h_nonempty).id.succ) := by
   simp [kruskal_prog]
   simp [matching_edge] at h_matching_edge
-  have h := kruskal_helper_time2 (edgeList.mergeSort fun a b => decide (a ≤ b)) nodeList (init_unionFind nodeList h_nodup) [] (by simp [matching_edge]; exact h_matching_edge) h_nodup h_nonempty
+  have h_lt : (kruskal_helper (edgeList.mergeSort fun a b => decide (a ≤ b)) nodeList (init_unionFind nodeList h_nodup) [] (kruskal_prog._proof_1 edgeList nodeList h_matching_edge) h_nodup).length < (nodeList.max h_nonempty).id.succ := by
+    have h := kruskal_of_edgeList.card_edgeSet edgeList h_nonempty'
+    simp [h_nodeList]
+    simp only [nodeList_of_edgeList_max_eq edgeList h_nonempty'] at h
+    simp [kruskal_of_edgeList, kruskal, nodeList_of_edgeList_max] at h
+    grind
+  have h := kruskal_helper_time2 (edgeList.mergeSort fun a b => decide (a ≤ b)) nodeList (init_unionFind nodeList h_nodup) [] (by simp [matching_edge]; exact h_matching_edge) h_nodup h_nonempty h_lt
   apply le_of_le_of_eq h
   simp
