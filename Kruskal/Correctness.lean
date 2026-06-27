@@ -1758,6 +1758,61 @@ theorem kruskal_of_edgeList.nodup_con (edgeList : List edge) (h_nodup_con : ∀ 
 -- geht auch ohne edgeList.nodup_con, abhängig von kruskal_helper.nodup_con
 theorem kruskal_of_edgeList.card_edgeSet (edgeList : List edge) (h : edgeList ≠ []) (h_nodup : edgeList.Nodup) (h_nodup_con : ∀ e1 ∈ edgeList, ∀ e2 ∈ edgeList, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2) : (kruskal_of_edgeList edgeList).length < (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)).id.succ := SimpleGraph_of_edgeList.card_edgeSet (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) (kruskal_of_edgeList.nodup_con edgeList h_nodup_con) (kruskal_of_edgeList.Nodup edgeList h_nodup) (by exact SimpleGraph_of_kruskal.IsAcyclic edgeList h)
 
+theorem rankInvariant' {nodeList : List node} {uF : unionFind nodeList} (h_nodup : nodeList.Nodup) (h_rankInvariant : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path (uFL := x) (uF := uF) h_x_in else False)).length ≥ 2^(uFL.rank.val)) : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => x.rank < uFL.rank ∧ ¬x.nodeId = x.ccId)).length ≥ uFL.rank := by
+  intro uFL h_in
+  -- rcases uFL with ⟨nodeId, ccId, rank⟩
+  -- rcases rank with ⟨rank, h_lt⟩
+  set rank := uFL.rank.val with ← h_rank
+  revert h_rank
+  induction rank generalizing uFL with
+  | zero =>
+    simp
+  | succ rank ih =>
+    intro h_rank
+    simp
+    have h := h_rankInvariant uFL h_in
+    simp [h_rank, pow_succ] at h
+    have h : 2 ≤ (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList).length := by
+      grind
+    set a := (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList).get ⟨0, by omega⟩ with h_a
+    set b := (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList).get ⟨1, by omega⟩ with h_b
+    have h_a_in_filter : a ∈ (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList) := by
+      apply List.get_mem
+    have h_b_in_filter : b ∈ (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList) := by
+      apply List.get_mem
+    have h_a_in := List.mem_of_mem_filter h_a_in_filter
+    have h_b_in := List.mem_of_mem_filter h_b_in_filter
+    have h_a_prop := (List.mem_filter.mp h_a_in_filter).right
+    have h_b_prop := (List.mem_filter.mp h_b_in_filter).right
+    simp [h_a_in] at h_a_prop
+    simp [h_b_in] at h_b_prop
+    have h_filter_nodup : (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList).Nodup := List.Nodup.filter _ uF.nodup
+    have h_a_ne_b : a ≠ b := by
+      generalize h_l :
+        List.filter
+          (fun x =>
+            if h_x_in : x ∈ uF.linkList
+            then decide (uFL ∈ get_parent_path h_x_in)
+            else false)
+          uF.linkList = l
+      simp [h_l] at h h_filter_nodup h_a h_b
+      cases l with
+      | nil =>
+        simp at h
+      | cons x l =>
+        cases l with
+        | nil =>
+          simp at h
+        | cons y l =>
+          simp at h_filter_nodup h_a h_b
+          simp [h_filter_nodup, h_a, h_b]
+    by_cases h_eq : uFL = a
+    · simp [← h_eq] at h_a_ne_b
+      sorry
+    -- have h_ex := exists_of_filter
+    -- simp [Nat.lt_of_succ_lt h_lt] at ih
+    sorry
+
 -- theorem SimpleGraph_of_kruskal_IsEqReachable (edgeList : List edge) (h : edgeList ≠ []) : ∀ (x y), (SimpleGraph_of_edgeList edgeList h).Reachable x y ↔ (SimpleGraph_of_kruskal edgeList h).Reachable x y := by sorry
 
 -- theorem SimpleGraph_of_kruskal_IsSpanningTree (edgeList : List edge) (h : edgeList ≠ []) : SimpleGraph.IsSpanningTree (SimpleGraph_of_kruskal edgeList h) (SimpleGraph_of_edgeList edgeList h) := by sorry
