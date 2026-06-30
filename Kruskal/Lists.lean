@@ -621,5 +621,39 @@ theorem mem_le_max (h_in : a ∈ l) (h_nonempty : l ≠ []) [Preorder α] [Max �
   -- apply h.right
   -- exact h_in
 
+theorem length_of_filter_mem [DecidableEq α] (h_mem : a ∈ l) : l.length ≥ 1 + (l.filter (fun b => b ≠ a)).length := by
+  induction l with
+  | nil =>
+    simp at h_mem
+  | cons b l ih =>
+    by_cases h_eq : b = a
+    · simp [h_eq]
+      rw [Nat.add_comm]
+      simp
+      exact List.length_filter_le (fun b => !decide (b = a)) l
+    · simp
+      rw [Nat.add_comm]
+      simp
+      simp [h_eq]
+      simp [ne_comm.mp h_eq] at h_mem
+      simp [h_mem, Nat.add_comm] at ih
+      rw [Nat.add_comm] at ih
+      exact ih
+
+theorem nodup_length_le_length_all_mem [DecidableEq α] (h_nodup : l.Nodup) (h_all_mem : ∀ a ∈ l, a ∈ l') : l.length ≤ l'.length := by
+  induction l generalizing l' with
+  | nil =>
+    simp
+  | cons a l ih =>
+    simp at h_nodup h_all_mem
+    have ih := ih (l' := l'.filter (fun b => b ≠ a)) h_nodup.right (by grind)
+    simp at ih
+    have h_filter_length : l'.length ≥ 1 + (l'.filter (fun b => b ≠ a)).length := length_of_filter_mem h_all_mem.left
+    apply le_trans ?_ h_filter_length
+    simp
+    rw [Nat.add_comm]
+    simp
+    exact ih
+
 -- exact?
 -- #min_imports

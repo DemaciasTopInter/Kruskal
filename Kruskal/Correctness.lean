@@ -1758,7 +1758,77 @@ theorem kruskal_of_edgeList.nodup_con (edgeList : List edge) (h_nodup_con : ∀ 
 -- geht auch ohne edgeList.nodup_con, abhängig von kruskal_helper.nodup_con
 theorem kruskal_of_edgeList.card_edgeSet (edgeList : List edge) (h : edgeList ≠ []) (h_nodup : edgeList.Nodup) (h_nodup_con : ∀ e1 ∈ edgeList, ∀ e2 ∈ edgeList, e1.node1 = e2.node1 ∧ e1.node2 = e2.node2 ∨ e1.node1 = e2.node2 ∧ e1.node2 = e2.node1 → e1 = e2) : (kruskal_of_edgeList edgeList).length < (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h)).id.succ := SimpleGraph_of_edgeList.card_edgeSet (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) (kruskal_of_edgeList.nodup_con edgeList h_nodup_con) (kruskal_of_edgeList.Nodup edgeList h_nodup) (by exact SimpleGraph_of_kruskal.IsAcyclic edgeList h)
 
-theorem rankInvariant' {nodeList : List node} {uF : unionFind nodeList} (h_nodup : nodeList.Nodup) (h_rankInvariant : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path (uFL := x) (uF := uF) h_x_in else False)).length ≥ 2^(uFL.rank.val)) : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => x.rank < uFL.rank ∧ ¬x.nodeId = x.ccId)).length ≥ uFL.rank := by
+theorem rank_le_rank_of_mem_get_parent_path
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL uFL' : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  (h_in' : uFL' ∈ get_parent_path h_in)
+  (h_ne : uFL ≠ uFL')
+  : uFL.rank < uFL'.rank := by
+  fun_induction get_parent_path with
+  | case1 uFL h_in h_self_con =>
+    simp at h_in'
+    simp [h_in'] at h_ne
+  | case2 uFL h_in h_self_con ih =>
+    rw [get_parent_path] at h_in'
+    set p := parent uFL h_in with ← h_p
+    simp [h_p, ne_comm.mp h_ne] at h_in'
+    revert h_in'
+    split_ifs with h_p_self_con
+    · simp
+      intro h_in'
+      simp [h_in', p, parent]
+      have h := uF.matching_rank uFL h_in
+      simp [h_self_con] at h
+      exact h
+    · simp
+      intro h_in'
+      have h_lt_parent : uFL.rank < p.rank := by
+        simp [p, parent]
+        have h := uF.matching_rank uFL h_in
+        simp [h_self_con] at h
+        exact h
+      by_cases h_eq : uFL' = p
+      · simp [h_eq]
+        exact h_lt_parent
+      · simp [h_p] at ih
+        simp [h_eq] at h_in'
+        -- have ih := ih h_in'
+        apply lt_trans h_lt_parent
+        apply ih
+        · rw [get_parent_path]
+          simp [h_p_self_con, h_eq, h_in']
+        · exact ne_comm.mp h_eq
+
+theorem not_self_con_of_mem_get_parent_path
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL uFL' : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  (h_in' : uFL' ∈ get_parent_path h_in)
+  (h_ne : uFL ≠ uFL')
+  : uFL.nodeId ≠ uFL.ccId := by
+  intro h_self_con
+  rw [get_parent_path] at h_in'
+  simp [h_self_con, ne_comm.mp h_ne] at h_in'
+
+theorem le_two_pow_minus_one (n : Nat) : n ≤ 2^n-1 := by
+  induction n with
+  | zero =>
+    simp
+  | succ n ih =>
+    simp
+    apply Nat.lt_of_succ_le
+    apply Nat.le_of_lt_succ
+    have h : (2 ^ (n + 1) - 1).succ = 2 ^ (n + 1) := by
+      grind
+    rw [h]
+    exact Nat.lt_two_pow_self
+
+def unionFind.rankInvariant' {nodeList : List node} (uF : unionFind nodeList) := ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path (uFL := x) (uF := uF) h_x_in else False)).length ≥ 2^(uFL.rank.val)
+
+theorem unionFind.rankInvariant_of_rankInvariant' {nodeList : List node} {uF : unionFind nodeList} (h_rankInvariant : uF.rankInvariant') : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => x.rank < uFL.rank ∧ ¬x.nodeId = x.ccId)).length ≥ uFL.rank := by
   intro uFL h_in
   -- rcases uFL with ⟨nodeId, ccId, rank⟩
   -- rcases rank with ⟨rank, h_lt⟩
@@ -1767,51 +1837,76 @@ theorem rankInvariant' {nodeList : List node} {uF : unionFind nodeList} (h_nodup
   induction rank generalizing uFL with
   | zero =>
     simp
-  | succ rank ih =>
-    intro h_rank
-    simp
-    have h := h_rankInvariant uFL h_in
-    simp [h_rank, pow_succ] at h
-    have h : 2 ≤ (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList).length := by
+  | succ rank' ih =>
+    intro h_rank'
+    have h : rank' + 1 ≤ 2^rank'-1+1 := by
+      simp [le_two_pow_minus_one rank']
+    apply le_trans h
+    have h_length_lt : (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else decide False) uF.linkList).length ≤ (uFL :: List.filter (fun x => decide (x.rank < uFL.rank) && !decide (x.nodeId = x.ccId)) uF.linkList).length := by
+      apply nodup_length_le_length_all_mem (by simp [List.Nodup.filter, uF.nodup])
+      intro x h_x_in_filter
+      by_cases h_eq : x = uFL
+      · simp [h_eq]
+      · have h_x_in := List.mem_of_mem_filter h_x_in_filter
+        have h_x_prop := (List.mem_filter.mp h_x_in_filter).right
+        simp at h_x_prop
+        rcases h_x_prop with ⟨_, h_x_prop⟩
+        simp [h_eq, h_x_in]
+        constructor
+        · exact rank_le_rank_of_mem_get_parent_path h_x_in h_x_prop h_eq
+        · exact not_self_con_of_mem_get_parent_path h_x_in h_x_prop h_eq
+    simp at h_length_lt
+    apply Nat.le_of_lt_succ
+    apply Nat.lt_of_succ_le
+    simp only [Nat.succ_eq_add_one, Bool.decide_and, decide_not]
+    apply le_trans ?_ h_length_lt
+    apply le_trans ?_ (h_rankInvariant uFL h_in)
+    simp [h_rank']
+    have h : (2 ^ rank' - 1) + 1 = 2 ^ rank' := by
       grind
-    set a := (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList).get ⟨0, by omega⟩ with h_a
-    set b := (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList).get ⟨1, by omega⟩ with h_b
-    have h_a_in_filter : a ∈ (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList) := by
-      apply List.get_mem
-    have h_b_in_filter : b ∈ (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList) := by
-      apply List.get_mem
-    have h_a_in := List.mem_of_mem_filter h_a_in_filter
-    have h_b_in := List.mem_of_mem_filter h_b_in_filter
-    have h_a_prop := (List.mem_filter.mp h_a_in_filter).right
-    have h_b_prop := (List.mem_filter.mp h_b_in_filter).right
-    simp [h_a_in] at h_a_prop
-    simp [h_b_in] at h_b_prop
-    have h_filter_nodup : (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else false) uF.linkList).Nodup := List.Nodup.filter _ uF.nodup
-    have h_a_ne_b : a ≠ b := by
-      generalize h_l :
-        List.filter
-          (fun x =>
-            if h_x_in : x ∈ uF.linkList
-            then decide (uFL ∈ get_parent_path h_x_in)
-            else false)
-          uF.linkList = l
-      simp [h_l] at h h_filter_nodup h_a h_b
-      cases l with
-      | nil =>
-        simp at h
-      | cons x l =>
-        cases l with
-        | nil =>
-          simp at h
-        | cons y l =>
-          simp at h_filter_nodup h_a h_b
-          simp [h_filter_nodup, h_a, h_b]
-    by_cases h_eq : uFL = a
-    · simp [← h_eq] at h_a_ne_b
-      sorry
-    -- have h_ex := exists_of_filter
-    -- simp [Nat.lt_of_succ_lt h_lt] at ih
+    simp [h, pow_add]
+
+theorem init_unionFind.rankInvariant' {nodeList : List node} (h_nodup : nodeList.Nodup) : (init_unionFind nodeList h_nodup).rankInvariant' := by
+  simp [unionFind.rankInvariant', init_unionFind, init_unionFind_helper]
+  by_cases h_empty : nodeList = []
+  · simp [h_empty]
+  · simp [h_empty]
+    intro uFL h_in
+    have h_rank := init_unionFind_helper.helper_all_rank_zero nodeList nodeList (by simp [h_empty]) uFL h_in
+    simp [h_rank]
+    have h_in_filter : uFL ∈ (List.filter (fun x => if h : x ∈ (init_unionFind nodeList h_nodup).linkList then decide (uFL ∈ get_parent_path (Eq.mpr_prop (Eq.refl (x ∈ (init_unionFind nodeList h_nodup).linkList)) h)) else false) (init_unionFind nodeList h_nodup).linkList) := by
+      simp [init_unionFind, init_unionFind_helper, h_empty, h_in]
+      rw [get_parent_path]
+      split_ifs
+      · simp
+      · simp
+    have h_length : 1 ≤ (List.filter (fun x => if h : x ∈ (init_unionFind nodeList h_nodup).linkList then decide (uFL ∈ get_parent_path (Eq.mpr_prop (Eq.refl (x ∈ (init_unionFind nodeList h_nodup).linkList)) h)) else false) (init_unionFind nodeList h_nodup).linkList).length := by
+      grind
+    simp [init_unionFind, init_unionFind_helper, h_empty] at h_length
+    exact h_length
+
+theorem update_unionFind.rankInvariant' {nodeList : List node} (uF : unionFind nodeList) (x y : ℕ) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant') : (update_unionFind uF x y h₁ h₂).rankInvariant' := by
+  simp [unionFind.rankInvariant', update_unionFind]
+  set uFLx := List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₁ with ← h_uFLx
+  set uFLy := List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h₂ with ← h_uFLy
+  set uFLx' : unionFindLink nodeList := { nodeId := uFLx.nodeId, ccId := uFLy.ccId, rank := uFLx.rank } with ← h_uFLx'
+  -- set uFLy' : unionFindLink nodeList := { nodeId := uFLy.nodeId, ccId := uFLy.ccId, rank := ⟨max (↑uFLy.rank) (↑uFLx.rank + 1), sorry⟩ }with ← h_uFLy'
+
+  simp [h_uFLx, h_uFLy, h_uFLx']--, h_uFLy', h_linklist']
+  split_ifs with h_eq h_rank_lt h_rank_lt'
+  · exact h_rankInvariant
+  · have h_rank_succ_le : uFLx.rank.val.succ ≤ uFLy.rank.val := by
+      simp [h_rank_lt]
+    have h_rank_succ_isLt : uFLx.rank.val.succ < nodeList.length := by
+      simp [Nat.lt_of_le_of_lt h_rank_succ_le]
+    set uFLy' : unionFindLink nodeList := { nodeId := uFLy.nodeId, ccId := uFLy.ccId, rank := ⟨max (↑uFLy.rank) (↑uFLx.rank + 1), by simp [h_rank_succ_isLt]⟩ }with ← h_uFLy'
+    simp
+    intro uFL h_uFL_in
+    set linklist' : List (unionFindLink nodeList) := (uF.linkList.set (List.idxOf uFLx uF.linkList) uFLx').set (List.idxOf uFLy uF.linkList) uFLy' with ← h_linklist'
+    -- simp at h_uFL_in
     sorry
+  · sorry
+  · sorry
 
 -- theorem SimpleGraph_of_kruskal_IsEqReachable (edgeList : List edge) (h : edgeList ≠ []) : ∀ (x y), (SimpleGraph_of_edgeList edgeList h).Reachable x y ↔ (SimpleGraph_of_kruskal edgeList h).Reachable x y := by sorry
 
