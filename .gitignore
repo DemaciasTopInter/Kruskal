@@ -1,2 +1,5 @@
 /.lake
 .DS_Store
+Schriftliche Ausarbeitung/build
+Schriftliche Ausarbeitung/*.pdf
+Schriftliche Ausarbeitung/*.synctex.gz

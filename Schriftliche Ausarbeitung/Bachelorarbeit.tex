@@ -1,0 +1,61 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath} % Required for math stuff
+\usepackage{amssymb} % Required for math stuff
+\usepackage{amsfonts} % Required for math stuff
+\usepackage[german]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, top=2cm, bottom=2cm, left=3cm, right=3cm, marginparwidth=1.75cm]{geometry}
+\usepackage{csquotes}
+\usepackage[backend=biber, sorting=none]{biblatex}
+\addbibresource{Quellen.bib}
+\usepackage[T1]{fontenc}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+
+\usepackage{tocloft}
+\renewcommand{\cftsubsecleader}{\cftdotfill{\cftnodots}}
+
+\usepackage{color}
+\definecolor{keywordcolor}{rgb}{0.7, 0.1, 0.1}   % red
+\definecolor{tacticcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{commentcolor}{rgb}{0.4, 0.4, 0.4}   % grey
+\definecolor{symbolcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{sortcolor}{rgb}{0.1, 0.5, 0.1}      % green
+\definecolor{attributecolor}{rgb}{0.7, 0.1, 0.1} % red
+
+\def\lstlanguagefiles{lstlean.tex}
+% set default language
+\lstset{language=lean}
+
+\begin{document}
+
+\include{Dokumente/Titelseite}
+
+\tableofcontents
+
+\include{Dokumente/Zusammenfassung} % Abstract?  Abstrakt?
+
+\include{Dokumente/Einleitung}
+
+\include{Dokumente/Der Algorithmus von Kruskal}
+
+\include{Dokumente/Das Potential von Lean}
+
+\include{Dokumente/Die Implementierung}
+
+\include{Dokumente/Der Korrektheitsbeweis}
+
+\include{Dokumente/Algolean}
+
+\include{Dokumente/Der Beweis über die Laufzeit}
+
+\include{Dokumente/Fazit}
+
+\section{Quellen}
+\printbibliography[heading = none]
+Letzter Abruf \today
+
+\include{Dokumente/Ehrenerklärung}
+
+\end{document}
