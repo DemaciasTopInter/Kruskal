@@ -3,6 +3,8 @@ This code was written by Johannes Jasper von Spreckelsen.
 -/
 import Mathlib.Data.List.Defs
 import Mathlib.Data.List.MinMax
+import Mathlib.Data.Finset.Dedup
+import Mathlib.Data.Finset.Card
 -- import Mathlib.Data.Nat.SuccPred
 
 universe u
@@ -654,6 +656,16 @@ theorem nodup_length_le_length_all_mem [DecidableEq α] (h_nodup : l.Nodup) (h_a
     rw [Nat.add_comm]
     simp
     exact ih
+
+theorem nodup_length_le_length_of_injectiv_fun [DecidableEq α] (f : l.toFinset → l'.toFinset) (h_nodup : l.Nodup) (h_injectiv : Function.Injective f) : l.length ≤ l'.length := by
+  have h : l.toFinset.card ≤ l'.toFinset.card := by
+    apply Finset.card_le_card_of_injective h_injectiv
+  have h_card : l.toFinset.card = l.length := by
+    simp [List.toFinset_card_of_nodup h_nodup]
+  have h_card' : l'.toFinset.card ≤ l'.length := by
+    exact List.toFinset_card_le l'
+  apply le_of_eq_of_le h_card.symm
+  apply le_trans h h_card'
 
 -- exact?
 -- #min_imports
