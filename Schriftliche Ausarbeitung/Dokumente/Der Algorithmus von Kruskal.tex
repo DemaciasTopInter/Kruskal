@@ -1,1 +1,33 @@
 \section{Der Algorithmus von Kruskal}
+Der Algorithmus von Kruskal vom Mathematiker Joseph Bernard Kruskal im Artikel \cite{kruskal_article}.
+Der Algorithmus findet für einen ungerichteten endliche Graphen mit Kantenkosten einen minimalen Spannbaum.
+
+\subsection{Was ist ein Spannbaum}
+Gegeben ein Graph G(V, E) mit Knotenmenge V und Kantenmenge E, dann ist ein Spannbaum T(V, E') ein Subgraph von G mit E' $\subseteq$ E, sodass: 
+\begin{itemize}
+    \item alle Knoten aus V, die in G durch einen Kantenzug verbunden sind, auch in T verbunden sind.
+    \item in T keine Kreise vorkommen.
+\end{itemize}
+Wenn also G vollständig verbunden ist, dann ist es auch T und man spricht tatsächlich von einem Spannbaum. 
+Besteht G hingegen mehreren Klastern von Konten zwischen denen es keine verbindende Kante gibt, dann gibt es in T entsprechend die selben Klaster und  man  spricht von einem Spannwald.
+
+Ein minimaler Spannbaum ist ein Spannbaum, der die Summe der Kantenkosten minimiert. Das heißt, wenn M(V, E*) ein minimaler Spannbaum von G ist, 
+dann muss für jeden anderen Spannbaum T(V, E') von G die Summe der Kantenkosten mindestens so groß sein, wie die von M.
+$$\sum_{e \in E^*} c(e) \le \sum_{e \in E'} c(e)$$
+
+\subsection{Der Algorithmus}
+Der Algorithmus sortiert zunächst die Kantenliste aufsteigeng nach kosten.
+Anschließend iteriert er über die Kanten der Kantenliste, beginnend bei der mit den niedrigsten kosten.
+Für jede Kante prüft er nun, ob er die beiden Knoten der Kante schon über einen Kantenzug verbunden hat.
+Falls nein übernimmt er die kannte und merkt sich, dass die beiden Knoten jetzt vebunden sind.
+Falls ja wird die Kante verworfen.
+Zum Schluss gibt er die Liste der übernommenen Kanten zurück.
+
+In Kruskals Worten: 
+\begin{quotation}
+    Perform the following step as many times as possible: Among the edges of G not yet chosen, choose the shortest edge which does not form any loops with those edges already chosen.\cite{kruskal_article}
+\end{quotation}
+
+\subsection{Pseudocode}
+
+\subsection{Waum der Algorithmus funktioniert}
