@@ -2,6 +2,22 @@
 Der Algorithmus von Kruskal vom Mathematiker Joseph Bernard Kruskal im Artikel \cite{kruskal_article}.
 Der Algorithmus findet für einen ungerichteten endliche Graphen mit Kantenkosten einen minimalen Spannbaum.
 
+\subsection{Was ist ein Graph}
+Ein \textbf{Graph} $G(V, E)$ besteht aus einer Menge an Knoten $V$ und einer Menge an Kanten $E$. Eine Kante ist die Verbindung zwischen zwei Knoten. 
+Man unterscheidet zwischen verschiedenen Arten von Graphen:
+\begin{itemize}
+    \item Man spricht von \textbf{endlichen Graphen}, wenn $V$ und $E$ endlich sind, andernfalls von \textbf{unendlichen Graphen}.
+    \item Bei einem \textbf{gerichteten Graphen} besteht ein Unterschied zwischen einer Kante $u$ nach $v$ und einer Kante von $v$ nach $u$ und es kann auch sein, dass nur eine davon in $E$ enthalten ist. Mit $u, v \in V$. Bei einem \textbf{ungerichteten Graphen} hingegen ist das die selbe Kante.
+    \item Wenn eine Funktion $c : E \rightarrow \mathbb{R}$ definiert ist, die jeder Kante einen Wert zuweist, spricht man von einem Graphen mit \textbf{Kantenkosten}.
+\end{itemize}
+Ein \textbf{Kantenzug} (engl. Walk) ist eine Liste von Kanten $e_1, e_2, e_3, \dots, e_n \in E$, sodass für je zwei aufeinander folgende Kanten $e_i, e_{i+1}$ gilt, 
+dass es Konten $u, v, w \in V$ gibt und $e_i$ von $u$ nach $v$ geht und $e_{i+1}$ von $v$ nach $w$, also jede Kante fängt da an, woh ihre vorgängerin aufhört.
+
+Wenn es für zwei Knoten $u, v \in V$ einen Kantenzug von $u$ nach $v$ gibt, also die erste Kante bei $u$ anfängt und die letzte bei $v$ aufhört, dann sind $u$ und $v$ \textbf{verbunden} (engl. connected). Sind in einem Graphen alle Knoten paarweise verbunden, nennt man ihn \textbf{zusammenhängend}.
+
+Ein Kantenzug von $u$ nach $u$, also der beim selben Knoten anfängt und aufhört, indem keine Kante mehrmals vorkommt, heißt \textbf{Kreis}.
+Gibt es in einem Graphen keinen einzigen Kreis, so nennt man ihn \textbf{kreisfrei} oder \textbf{azyklisch} (engl. acyclic).
+
 \subsection{Was ist ein Spannbaum}
 Gegeben ein Graph G(V, E) mit Knotenmenge V und Kantenmenge E, dann ist ein Spannbaum T(V, E') ein Subgraph von G mit E' $\subseteq$ E, sodass: 
 \begin{itemize}
@@ -19,7 +35,7 @@ $$\sum_{e \in E^*} c(e) \le \sum_{e \in E'} c(e)$$
 Der Algorithmus sortiert zunächst die Kantenliste aufsteigeng nach kosten.
 Anschließend iteriert er über die Kanten der Kantenliste, beginnend bei der mit den niedrigsten kosten.
 Für jede Kante prüft er nun, ob er die beiden Knoten der Kante schon über einen Kantenzug verbunden hat.
-Falls nein übernimmt er die kannte und merkt sich, dass die beiden Knoten jetzt vebunden sind.
+Falls nein übernimmt er die Kante und merkt sich, dass die beiden Knoten jetzt vebunden sind.
 Falls ja wird die Kante verworfen.
 Zum Schluss gibt er die Liste der übernommenen Kanten zurück.
 
