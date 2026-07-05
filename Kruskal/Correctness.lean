@@ -1978,6 +1978,26 @@ theorem update_unionFind.rankInvariant' {nodeList : List node} (uF : unionFind n
   · sorry
   · sorry
 
+theorem max_rank {nodeList : List node} {uF : unionFind nodeList} (h_rankInvariant : uF.rankInvariant') : ∀ uFL ∈ uF.linkList, uFL.rank.val ≤ Nat.log 2 nodeList.length := by
+  intro uFL h_uFL_in
+  by_cases h_contra : uFL.rank.val > Nat.log 2 nodeList.length
+  · simp [unionFind.rankInvariant'] at h_rankInvariant
+    have h := h_rankInvariant uFL h_uFL_in
+    have h : 2 ^ uFL.rank.val ≤ uF.linkList.length := by
+      apply le_trans h
+      simp [List.length_filter_le]
+    have h' : 2 ^ (Nat.log 2 nodeList.length + 1) ≤ 2 ^ uFL.rank.val := by
+      simp [Nat.pow_le_pow_iff_right]
+      exact h_contra
+    have h := le_trans h' h
+    simp [uF.matching_length.symm] at h
+    have h' := Nat.lt_pow_succ_log_self (b := 2) (by simp) nodeList.length
+    simp at h'
+    have h := lt_of_le_of_lt h h'
+    simp at h
+  · simp at h_contra
+    exact h_contra
+
 -- theorem SimpleGraph_of_kruskal_IsEqReachable (edgeList : List edge) (h : edgeList ≠ []) : ∀ (x y), (SimpleGraph_of_edgeList edgeList h).Reachable x y ↔ (SimpleGraph_of_kruskal edgeList h).Reachable x y := by sorry
 
 -- theorem SimpleGraph_of_kruskal_IsSpanningTree (edgeList : List edge) (h : edgeList ≠ []) : SimpleGraph.IsSpanningTree (SimpleGraph_of_kruskal edgeList h) (SimpleGraph_of_edgeList edgeList h) := by sorry
