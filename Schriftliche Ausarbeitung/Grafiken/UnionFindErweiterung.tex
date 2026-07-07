@@ -1,0 +1,58 @@
+\NewAdigraph{UnionFindErweiterung}{
+    A:0,0;
+    B:2,0;
+    C:4,0;
+    D:6,0;
+    E:8,0
+}{
+    A, B;
+    B, B;
+    C, C;
+    D, D;
+    E, E
+}
+\begin{figure}[h]
+    \centering
+    \UnionFindErweiterung{}
+    \caption{Hinzufügen der Kante $(A, B)$}
+    \label{UnionFindErweiterung1}
+\end{figure}
+\RenewAdigraph{UnionFindErweiterung}{
+    A:0,0;
+    B:2,0;
+    C:4,0;
+    D:6,0;
+    E:8,0
+}{
+    A, B;
+    B, C;
+    C, C;
+    D, D;
+    E, E
+}
+\begin{figure}[h]
+    \centering
+    \UnionFindErweiterung{}
+    \caption{Hinzufügen der Kante $(B, C)$}
+    \label{UnionFindErweiterung2}
+\end{figure}
+
+\RenewAdigraph{UnionFindErweiterung}{
+    A:0,0;
+    B:2,0;
+    C:4,0;
+    D:6,0;
+    E:8,0
+}{
+    A, B;
+    B, C;
+    C, D;
+    D, D;
+    E, E
+}
+\begin{figure}[h]
+    \centering
+    \UnionFindErweiterung{}
+    \caption{Hinzufügen der Kante $(C, D)$}
+    \label{UnionFindErweiterung3}
+\end{figure}
