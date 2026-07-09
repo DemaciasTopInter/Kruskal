@@ -1,1 +1,96 @@
 \section{Die Implementierung}
+
+\subsection{Grundliegende Strukturen}
+Meine grundliegenden Strukturen sind Knoten (node), Kanten (edge), die Zeiger der Union-Find-Struktur (unionFindLink) und die Union-Find-Struktur selbst (unionFind).
+Knoten habe keine besonderen Eigenschaften, die sie erfüllen müssen, außer, dass sie unterscheidbar sein müssen. Es ist also ausreichend, sie durch eine ID zu repräsentieren.
+
+\begin{lstlisting}
+structure node : Type where
+  mk ::
+  id : Nat
+\end{lstlisting}
+
+Alternativ hätte ich Knoten auch direkt als natürliche Zahl darstellen können.
+Das wäre von der bedeutung her äquivalent gewesen, hätte mir hier und da ein par Zeilen Code gespart und ich hätte keine der Instazen schreiben müssen, weil die für Nat schon gegeben sind.
+
+\begin{lstlisting}
+abbrev node := Nat
+\end{lstlisting}
+
+Allerdings wollte ich zum einen meine grundliegenden Strukturen einheitlich halten und zum anderen hatte ich anfänglich noch geplant, den Zeiger Teil des Knoten sein zu lassen.
+Davon bin ich aber abgekommen, da ein Graph mit seinen Knoten unabhängig vom Kruskal-Algorithmus existieren,
+die Union-Find-Struktur und ihre Zeiger hingegen nur innerhalb des Algorithmus und abhängig von dessen aktuellen Zustand.
+
+Kanten müssen ebenfalls unterscheidbar sein.
+Vor allem aber verbinden sie zwei Knoten und haben kosten.
+Außerdem sollen Dopplungen von Kanten vermieden werden.
+Der Kruskal-Algorithmus ist definiert für ungerichtete Graphen, also sind für Knoten $u$ und $v$, die Kante von $u$ nach $v$ und die Kante von $v$ nach $u$ die slbe Kante.
+Um also Dopplungen zu vermeiden, habe ich die Bedingung gestellt, dass die ID des ersten Knoten echt kleiner als die des zweiten sein soll.
+
+\begin{lstlisting}
+structure edge : Type where
+  mk ::
+  id : Nat
+  node1 : Nat
+  node2 : Nat
+  cost : Nat
+  nodesLt : node1 < node2
+\end{lstlisting}
+
+Diese Darstellung ist nicht perfekt.
+Durch edge.nodesLt habe ich als Nebeneffekt Selbskanten verboten, also Kanten, die einen Knoten mit sich selbst verbinden.
+Das habe ich aber inkauf genommen, da es sich auf das Ergebnis nicht auswirken würde.
+Der Algorithmus würde solche Kanten niemals aufnehmen, da jeder Knoten immer in der selben Zusammenhangskomponente ist wie er selbst.
+Hätte ich Selbskantennicht von vorneherein ausgeschlossen, hätte ich zur performance steigerung eine Abfrage in den Algorithmus eingebaut,
+der diese noch vor dem Prüfen der Zusammenhangskomponente aussortiert.
+Außerdem ist edge.id eher kosmetischer Natur und wird von mir nur zu debug zwecken benutzt.
+Es reichen bei korrektem Input edge.node1 und edge.node2 zur eindeutigen identifikation.
+
+Was mir an den Kanten das meiste Kopfzerbrechen bereitet hat, sind die Relationen $=$ und $\le$.
+Auf der einen Seite habe ich bestimmt, dass zwei Kanten gleich ($=$) sind, wenn sie in all ihren Atributen überein stimmen.
+Das brauchte ich um in Beweisen verschiedene Kanten unterscheiden zu können.
+Auf der anderen Seite habe ich festgelegt, dass eine Kante kleinergleich ($\le$) einer andere ist, wenn ihre Kosten kleinergleich sind.
+Das war notwendig, um die Kantenliste nach Kosten sortieren zu können.
+Das Problem, das sich daraus ergibt, ist, dass $\le$ jetzt nicht antisemetrisch ist.
+Für zwei Kanten $e$ und $f$ gilt also nicht, dass aus $e \le f \land f \le e$ auch automatisch $e = f$ folgt.
+
+Die Zeiger sind müssen auf den ersten Blick keine Bedingungen erfüllen.
+Sie beinhalten nur die Information, zu welchem Knoten sie gehören, auf welchen sie zeigen und ihren Rang.
+Allerdings habe ich doch eine Bedingung eingebaut, indem ich den Rang nach oben auf die Länge der KnotenListe beschränke.
+Damit zeige ich, dass das suchen des Repräsentanten der Zusammenhangskomponenten auch terminiert.
+
+\begin{lstlisting}
+structure unionFindLink (nodeList : List node) : Type where
+  mk ::
+  nodeId : Nat
+  ccId : Nat
+  rank : Fin nodeList.length
+\end{lstlisting}
+
+Die Union-Find-Struktur besteht eigentlich nur aus der Lister an Zeigern, aber für die müssen eine menge Bedingungen gelten.
+
+\begin{itemize}
+    \item Für jeden Knoten muss es genau einen Zeiger geben.
+    \item Jeder Zeiger zeigt auf einen eindeutigen Knoten.
+    \item Es gibt genau so viele Zeiger wie Knoten.
+    \item Wenn ein Zeiger nicht auf seinen eigenen Knoten zeigt, dann hat der Zeiger des Knoten auf den er zeigt einen höheren Rang.
+    \item Es gibt keine Dopplungen.
+    \item Und die Rang-Invariante
+\end{itemize}
+
+Die Rang-Invariante besagt eigentlich, dass für einen Zeiger mit Rang $r$ es mindestens $2^r-1$ Zeiger gibt, die direkt oder indirekt auf ihn zeigen.
+Allerdings habe ich mich für den Anfang für eine schwächer Version entschieden, die sich einfacher beweisen lässt.
+Nämlich, dass es für einen Zeiger mit Rang $r$ mindestens $r$ Zeiger gibt, die nicht auf ihren eigenen Knoten zeigen.
+
+\begin{lstlisting}
+structure unionFind (nodeList : List node) : Type where
+  mk ::
+  linkList : List (unionFindLink nodeList)
+  matching_nodeId : ∀ x ∈ nodeList, ∃! y ∈ linkList, x.id = y.nodeId
+  matching_ccId : ∀ y ∈ linkList, ∃! x ∈ nodeList, x.id = y.ccId
+  matching_length : nodeList.length = linkList.length
+  matching_rank (y : unionFindLink nodeList) (h : y ∈ linkList) : y.nodeId = y.ccId ∨ y.rank < (List.choose (fun x => x.nodeId = y.ccId) linkList (exists_parent_link linkList matching_nodeId matching_ccId y h)).rank
+  nodup : linkList.Nodup
+  rankInvariant (x : unionFindLink nodeList) : x ∈ linkList → (linkList.filter (fun y => y.rank < x.rank ∧ ¬y.nodeId = y.ccId)).length ≥ x.rank
+\end{lstlisting}
+
