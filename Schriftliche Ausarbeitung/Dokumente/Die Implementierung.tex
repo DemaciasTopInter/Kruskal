@@ -50,13 +50,13 @@ Was mir an den Kanten das meiste Kopfzerbrechen bereitet hat, sind die Relatione
 Auf der einen Seite habe ich bestimmt, dass zwei Kanten gleich ($=$) sind, wenn sie in all ihren Atributen überein stimmen.
 Das brauchte ich um in Beweisen verschiedene Kanten unterscheiden zu können.
 Auf der anderen Seite habe ich festgelegt, dass eine Kante kleinergleich ($\le$) einer andere ist, wenn ihre Kosten kleinergleich sind.
-Das war notwendig, um die Kantenliste nach Kosten sortieren zu können.
+Das war notwendig, um die Kanten-Liste nach Kosten sortieren zu können.
 Das Problem, das sich daraus ergibt, ist, dass $\le$ jetzt nicht antisemetrisch ist.
 Für zwei Kanten $e$ und $f$ gilt also nicht, dass aus $e \le f \land f \le e$ auch automatisch $e = f$ folgt.
 
 Die Zeiger sind müssen auf den ersten Blick keine Bedingungen erfüllen.
 Sie beinhalten nur die Information, zu welchem Knoten sie gehören, auf welchen sie zeigen und ihren Rang.
-Allerdings habe ich doch eine Bedingung eingebaut, indem ich den Rang nach oben auf die Länge der KnotenListe beschränke.
+Allerdings habe ich doch eine Bedingung eingebaut, indem ich den Rang nach oben auf die Länge der Knoten-Liste beschränke.
 Damit zeige ich, dass das suchen des Repräsentanten der Zusammenhangskomponenten auch terminiert.
 
 \begin{lstlisting}
@@ -67,7 +67,7 @@ structure unionFindLink (nodeList : List node) : Type where
   rank : Fin nodeList.length
 \end{lstlisting}
 
-Die Union-Find-Struktur besteht eigentlich nur aus der Lister an Zeigern, aber für die müssen eine menge Bedingungen gelten.
+Die Union-Find-Struktur besteht eigentlich nur aus der Liste an Zeigern, aber für die müssen eine menge Bedingungen gelten.
 
 \begin{itemize}
     \item Für jeden Knoten muss es genau einen Zeiger geben.
@@ -94,3 +94,56 @@ structure unionFind (nodeList : List node) : Type where
   rankInvariant (x : unionFindLink nodeList) : x ∈ linkList → (linkList.filter (fun y => y.rank < x.rank ∧ ¬y.nodeId = y.ccId)).length ≥ x.rank
 \end{lstlisting}
 
+\subsection{Initialisierung der Union-Find-Struktur}
+Die Funktion, die für eine gültige Knoten-Liste, also eine ohne Duplikate, die Union-Find-Struktur initialisiert, muss zum einen die Zeiger-Liste erstellen
+und zum anderen die Nachweise erbringen, dass alle an sie gestellten Bedingungen auch erfüllt werden.
+
+Zuerst habe ich den trivialen Fall einer leeren Knoten-Liste abgefragt.
+Indiesem Fall ist auch die Zeiger-Liste leer und keiner der Beweise ist komplexer als zwei simp.
+Die erstellung der Zeiger-Liste habe ich in eine Verschachtelte Hilfsfunktion ausgelagert, die für jeden Knoten einen Zeiger mit Rang 0 erzeugt, der auf ihn selbst zeigt.
+Hierfür war es auch wichtig, erst den trivialen Fall abzufragen, damit jetzt die 0 kleiner als die Länge der Knoten-Liste und damit als Rang zulässig ist.
+
+\begin{lstlisting}
+def init_unionFind.linkList (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) : List (unionFindLink (nodeList : List node)) :=
+  helper nodeList where
+    helper : List node → List (unionFindLink (nodeList : List node))
+      | [] => []
+      | x::xs => { nodeId := x.id, ccId := x.id, rank := ⟨0, zero_lt_iff.mpr h_nonempty⟩ } :: (helper xs)
+\end{lstlisting}
+
+Die Beweise habe ich ebenfalls ausgelagert.
+Dadurch wurde die eigentliche Funktion deutlich kleiner und übersichtlicher.
+
+Um matching\_nodeId zu zeigen, habe ich für einen generischen Knoten den entsprechenden Zeiger gebaut und musste anschließend zeigen, dass sich dieser auch in der Zeiger-Liste befindet.
+\dots
+% So, oder ist das zu viel wie und zu wenig warum?
+
+\begin{lstlisting}
+theorem init_unionFind.linkList.matching_nodeId {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ nodeList, ∃! y, y ∈ (init_unionFind.linkList nodeList h_nonempty) ∧ x.id = y.nodeId
+\end{lstlisting}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Union}
+
+\subsection{Find}
+
+\subsection{kruskal}
