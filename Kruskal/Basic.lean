@@ -272,7 +272,7 @@ theorem init_unionFind.linkList.matching_nodeId {nodeList : List node} (h_nonemp
     nth_rewrite 1 [h_z_eq_id]
     rw [h_z_eq_cc, ← h_z_rank_zero]
 
-theorem init_unionFind.linkList.helper_eq_length (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) : (init_unionFind.linkList.helper nodeList h_nonempty l).length = l.length := by
+theorem init_unionFind.linkList.helper_matching_length (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) : (init_unionFind.linkList.helper nodeList h_nonempty l).length = l.length := by
   induction l with
   | nil =>
     simp [init_unionFind.linkList.helper]
@@ -281,7 +281,7 @@ theorem init_unionFind.linkList.helper_eq_length (nodeList : List node) (h_nonem
 
 theorem init_unionFind.linkList.helper_eq_input (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List node) (h_init_eq : init_unionFind.linkList.helper nodeList h_nonempty l₁ = init_unionFind.linkList.helper nodeList h_nonempty l₂) : l₁ = l₂ := by
   have h_eq_length : l₁.length = l₂.length := by
-    have h := init_unionFind.linkList.helper_eq_length nodeList h_nonempty
+    have h := init_unionFind.linkList.helper_matching_length nodeList h_nonempty
     simp [← h l₁, ← h l₂, h_init_eq]
   induction l₁ generalizing l₂ with
   | nil =>
@@ -312,8 +312,8 @@ theorem init_unionFind.linkList.helper_append_reverse (nodeList : List node) (h_
   set k₁ := nodeList_of_unionFindLinkList nodeList l₁
   set k₂ := nodeList_of_unionFindLinkList nodeList l₂
   refine ⟨k₁, k₂, ?_⟩
-  have h_eq₂ : helper nodeList h_nonempty k₁ = l₁ := by
-    have h_in : ∀ x ∈ l₁, x ∈ helper nodeList h_nonempty nodeList := by
+  have h_eq₂ : init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ := by
+    have h_in : ∀ x ∈ l₁, x ∈ init_unionFind.linkList.helper nodeList h_nonempty nodeList := by
       simp [h_split]
       intro x h_in
       left
@@ -325,11 +325,11 @@ theorem init_unionFind.linkList.helper_append_reverse (nodeList : List node) (h_
     | cons x xs ih =>
       simp [k₁, nodeList_of_unionFindLinkList, init_unionFind.linkList.helper]
       constructor
-      · have h_in' : x ∈ helper nodeList h_nonempty nodeList := by
+      · have h_in' : x ∈ init_unionFind.linkList.helper nodeList h_nonempty nodeList := by
           simp [h_in]
         nth_rewrite 2 [init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty x h_in']
         rw [← init_unionFind.linkList.helper_all_rank_zero nodeList nodeList h_nonempty x h_in']
-      · have h_in' : ∀ x ∈ xs, x ∈ helper nodeList h_nonempty nodeList := by
+      · have h_in' : ∀ x ∈ xs, x ∈ init_unionFind.linkList.helper nodeList h_nonempty nodeList := by
           intro y h_y_in
           have h_y_in' : y ∈ x :: xs := by
             simp [h_y_in]
@@ -338,8 +338,8 @@ theorem init_unionFind.linkList.helper_append_reverse (nodeList : List node) (h_
         have ih := ih h_in'
         exact ih
 
-  have h_eq₃ : helper nodeList h_nonempty k₂ = l₂ := by
-    have h_in : ∀ x ∈ l₂, x ∈ helper nodeList h_nonempty nodeList := by
+  have h_eq₃ : init_unionFind.linkList.helper nodeList h_nonempty k₂ = l₂ := by
+    have h_in : ∀ x ∈ l₂, x ∈ init_unionFind.linkList.helper nodeList h_nonempty nodeList := by
       simp [h_split]
       intro x h_in
       right
@@ -351,11 +351,11 @@ theorem init_unionFind.linkList.helper_append_reverse (nodeList : List node) (h_
     | cons x xs ih =>
       simp [k₂, nodeList_of_unionFindLinkList, init_unionFind.linkList.helper]
       constructor
-      · have h_in' : x ∈ helper nodeList h_nonempty nodeList := by
+      · have h_in' : x ∈ init_unionFind.linkList.helper nodeList h_nonempty nodeList := by
           simp [h_in]
         nth_rewrite 2 [init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty x h_in']
         rw [← init_unionFind.linkList.helper_all_rank_zero nodeList nodeList h_nonempty x h_in']
-      · have h_in' : ∀ x ∈ xs, x ∈ helper nodeList h_nonempty nodeList := by
+      · have h_in' : ∀ x ∈ xs, x ∈ init_unionFind.linkList.helper nodeList h_nonempty nodeList := by
           intro y h_y_in
           have h_y_in' : y ∈ x :: xs := by
             simp [h_y_in]
@@ -399,7 +399,7 @@ theorem init_unionFind.linkList.matching_ccId {nodeList : List node} (h_nonempty
     intro z h_z_in h_z_eq
     simp [x, init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty y h_in, ← h_z_eq]
 
-theorem init_unionFind.linkList.helper_nodup_of_nodup (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) (h_nodup : l.Nodup) : (init_unionFind.linkList.helper nodeList h_nonempty l).Nodup := by
+theorem init_unionFind.linkList.helper_nodup (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) (h_nodup : l.Nodup) : (init_unionFind.linkList.helper nodeList h_nonempty l).Nodup := by
   induction l with
   | nil =>
     simp [init_unionFind.linkList.helper]
@@ -435,7 +435,7 @@ def init_unionFind (nodeList : List node) (h_nodup : nodeList.Nodup) : unionFind
 
       have h_matching_length : nodeList.length = linkList.length := by
         simp [linkList, init_unionFind.linkList]
-        exact (init_unionFind.linkList.helper_eq_length nodeList h nodeList).symm
+        exact (init_unionFind.linkList.helper_matching_length nodeList h nodeList).symm
 
       have h_matching_rank : ∀ (y : unionFindLink nodeList) (h : y ∈ linkList), y.nodeId = y.ccId ∨ y.rank < (List.choose (fun x => x.nodeId = y.ccId) linkList (exists_parent_link linkList h_matching_nodeId h_matching_ccId y h)).rank := by
         intro y h_y_in
@@ -444,7 +444,7 @@ def init_unionFind (nodeList : List node) (h_nodup : nodeList.Nodup) : unionFind
 
       have h_nodup : linkList.Nodup := by
         simp [linkList, init_unionFind.linkList]
-        apply init_unionFind.linkList.helper_nodup_of_nodup nodeList h nodeList h_nodup
+        apply init_unionFind.linkList.helper_nodup nodeList h nodeList h_nodup
 
       have h_rankInvariant : (z : unionFindLink nodeList) → z ∈ linkList → (linkList.filter (fun y => y.rank < z.rank ∧ ¬y.nodeId = y.ccId)).length ≥ z.rank := by
         simp [linkList, init_unionFind.linkList]

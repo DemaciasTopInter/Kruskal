@@ -7,7 +7,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[a4paper, top=2cm, bottom=2cm, left=3cm, right=3cm, marginparwidth=1.75cm]{geometry}
 \usepackage{csquotes}
-\usepackage[backend=biber, sorting=none]{biblatex}
+\usepackage[backend=biber, sorting=none, maxbibnames=99]{biblatex}
 \addbibresource{Quellen.bib}
 \usepackage[T1]{fontenc}
 \usepackage{listings}
@@ -22,7 +22,7 @@
 
 \usepackage{color}
 \definecolor{keywordcolor}{rgb}{0.7, 0.1, 0.1}   % red
-\definecolor{tacticcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{tacticcolor}{rgb}{0.7, 0.1, 0.1}    % red
 \definecolor{commentcolor}{rgb}{0.4, 0.4, 0.4}   % grey
 \definecolor{symbolcolor}{rgb}{0.0, 0.1, 0.6}    % blue
 \definecolor{sortcolor}{rgb}{0.1, 0.5, 0.1}      % green
@@ -30,7 +30,12 @@
 
 \def\lstlanguagefiles{lstlean.tex}
 % set default language
-\lstset{language=lean}
+\lstset{
+    language=lean,
+    escapeinside={(.}{.)}
+}
+
+\input{codeCommands.tex} % Für Links zu den richtigen Stellen im Repo
 
 \begin{document}
 

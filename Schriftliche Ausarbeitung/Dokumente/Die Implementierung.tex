@@ -5,7 +5,7 @@ Meine grundliegenden Strukturen sind Knoten (node), Kanten (edge), die Zeiger de
 Knoten habe keine besonderen Eigenschaften, die sie erfüllen müssen, außer, dass sie unterscheidbar sein müssen. Es ist also ausreichend, sie durch eine ID zu repräsentieren.
 
 \begin{lstlisting}
-structure node : Type where
+structure (.\node.) : Type where
   mk ::
   id : Nat
 \end{lstlisting}
@@ -14,7 +14,7 @@ Alternativ hätte ich Knoten auch direkt als natürliche Zahl darstellen können
 Das wäre von der bedeutung her äquivalent gewesen, hätte mir hier und da ein par Zeilen Code gespart und ich hätte keine der Instazen schreiben müssen, weil die für Nat schon gegeben sind.
 
 \begin{lstlisting}
-abbrev node := Nat
+abbrev (.\textcolor{symbolcolor}{node}.) : Type := Nat
 \end{lstlisting}
 
 Allerdings wollte ich zum einen meine grundliegenden Strukturen einheitlich halten und zum anderen hatte ich anfänglich noch geplant, den Zeiger Teil des Knoten sein zu lassen.
@@ -28,7 +28,7 @@ Der Kruskal-Algorithmus ist definiert für ungerichtete Graphen, also sind für 
 Um also Dopplungen zu vermeiden, habe ich die Bedingung gestellt, dass die ID des ersten Knoten echt kleiner als die des zweiten sein soll.
 
 \begin{lstlisting}
-structure edge : Type where
+structure (.\edge.) : Type where
   mk ::
   id : Nat
   node1 : Nat
@@ -37,14 +37,14 @@ structure edge : Type where
   nodesLt : node1 < node2
 \end{lstlisting}
 
-Diese Darstellung ist nicht perfekt.
 Durch edge.nodesLt habe ich als Nebeneffekt Selbskanten verboten, also Kanten, die einen Knoten mit sich selbst verbinden.
-Das habe ich aber inkauf genommen, da es sich auf das Ergebnis nicht auswirken würde.
+Das habe ich aber bewusst inkauf genommen, da es sich auf das Ergebnis nicht auswirken würde.
 Der Algorithmus würde solche Kanten niemals aufnehmen, da jeder Knoten immer in der selben Zusammenhangskomponente ist wie er selbst.
 Hätte ich Selbskantennicht von vorneherein ausgeschlossen, hätte ich zur performance steigerung eine Abfrage in den Algorithmus eingebaut,
 der diese noch vor dem Prüfen der Zusammenhangskomponente aussortiert.
-Außerdem ist edge.id eher kosmetischer Natur und wird von mir nur zu debug zwecken benutzt.
-Es reichen bei korrektem Input edge.node1 und edge.node2 zur eindeutigen identifikation.
+
+Dazu sei angemerkt, dass die edge.id eher kosmetischer Natur ist und von mir nur zu debug zwecken benutzt wird.
+Es reichen bei korrektem Input edge.node1 und edge.node2 zur eindeutigen identifikation, allerdings finde ich es beim vergleichen übersichtlicher.
 
 Was mir an den Kanten das meiste Kopfzerbrechen bereitet hat, sind die Relationen $=$ und $\le$.
 Auf der einen Seite habe ich bestimmt, dass zwei Kanten gleich ($=$) sind, wenn sie in all ihren Atributen überein stimmen.
@@ -53,6 +53,7 @@ Auf der anderen Seite habe ich festgelegt, dass eine Kante kleinergleich ($\le$)
 Das war notwendig, um die Kanten-Liste nach Kosten sortieren zu können.
 Das Problem, das sich daraus ergibt, ist, dass $\le$ jetzt nicht antisemetrisch ist.
 Für zwei Kanten $e$ und $f$ gilt also nicht, dass aus $e \le f \land f \le e$ auch automatisch $e = f$ folgt.
+Dadurch konnte ich manche Lemma aus Mathlib über sortierte Listen nicht benutzen, da sie Lineare Ordnung voraus setzen, was die Antisemetrie von $\le$ beinhaltet.
 
 Die Zeiger sind müssen auf den ersten Blick keine Bedingungen erfüllen.
 Sie beinhalten nur die Information, zu welchem Knoten sie gehören, auf welchen sie zeigen und ihren Rang.
@@ -99,7 +100,7 @@ Die Funktion, die für eine gültige Knoten-Liste, also eine ohne Duplikate, die
 und zum anderen die Nachweise erbringen, dass alle an sie gestellten Bedingungen auch erfüllt werden.
 
 Zuerst habe ich den trivialen Fall einer leeren Knoten-Liste abgefragt.
-Indiesem Fall ist auch die Zeiger-Liste leer und keiner der Beweise ist komplexer als zwei simp.
+In diesem Fall ist auch die Zeiger-Liste leer und keiner der Beweise ist komplexer als zwei simp.
 Die erstellung der Zeiger-Liste habe ich in eine Verschachtelte Hilfsfunktion ausgelagert, die für jeden Knoten einen Zeiger mit Rang 0 erzeugt, der auf ihn selbst zeigt.
 Hierfür war es auch wichtig, erst den trivialen Fall abzufragen, damit jetzt die 0 kleiner als die Länge der Knoten-Liste und damit als Rang zulässig ist.
 
@@ -114,20 +115,110 @@ def init_unionFind.linkList (nodeList : List node) (h_nonempty : nodeList.length
 Die Beweise habe ich ebenfalls ausgelagert.
 Dadurch wurde die eigentliche Funktion deutlich kleiner und übersichtlicher.
 
-Um matching\_nodeId zu zeigen, habe ich für einen generischen Knoten den entsprechenden Zeiger gebaut und musste anschließend zeigen, dass sich dieser auch in der Zeiger-Liste befindet.
-\dots
-% So, oder ist das zu viel wie und zu wenig warum?
+\begin{lstlisting}
+def init_unionFind (nodeList : List node) (h_nodup : nodeList.Nodup) : unionFind (nodeList : List node) :=
+  if h : nodeList.length ≠ 0
+    then
+      let linkList : List (unionFindLink nodeList) := (init_unionFind.linkList nodeList h)
+      have h_matching_nodeId : ∀ x ∈ nodeList, ∃! y, y ∈ linkList ∧ x.id = y.nodeId := …
+
+      have h_matching_ccId : ∀ y ∈ linkList, ∃! x, x ∈ nodeList ∧ x.id = y.ccId := …
+
+      have h_matching_length : nodeList.length = linkList.length := …
+
+      have h_matching_rank : ∀ (y : unionFindLink nodeList) (h : y ∈ linkList), y.nodeId = y.ccId ∨ y.rank < (List.choose (fun x => x.nodeId = y.ccId) linkList (exists_parent_link linkList h_matching_nodeId h_matching_ccId y h)).rank := …
+
+      have h_nodup : linkList.Nodup := …
+
+      have h_rankInvariant : (z : unionFindLink nodeList) → z ∈ linkList → (linkList.filter (fun y => y.rank < z.rank ∧ ¬y.nodeId = y.ccId)).length ≥ z.rank := …
+
+      ⟨linkList, h_matching_nodeId, h_matching_ccId, h_matching_length, h_matching_rank, h_nodup, h_rankInvariant⟩
+    else
+      let linkList : List (unionFindLink nodeList) := []
+      ⟨linkList, by simp at h; simp [h], by simp [linkList], by simp at h; simp [h, linkList], by intro y h_y_in; simp [linkList] at h_y_in, by simp [linkList], by simp [linkList]⟩
+\end{lstlisting}
+
+Um matching\_nodeId zu zeigen, habe ich für einen generischen Knoten den entsprechenden Zeiger gebaut und gezeigt, dass sich dieser auch in der Zeiger-Liste befindet.
+Anschließend musste ich zeigen, dass dieser Zeiger auch die Anforderungen erfüllt (was er per definition tut)
+und, da ich $\exists!$ gefordert habe, dass jeder Zeiger aus der Liste, der die Anforderungen erfüllt, in Wahrheit der selbe ist.
 
 \begin{lstlisting}
-theorem init_unionFind.linkList.matching_nodeId {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ nodeList, ∃! y, y ∈ (init_unionFind.linkList nodeList h_nonempty) ∧ x.id = y.nodeId
+theorem init_unionFind.linkList.matching_nodeId {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ nodeList, ∃! y, y ∈ (init_unionFind.linkList nodeList h_nonempty) ∧ x.id = y.nodeId := by
+  intro x h_in
+  set y : unionFindLink nodeList := ⟨x.id, x.id, ⟨0, zero_lt_iff.mpr h_nonempty⟩⟩
+  rcases (mem_split h_in) with ⟨l₁, l₂, h_split, h_nin⟩
+  have h_y_in : y ∈ (init_unionFind.linkList nodeList h_nonempty) := by
+    simp [init_unionFind.linkList, y, h_split, init_unionFind.linkList.helper_append]
+    right
+    simp [init_unionFind.linkList.helper]
+  refine ⟨y, ?_⟩
+  constructor
+  · constructor
+    · exact h_y_in
+    · simp [y]
+  · intro z h_z
+    rcases h_z with ⟨h_z_in, h_z_eq_id⟩
+    simp [init_unionFind.linkList] at h_z_in
+    have h_z_eq_self := init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty z h_z_in
+    have h_z_eq_cc : x.id = z.ccId := by
+      rw [← h_z_eq_self]
+      exact h_z_eq_id
+    have h_z_rank_zero := init_unionFind.linkList.helper_all_rank_zero nodeList nodeList h_nonempty z h_z_in
+    simp [y]
+    nth_rewrite 1 [h_z_eq_id]
+    rw [h_z_eq_cc, ← h_z_rank_zero]
+  \end{lstlisting}
+
+Zuerst habe ich mir dafür jedoch drei Hilfslemma geschrieben, die sich alle durch eine einfache Listen-Induktion lösen ließen.
+Nämlich, dass eine geteilte Knoten-Liste eine geteilte Zeiger-Liste bedeutet, dass die Zeiger alle auf ihren eigenen Knoten Zeigen und das sie alle Rang 0 haben.
+
+\begin{lstlisting}
+theorem init_unionFind.linkList.helper_append (nodeList l₁ l₂ : List node) (h_nonempty : nodeList.length ≠ 0) : init_unionFind.linkList.helper nodeList h_nonempty (l₁ ++ l₂) = (init_unionFind.linkList.helper nodeList h_nonempty l₁) ++ (init_unionFind.linkList.helper nodeList h_nonempty l₂)
+
+theorem init_unionFind.linkList.helper_all_self_connected (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.nodeId = x.ccId
+
+theorem init_unionFind.linkList.helper_all_rank_zero (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.rank = ⟨0, zero_lt_iff.mpr h_nonempty⟩
+\end{lstlisting}
+
+Der Beweis für matching\_ccId ist dem für matching\_nodeId sehr ähnlich nur andersrum, da ich jetzt für einen generischen Zeiger den entsprechenden Knoten baue.
+Dem entsprechend brauchte ich auch das Teilungs-Lemma in die andere Richtung.
+Das war jedoch komplexer als die Hinrichtung, da ich zuerst definieren musste, wie ich aus einer Zeiger-Liste auf eine Knoten-Liste schließe
+und anschließend beweisen, dass es in diesem Fall die selbe ist, aus der die Zeiger-Liste selbst erzeugt wurde.
+
+\begin{lstlisting}
+def nodeList_of_unionFindLinkList (nodeList : List node) : List (unionFindLink nodeList) → List node
+  | [] => []
+  | x::xs => ⟨x.nodeId⟩ :: (nodeList_of_unionFindLinkList nodeList xs)
+
+theorem init_unionFind.linkList.helper_append_reverse (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List (unionFindLink nodeList)) (h_split : init_unionFind.linkList.helper nodeList h_nonempty nodeList = l₁ ++ l₂) : ∃ k₁ k₂, nodeList = k₁ ++ k₂ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₂ = l₂ := by
+  set k₁ := nodeList_of_unionFindLinkList nodeList l₁
+  set k₂ := nodeList_of_unionFindLinkList nodeList l₂
+  refine ⟨k₁, k₂, ?_⟩
+  have h_eq₂ : init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ := …
+
+  have h_eq₃ : init_unionFind.linkList.helper nodeList h_nonempty k₂ = l₂ := …
+
+  have h_eq₁ : nodeList = k₁ ++ k₂ := …
+
+  refine ⟨h_eq₁, h_eq₂, h_eq₃⟩
+
+theorem init_unionFind.linkList.matching_ccId {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ y ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = y.ccId
+\end{lstlisting}
+
+Der Beweis für matching\_length lässt sich durch eine einfache Listen-Induktion zeigen, diese hat aber einen Harken.
+Da der Typ der Ränge der Zeiger von der Länge der Knoten-Liste abhängt, hätten bei einer Induktion über die Knoten-Liste
+die Zeiger-Listen in der Induktionshypothese und im Ziel einen verschiedenen Typ und die Induktionshypothese ließe sich nicht anwenden.
+Deshalb führe ich den Beweis nicht über init\_unionFind.linkList und die Knoten-Liste, sonder über die innere Hilfsfunktion und eine beliebige Knoten-Liste.
+Gleiches gilt für den Beweis von nodup, den ich durch eine doppelte Induktion gelöst habe.
+
+\begin{lstlisting}
+theorem init_unionFind.linkList.helper_matching_length (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) : (init_unionFind.linkList.helper nodeList h_nonempty l).length = l.length
+
+theorem init_unionFind.linkList.helper_nodup (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) (h_nodup : l.Nodup) : (init_unionFind.linkList.helper nodeList h_nonempty l).Nodup
 \end{lstlisting}
 
 
-
-
-
-
-
+matching\_rank hat kein eigenes Lemma bekommen, da es quasi durch das Lemma, dass alle Zeiger Rang 0 haben geöst wurde.
 
 
 
