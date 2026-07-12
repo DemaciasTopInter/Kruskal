@@ -115,6 +115,7 @@ theorem connected_component_of_init_unionFind_of_id_eq_id {nodeList : List node}
     have h_x_prop := List.choose_property (fun x => x.nodeId = id) (init_unionFind.linkList nodeList (by simp [h_nonempty])) h_ex
     simp [← h_x] at h_x_prop
     have h_x_selfcon := init_unionFind.linkList.helper_all_self_connected nodeList nodeList (by simp [h_nonempty]) x h_x_in
+    rw [connected_component_of_unionFind_of_unionFindLink]
     simp [h_x_selfcon.symm, h_x_prop]
   · simp at h_nonempty
     simp [h_nonempty] at h
@@ -295,22 +296,22 @@ theorem connected_component_of_unionFind_of_id_not_con
     have h_uFLx_in := List.choose_mem (fun y => y.nodeId = x.id) uF.linkList h_ex_uFLx
     simp_all [← h_uFLx]
     by_cases h_uFLx_self_con : uFLx.ccId = uFLx.nodeId
-    · simp [← h_uFLx_self_con, ← h_uFLx_prop]
+    · rw [connected_component_of_unionFind_of_unionFindLink]
+      simp [← h_uFLx_self_con]
       intro h_eq
       have h := (h_uF_not_con uFLx h_uFLx_in).mp h_eq
       cases x
       cases z
       simp [h] at h_uFLx_prop
       simp [h_uFLx_prop.symm]
-    · simp [h_uFLx_self_con, ← h_uFLx_prop]
-      have h_goal : ∀ (uFL : unionFindLink nodeList) (h_in : uFL ∈ uF.linkList), connected_component_of_unionFind_of_id_helper uF uFL h_in = z.id → uFL.nodeId = z.id := by
+    · have h_goal : ∀ (uFL : unionFindLink nodeList) (h_in : uFL ∈ uF.linkList), connected_component_of_unionFind_of_unionFindLink uF uFL h_in = z.id → uFL.nodeId = z.id := by
         intro uFL h_uFL_in
-        induction uFL, h_uFL_in using connected_component_of_unionFind_of_id_helper.induct with
+        induction uFL, h_uFL_in using connected_component_of_unionFind_of_unionFindLink.induct with
         | case1 uFL h_uFL_in h_uFL_self_con =>
-          rw [connected_component_of_unionFind_of_id_helper]
+          rw [connected_component_of_unionFind_of_unionFindLink]
           simp [h_uFL_self_con]
         | case2 uFL h_uFL_in h_uFL_not_self_con uFLy h_uFLy_in h_rank_lt ih =>
-          rw [connected_component_of_unionFind_of_id_helper]
+          rw [connected_component_of_unionFind_of_unionFindLink]
           simp [h_uFL_not_self_con]
           intro h_id
           have h_uFLx_prop := List.choose_property (fun y => y.nodeId = uFL.ccId) uF.linkList (by grind)
@@ -334,6 +335,7 @@ theorem connected_component_of_unionFind_of_id_not_con
     have h_uFLz_prop := List.choose_property (fun x => x.nodeId = z.id) uF.linkList h_ex_uFLz
     have h_uFLz_in := List.choose_mem (fun x => x.nodeId = z.id) uF.linkList h_ex_uFLz
     simp [← h_uFLz] at *
+    rw [connected_component_of_unionFind_of_unionFindLink]
     simp [h_uFLz_prop, (h_uF_not_con uFLz h_uFLz_in)]
 
 theorem kruskal_helper_not_con_invariant_append
@@ -583,7 +585,7 @@ theorem connected_component_of_unionFind_of_id_of_self
   set uFLcc' := List.choose (fun x => x.nodeId = cc) uF.linkList (connected_component_of_unionFind_of_id._proof_1 uF cc (h_cc ▸ h') : ∃ x ∈ uF.linkList, x.nodeId = cc) with h_uFLcc'
   have h_uFLcc'_prop := List.choose_property (fun x => x.nodeId = cc) uF.linkList (connected_component_of_unionFind_of_id._proof_1 uF cc (h_cc ▸ h') : ∃ x ∈ uF.linkList, x.nodeId = cc)
   have h_uFLcc'_mem := List.choose_mem (fun x => x.nodeId = cc) uF.linkList (connected_component_of_unionFind_of_id._proof_1 uF cc (h_cc ▸ h') : ∃ x ∈ uF.linkList, x.nodeId = cc)
-  simp [connected_component_of_unionFind_of_id, h_uFLcc'_prop]
+  simp [connected_component_of_unionFind_of_id]
   cases h' with
   | intro x h_x =>
   cases x
@@ -593,7 +595,9 @@ theorem connected_component_of_unionFind_of_id_of_self
   simp [ExistsUnique] at h_matching_nodeId
   rcases h_matching_nodeId with ⟨uFLcc'', h_prop, h_unique⟩
   simp [← h_uFLcc', h_unique uFLcc' h_uFLcc'_mem h_uFLcc'_prop.symm]
-  simp [← h_unique uFLcc h_uFLcc_self_con.left h_uFLcc_self_con.right.left.symm, h_uFLcc_self_con.right.right]
+  simp [← h_unique uFLcc h_uFLcc_self_con.left h_uFLcc_self_con.right.left.symm]
+  rw [connected_component_of_unionFind_of_unionFindLink]
+  simp [h_uFLcc_self_con]
 
 theorem node_of_uFL
   {nodeList : List node}
@@ -666,14 +670,14 @@ theorem node_of_uFL
       have h := lenght_ge_of_injectiv h_nodup h_injectiv h_image
       simp [h_len] at h
 
-theorem connected_component_of_unionFind_of_id_helper_of_self
+theorem connected_component_of_unionFind_of_unionFindLink_of_self
   {nodeList : List node}
   {uF : unionFind nodeList}
   {a b : unionFindLink nodeList}
   {h_a_in : a ∈ uF.linkList}
   {h_b_in : b ∈ uF.linkList}
   (h_nodup : nodeList.Nodup)
-  : connected_component_of_unionFind_of_id_helper uF a h_a_in = connected_component_of_unionFind_of_id_helper uF b h_b_in →
+  : connected_component_of_unionFind_of_unionFindLink uF a h_a_in = connected_component_of_unionFind_of_unionFindLink uF b h_b_in →
     connected_component_of_unionFind_of_id uF a.nodeId (node_of_uFL h_a_in h_nodup) =
     connected_component_of_unionFind_of_id uF b.nodeId (node_of_uFL h_b_in h_nodup) := by
   have h_unique_nodeId : ∀ uFL_1 ∈ uF.linkList, ∀ uFL_2 ∈ uF.linkList, uFL_1.nodeId = uFL_2.nodeId → uFL_1 = uFL_2 := by
@@ -686,8 +690,8 @@ theorem connected_component_of_unionFind_of_id_helper_of_self
     have h_eq_1 := h_unique uFL_1 h_uFL_1_in h_x_id
     have h_eq_2 := h_unique uFL_2 h_uFL_2_in (by simp [h_x_id, h_nodeId_eq])
     simp [h_eq_1, h_eq_2]
-  rw [connected_component_of_unionFind_of_id_helper]
-  rw [connected_component_of_unionFind_of_id_helper]
+  rw [connected_component_of_unionFind_of_unionFindLink]
+  rw [connected_component_of_unionFind_of_unionFindLink]
   simp [connected_component_of_unionFind_of_id]
   have h_a'_prop := List.choose_property (fun x => x.nodeId = a.nodeId) uF.linkList (connected_component_of_unionFind_of_id._proof_1 uF a.nodeId (node_of_uFL h_a_in h_nodup) : ∃ x ∈ uF.linkList, x.nodeId = a.nodeId)
   have h_a'_in := List.choose_mem (fun x => x.nodeId = a.nodeId) uF.linkList (connected_component_of_unionFind_of_id._proof_1 uF a.nodeId (node_of_uFL h_a_in h_nodup) : ∃ x ∈ uF.linkList, x.nodeId = a.nodeId)
@@ -697,16 +701,24 @@ theorem connected_component_of_unionFind_of_id_helper_of_self
   set b' := List.choose (fun x => x.nodeId = b.nodeId) uF.linkList (connected_component_of_unionFind_of_id._proof_1 uF b.nodeId (node_of_uFL h_b_in h_nodup) : ∃ x ∈ uF.linkList, x.nodeId = b.nodeId) with ← h_b'
   simp [h_a', h_b', h_unique_nodeId a' h_a'_in a h_a_in (by simp [h_a'_prop]), h_unique_nodeId b' h_b'_in b h_b_in (by simp [h_b'_prop])]
   split_ifs with h_a_self_con h_b_self_con
-  · simp
   · intro h
-    rw [connected_component_of_unionFind_of_id_helper]
+    rw [connected_component_of_unionFind_of_unionFindLink]
+    simp [← h_a_self_con, h_b_self_con, h]
+    rw [connected_component_of_unionFind_of_unionFindLink]
+    simp [h_b_self_con]
+  · intro h
+    rw [connected_component_of_unionFind_of_unionFindLink]
+    simp [← h_a_self_con]
+    rw [connected_component_of_unionFind_of_unionFindLink]
     simp [h_b_self_con, h]
   · intro h
-    rw [connected_component_of_unionFind_of_id_helper]
-    simp [h_a_self_con, h]
+    rw [connected_component_of_unionFind_of_unionFindLink]
+    rw [connected_component_of_unionFind_of_unionFindLink]
+    rename_i h_b_self_con
+    simp [h_a_self_con, h_b_self_con, h]
   · intro h
-    rw [connected_component_of_unionFind_of_id_helper]
-    rw [connected_component_of_unionFind_of_id_helper]
+    rw [connected_component_of_unionFind_of_unionFindLink]
+    rw [connected_component_of_unionFind_of_unionFindLink]
     rename_i h_b_self_con
     simp [h_a_self_con, h_b_self_con, h]
 
@@ -745,18 +757,18 @@ theorem eq_cc
   (h_path_start : ∃ p', p = a :: p')
   (h_path_end : ∃ c ∈ p, c.nodeId = c.ccId)
   -- parent_path a = parent_path b
-  : connected_component_of_unionFind_of_id_helper uF a h_a_in = connected_component_of_unionFind_of_id_helper uF' b h_b_in := by
-  induction a, h_a_in using connected_component_of_unionFind_of_id_helper.induct generalizing b p with
+  : connected_component_of_unionFind_of_unionFindLink uF a h_a_in = connected_component_of_unionFind_of_unionFindLink uF' b h_b_in := by
+  induction a, h_a_in using connected_component_of_unionFind_of_unionFindLink.induct generalizing b p with
   | case1 x h_x_in h_x_self_con =>
-    rw [connected_component_of_unionFind_of_id_helper]
+    rw [connected_component_of_unionFind_of_unionFindLink]
     simp [h_x_self_con, ← h_eq]
-    rw [connected_component_of_unionFind_of_id_helper]
+    rw [connected_component_of_unionFind_of_unionFindLink]
     simp [h_x_self_con]
   | case2 x h_x_in h_x_not_self_con y h_y_in h_rank_lt =>
     rename_i ih
     simp [← h_eq]
-    rw [connected_component_of_unionFind_of_id_helper]
-    rw [connected_component_of_unionFind_of_id_helper]
+    rw [connected_component_of_unionFind_of_unionFindLink]
+    rw [connected_component_of_unionFind_of_unionFindLink]
     simp [h_x_not_self_con]
     have h_y_eq_parent : y = parent x h_x_in := by
       simp [y, parent]
@@ -773,7 +785,7 @@ theorem eq_cc
       have h_y_eq_parent' : y = parent b h_b_in := by
         simp [h_path_start, parent_path, h_eq] at h_path'
         simp [← h_path'.left]
-      have h_y : List.choose (fun y => y.nodeId = x.ccId) uF.linkList (connected_component_of_unionFind_of_id_helper._unary._proof_1 uF x h_x_in : ∃ y ∈ uF.linkList, y.nodeId = x.ccId) = y := by
+      have h_y : List.choose (fun y => y.nodeId = x.ccId) uF.linkList (connected_component_of_unionFind_of_unionFindLink._unary._proof_1 uF x h_x_in : ∃ y ∈ uF.linkList, y.nodeId = x.ccId) = y := by
         simp [y]
       simp [parent, ← h_eq] at h_y_eq_parent'
       simp [h_y, ← h_y_eq_parent']
@@ -929,11 +941,13 @@ theorem connected_component_of_unionFind_of_id_of_update_unionFind_of_not_con
     have h_choose : uF.linkList[List.findIdx (fun b => decide (b.nodeId = c)) uF.linkList]'sorry = List.choose (fun x => x.nodeId = c) uF.linkList sorry := by
       simp [choose_findIdx]
     simp [h_choose] at h_uFLc
-    split_ifs with h_self_con
-    · simp [h_self_con, h_uFLc_prop, ccc, connected_component_of_unionFind_of_id]
-      simp [← h_uFLc, h_uFLc_prop, h_self_con]
+    by_cases h_self_con : uFLc.nodeId = uFLc.ccId
     · simp [ccc, connected_component_of_unionFind_of_id]
+      rw [connected_component_of_unionFind_of_unionFindLink]
+      rw [connected_component_of_unionFind_of_unionFindLink]
       simp [← h_uFLc, h_self_con]
+    · simp [ccc, connected_component_of_unionFind_of_id]
+      simp [← h_uFLc]
       simp [update_unionFind, ← h_cca, ← h_ccb, ← h_uFLa, ← h_uFLb, ← h_uFLa', ← h_uFLb'] at h_updated_uF
       simp [h_eq, h_rank_lt] at h_updated_uF
       simp [← h_updated_uF]
@@ -965,7 +979,7 @@ theorem connected_component_of_unionFind_of_id_of_update_unionFind_of_not_con
           ∀ (z : unionFindLink nodeList)
             (h_z_in : z ∈ uF.linkList)
             (h_z_in' : z ∈ updated_uF.linkList)
-            (h_not : ¬(connected_component_of_unionFind_of_id updated_uF a h_a = connected_component_of_unionFind_of_id_helper updated_uF z h_z_in' ∨ connected_component_of_unionFind_of_id updated_uF b h_b = connected_component_of_unionFind_of_id_helper updated_uF z h_z_in')),
+            (h_not : ¬(connected_component_of_unionFind_of_id updated_uF a h_a = connected_component_of_unionFind_of_unionFindLink updated_uF z h_z_in' ∨ connected_component_of_unionFind_of_id updated_uF b h_b = connected_component_of_unionFind_of_unionFindLink updated_uF z h_z_in')),
             ∀ a ∈ get_parent_path h_z_in,
               a ∈ updated_uF.linkList := by
           intro z h_z_in
@@ -974,7 +988,7 @@ theorem connected_component_of_unionFind_of_id_of_update_unionFind_of_not_con
             sorry
           | case2 =>
             sorry
-        have h_ccc'_eq : connected_component_of_unionFind_of_id updated_uF c h_c = connected_component_of_unionFind_of_id_helper updated_uF uFLc h_uFLc_in' := by sorry
+        have h_ccc'_eq : connected_component_of_unionFind_of_id updated_uF c h_c = connected_component_of_unionFind_of_unionFindLink updated_uF uFLc h_uFLc_in' := by sorry
         simp only [h_ccc'_eq] at h_not_con'
         exact h_path uFLc h_uFLc_in h_uFLc_in' h_not_con'
       -- · simp [h_p_eq_p', p'] -- kann ich diese beiden auch für p zeigen?
@@ -1460,6 +1474,8 @@ theorem SimpleGraph_of_kruskal.IsAcyclic (edgeList : List edge) (h : edgeList �
       simp [h_uFLa, h_uFLb] at h_uFLa_mem h_uFLb_mem h_uFLa_prop h_uFLb_prop
       simp [uF, init_unionFind, h_nonempty, init_unionFind.linkList] at h_uFLa_mem h_uFLb_mem
       have h_all_self_con := init_unionFind.linkList.helper_all_self_connected (nodeList_of_edgeList edgeList) (nodeList_of_edgeList edgeList) (by simp [h_nonempty])
+      rw [connected_component_of_unionFind_of_unionFindLink]
+      rw [connected_component_of_unionFind_of_unionFindLink]
       simp [← h_all_self_con uFLa h_uFLa_mem, ← h_all_self_con uFLb h_uFLb_mem, h_uFLa_prop, h_uFLb_prop]
       intro h_a_eq_b
       have h_a_eq_b : a = b := by

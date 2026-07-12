@@ -27,7 +27,8 @@ calc, have, show, suffices, by, in, at, let, forall, Pi, fun,
 exists, if, dif, then, else, assume, obtain, from, register_simp_ext, unless, break, continue,
 mutual, do, def, run_cmd, const,
 partial, mut, where, macro, syntax, deriving,
-return, try, catch, for, macro_rules, declare_syntax_cat, abbrev},
+return, try, catch, for, macro_rules, declare_syntax_cat, abbrev,
+termination_by, decreasing_by},
 
 % Sorts
 morekeywords=[2]{Sort, Type, Prop},
@@ -41,7 +42,7 @@ refine, repeat, cases, rewrite, rw,
 simp, simp_all, contradiction,
 constructor, injection,
 induction,
-},
+by_cases},
 
 % modifiers, taken from lean-syntax.el
 % note: 'otherkeywords' is needed because these use a different symbol.

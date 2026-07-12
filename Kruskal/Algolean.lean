@@ -252,7 +252,7 @@ theorem kruskal_time2 (edgeList : List edge) (nodeList : List node) (h_matching_
   apply le_of_le_of_eq h
   simp
 
-def connected_component_of_unionFind_of_id_helper_prog {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) : Prog (find_query nodeList) (found nodeList uF) := do
+def connected_component_of_unionFind_of_unionFindLink_prog {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) : Prog (find_query nodeList) (found nodeList uF) := do
   if h_self_connected : uFL.ccId = uFL.nodeId
     then
       return ⟨uFL.ccId, by refine ⟨uFL, h_uFL_in, h_self_connected.symm, rfl⟩⟩
@@ -261,7 +261,7 @@ def connected_component_of_unionFind_of_id_helper_prog {nodeList : List node} (u
       let p : unionFindLink nodeList := f.p
       have h_p_in : p ∈ uF.linkList := f.isIn
       have h_r : p.rank > uFL.rank := f.rank_gt
-      return ← connected_component_of_unionFind_of_id_helper_prog uF p h_p_in
+      return ← connected_component_of_unionFind_of_unionFindLink_prog uF p h_p_in
 termination_by nodeList.length - uFL.rank
   decreasing_by
   grind
@@ -284,7 +284,7 @@ def connected_component_of_unionFind_of_id_prog {nodeList : List node} (uF : uni
     simp [uFL]
   have h_uFL_in := List.choose_mem _ uF.linkList h_ex_uFL
   have h_uFL_prop := List.choose_property _ uF.linkList h_ex_uFL
-  return ← connected_component_of_unionFind_of_id_helper_prog uF uFL h_uFL_in
+  return ← connected_component_of_unionFind_of_unionFindLink_prog uF uFL h_uFL_in
 
 def kruskal_model3 (nodeList : List node) : Model (kruskal_query' nodeList) (Nat × Nat) where
   evalQuery
@@ -323,13 +323,13 @@ def reduction {nodeList : List node} : Reduction (kruskal_query' nodeList) (find
     | .find uF id h _ => connected_component_of_unionFind_of_id_prog uF id h
     | .union uF x y h₁ h₂ h_rankInvariant => do find_query.union uF x y h₁ h₂ h_rankInvariant
 
-theorem connected_component_of_unionFind_of_id_helper_prog_eval {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList)
-  : connected_component_of_unionFind_of_id_helper uF uFL h_uFL_in = ((connected_component_of_unionFind_of_id_helper_prog uF uFL h_uFL_in).eval (find_model nodeList)).id := by
-  fun_induction connected_component_of_unionFind_of_id_helper with
+theorem connected_component_of_unionFind_of_unionFindLink_prog_eval {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList)
+  : connected_component_of_unionFind_of_unionFindLink uF uFL h_uFL_in = ((connected_component_of_unionFind_of_unionFindLink_prog uF uFL h_uFL_in).eval (find_model nodeList)).id := by
+  fun_induction connected_component_of_unionFind_of_unionFindLink with
   | case1 uFL h_uFL_in h_self_con =>
-    simp [find_model, h_self_con, connected_component_of_unionFind_of_id_helper_prog]
+    simp [find_model, h_self_con, connected_component_of_unionFind_of_unionFindLink_prog]
   | case2 uFL h_uFL_in h_not_self_con p h_p_in h_r ih =>
-    rw [connected_component_of_unionFind_of_id_helper_prog]
+    rw [connected_component_of_unionFind_of_unionFindLink_prog]
     simp [find_model, h_not_self_con, ih]
     have h_p_eq : parent uFL h_uFL_in = p := by
       simp [p, parent]
@@ -338,10 +338,7 @@ theorem connected_component_of_unionFind_of_id_helper_prog_eval {nodeList : List
 theorem connected_component_of_unionFind_of_id_prog_eval {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id)
   : connected_component_of_unionFind_of_id uF id h = ((connected_component_of_unionFind_of_id_prog uF id h).eval (find_model nodeList)).id := by
   simp [connected_component_of_unionFind_of_id, connected_component_of_unionFind_of_id_prog]
-  split_ifs with h_self_con
-  · rw [connected_component_of_unionFind_of_id_helper_prog]
-    simp [h_self_con]
-  · exact connected_component_of_unionFind_of_id_helper_prog_eval _ _ _
+  exact connected_component_of_unionFind_of_unionFindLink_prog_eval _ _ _
 
 theorem model_evalQuery_eq {nodeList : List node} : ∀ {l} (q : (kruskal_query' nodeList) l), (reduction.reduce q).eval (find_model nodeList) = (kruskal_model3 nodeList).evalQuery q := by
   intro t q
@@ -362,9 +359,9 @@ theorem model_evalQuery_eq {nodeList : List node} : ∀ {l} (q : (kruskal_query'
   | union uF x y h₁ h₂ =>
     simp [find_model, kruskal_model3, reduction]
 
-theorem connected_component_of_unionFind_of_id_helper_prog_tim_log {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) (h_rankInvariant : uF.rankInvariant') : (connected_component_of_unionFind_of_id_helper_prog uF uFL h_uFL_in).time (find_model nodeList) ≤ (Nat.log 2 nodeList.length - uFL.rank.val, 0) := by
+theorem connected_component_of_unionFind_of_unionFindLink_prog_tim_log {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) (h_rankInvariant : uF.rankInvariant') : (connected_component_of_unionFind_of_unionFindLink_prog uF uFL h_uFL_in).time (find_model nodeList) ≤ (Nat.log 2 nodeList.length - uFL.rank.val, 0) := by
   have h_max_rank := max_rank h_rankInvariant
-  fun_induction connected_component_of_unionFind_of_id_helper_prog with
+  fun_induction connected_component_of_unionFind_of_unionFindLink_prog with
   | case1 uFL h_uFL_in h_self_con =>
     simp
   | case2 uFL h_uFL_in h_not_self_con ih =>
@@ -398,7 +395,7 @@ theorem connected_component_of_unionFind_of_id_prog_tim_log {nodeList : List nod
   have h_le : (Nat.log 2 nodeList.length - uFL.rank.val, 0) ≤ (Nat.log 2 nodeList.length, 0) := by
     simp
   apply le_trans ?_ h_le
-  exact connected_component_of_unionFind_of_id_helper_prog_tim_log uF uFL h_uFL_in h_rankInvariant
+  exact connected_component_of_unionFind_of_unionFindLink_prog_tim_log uF uFL h_uFL_in h_rankInvariant
 
 theorem model_cost_le {nodeList : List node} : ∀ {l} (q : (kruskal_query' nodeList) l), (reduction.reduce q).time (find_model nodeList) ≤ (kruskal_model3 nodeList).cost q := by
   intro t q

@@ -1,4 +1,5 @@
 \section{Die Implementierung}
+Der Code aus diesem Abschnitt ist in der Datei Basic.lean zu finden.
 
 \subsection{Grundliegende Strukturen}
 Meine grundliegenden Strukturen sind Knoten (node), Kanten (edge), die Zeiger der Union-Find-Struktur (unionFindLink) und die Union-Find-Struktur selbst (unionFind).
@@ -93,6 +94,13 @@ structure unionFind (nodeList : List node) : Type where
   matching_rank (y : unionFindLink nodeList) (h : y ∈ linkList) : y.nodeId = y.ccId ∨ y.rank < (List.choose (fun x => x.nodeId = y.ccId) linkList (exists_parent_link linkList matching_nodeId matching_ccId y h)).rank
   nodup : linkList.Nodup
   rankInvariant (x : unionFindLink nodeList) : x ∈ linkList → (linkList.filter (fun y => y.rank < x.rank ∧ ¬y.nodeId = y.ccId)).length ≥ x.rank
+\end{lstlisting}
+
+Um in matching\_rank über den Zeiger des Kontens, auf den der ursprüngliche Zeiger zeigt, aussagen treffen zu können, braucht es den Beweis, das ein solcher auch existiert.
+Das folgt direkt aus matching\_nodeId und matching\_ccId, aber zur besseren Übersicht habe ich es in ein eigenes Lemma ausgelagert.
+
+\begin{lstlisting}
+theorem exists_parent_link {nodeList : List node} (linkList : List (unionFindLink nodeList)) (matching_nodeId : ∀ x ∈ nodeList, ∃! y ∈ linkList, x.id = y.nodeId) (matching_ccId : ∀ y ∈ linkList, ∃! x ∈ nodeList, x.id = y.ccId) : ∀ x ∈ linkList, ∃ y ∈ linkList, y.nodeId = x.ccId
 \end{lstlisting}
 
 \subsection{Initialisierung der Union-Find-Struktur}
@@ -217,24 +225,108 @@ theorem init_unionFind.linkList.helper_matching_length (nodeList : List node) (h
 theorem init_unionFind.linkList.helper_nodup (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) (h_nodup : l.Nodup) : (init_unionFind.linkList.helper nodeList h_nonempty l).Nodup
 \end{lstlisting}
 
-
 matching\_rank hat kein eigenes Lemma bekommen, da es quasi durch das Lemma, dass alle Zeiger Rang 0 haben geöst wurde.
 
+\subsection{Find}
+Um für einen Zeiger die Zusammenhangskomponente zu finden, geht man die Kette der Zeiger bis zum Ende.
+Zeigt der aktuelle Zeiger auf seinen eigenen Knoten ist man am Ende angekommen und der Knoten repräsentiert die Zusammenhangskomponente,
+tut er das nicht, geht man weiter zum Zeiger des Knoten, auf den er Zeigt.
 
+Da das eine rekursive Funktion ist, und es kein Element gibt, das in jedem Schritt kleiner wird, braucht Lean einen nachweis, dass diese Funktion auch terminiert.
+Über matching\_rank zeige ich, dass der Rang des neuen Zeigers höher ist als der des aktuellen.
+Dadurch habe ich doch eine natürlische Zahl, die in jedem Schritt kleiner wird, nämlich die Rang Oberschranke - der Rang des aktuellen Zeigers.
+Das ist auch der grund, warum ich den Rang überhaupt beschränke.
 
+\begin{lstlisting}
+def connected_component_of_unionFind_of_unionFindLink {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList): Nat :=
+  if h_self_connected : uFL.ccId = uFL.nodeId
+    then
+      uFL.ccId
+    else
+      let parent : unionFindLink nodeList := List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)
+      have h_parent_in : parent ∈ uF.linkList := List.choose_mem (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)
+      have h_r : parent.rank > uFL.rank := by
+        rcases uF.matching_rank uFL h_uFL_in with h | h
+        · simp [h] at h_self_connected
+        · have h_parent_eq : parent = List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in) := by rfl
+          rw [← h_parent_eq] at h
+          exact h
+      connected_component_of_unionFind_of_unionFindLink uF parent h_parent_in
+termination_by nodeList.length - uFL.rank
+  decreasing_by
+  have h : ↑(List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)).rank = parent.rank := by
+    simp [parent]
+  simp [h]
+  apply Nat.sub_lt_sub_left
+  · exact uFL.rank.isLt
+  · exact h_r
+\end{lstlisting}
 
+Um die Zusammenhangskomponente für eine gegebene Knoten-ID zu finden, mache ich nun diese Funktion, ich muss nur einmal zeigen, dass es den dazugehörigen Zeiger gibt.
 
-
-
-
-
-
-
-
-
+\begin{lstlisting}
+def connected_component_of_unionFind_of_id {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) : Nat :=
+  have h_ex_uFL : ∃ uFL ∈ uF.linkList, uFL.nodeId = id := by
+    rcases h with ⟨x, h_in, h_eq⟩
+    have h_matching_nodeId := uF.matching_nodeId x h_in
+    rw [h_eq] at h_matching_nodeId
+    rcases h_matching_nodeId with ⟨y, h_in', h_unique⟩
+    refine ⟨y, ?_⟩
+    simp [h_in']
+  let uFL := List.choose (fun x => x.nodeId = id) uF.linkList h_ex_uFL
+  have h_uFL_in : uFL ∈ uF.linkList := by
+    exact List.choose_mem (fun x => x.nodeId = id) uF.linkList h_ex_uFL
+  connected_component_of_unionFind_of_unionFindLink uF uFL h_uFL_in
+\end{lstlisting}
 
 \subsection{Union}
 
-\subsection{Find}
+
+\begin{lstlisting}
+theorem unionFind.rank_succ_isLt  {nodeList : List node} (uF : unionFind nodeList) (x y : unionFindLink nodeList) : x ≠ y → x ∈ uF.linkList → y ∈ uF.linkList → x.nodeId = x.ccId → y.nodeId = y.ccId → x.rank = y.rank → x.rank.val.succ < nodeList.length
+\end{lstlisting}
+
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
+
+
+
+
+
+
+
 
 \subsection{kruskal}

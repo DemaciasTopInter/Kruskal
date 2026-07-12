@@ -457,12 +457,13 @@ def init_unionFind (nodeList : List node) (h_nodup : nodeList.Nodup) : unionFind
       let linkList : List (unionFindLink nodeList) := []
       ⟨linkList, by simp at h; simp [h], by simp [linkList], by simp at h; simp [h, linkList], by intro y h_y_in; simp [linkList] at h_y_in, by simp [linkList], by simp [linkList]⟩
 
-theorem self_connected_of_max_rank {nodeList : List node} (u : unionFind nodeList) (x : unionFindLink nodeList) (h_x_in : x ∈ u.linkList) : x.rank.succ = nodeList.length → x.nodeId = x.ccId := by
-  rcases u.matching_rank x h_x_in with ⟨h_eq⟩ | ⟨h_lt⟩
+-- unused
+theorem self_connected_of_max_rank {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) : uFL.rank.succ = nodeList.length → uFL.nodeId = uFL.ccId := by
+  rcases uF.matching_rank uFL h_uFL_in with ⟨h_eq⟩ | ⟨h_lt⟩
   · simp [h_eq]
   · intro h_eq
-    let y : unionFindLink nodeList := List.choose (fun y => y.nodeId = x.ccId) u.linkList (exists_parent_link u.linkList u.matching_nodeId u.matching_ccId x h_x_in)
-    have h_y_eq : y = List.choose (fun y => y.nodeId = x.ccId) u.linkList (exists_parent_link u.linkList u.matching_nodeId u.matching_ccId x h_x_in) := by rfl
+    let y : unionFindLink nodeList := List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)
+    have h_y_eq : y = List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in) := by rfl
     simp [← h_y_eq] at h_lt
     have h_lt_succ : nodeList.length < y.rank.succ := by
       simp [← h_eq, h_lt]
@@ -470,61 +471,52 @@ theorem self_connected_of_max_rank {nodeList : List node} (u : unionFind nodeLis
     contrapose! h_lt_succ
     exact y.rank.isLt
 
-def connected_component_of_unionFind_of_id_helper {nodeList : List node} (uF : unionFind nodeList) (x : unionFindLink nodeList) (h_x_in : x ∈ uF.linkList): Nat :=
-  if h_self_connected : x.ccId = x.nodeId
+def connected_component_of_unionFind_of_unionFindLink {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList): Nat :=
+  if h_self_connected : uFL.ccId = uFL.nodeId
     then
-      x.ccId
+      uFL.ccId
     else
-      let y : unionFindLink nodeList := List.choose (fun y => y.nodeId = x.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId x h_x_in)
-      have h_y_in : y ∈ uF.linkList := List.choose_mem (fun y => y.nodeId = x.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId x h_x_in)
+      let parent : unionFindLink nodeList := List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)
+      have h_parent_in : parent ∈ uF.linkList := List.choose_mem (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)
 
-      have h_r : y.rank > x.rank := by
-        rcases uF.matching_rank x h_x_in with ⟨h⟩ | ⟨h⟩
+      have h_r : parent.rank > uFL.rank := by
+        rcases uF.matching_rank uFL h_uFL_in with h | h
         · simp [h] at h_self_connected
-        · have h_y_eq : y = List.choose (fun y => y.nodeId = x.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId x h_x_in) := by rfl
-          rw [← h_y_eq] at h
+        · have h_parent_eq : parent = List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in) := by rfl
+          rw [← h_parent_eq] at h
           exact h
 
-      connected_component_of_unionFind_of_id_helper uF y h_y_in
-termination_by nodeList.length - x.rank
+      connected_component_of_unionFind_of_unionFindLink uF parent h_parent_in
+termination_by nodeList.length - uFL.rank
   decreasing_by
-  have h : ↑(List.choose (fun y => y.nodeId = x.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId x h_x_in)).rank = y.rank := by
-    simp [y]
+  have h : ↑(List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)).rank = parent.rank := by
+    simp [parent]
   simp [h]
   apply Nat.sub_lt_sub_left
-  · exact x.rank.isLt
+  · exact uFL.rank.isLt
   · exact h_r
 
 def connected_component_of_unionFind_of_id {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) : Nat :=
-  have h' : ∃ x ∈ uF.linkList, x.nodeId = id := by
+  have h_ex_uFL : ∃ uFL ∈ uF.linkList, uFL.nodeId = id := by
     rcases h with ⟨x, h_in, h_eq⟩
-    have h'' := uF.matching_nodeId x h_in
-    rw [h_eq] at h''
-    rcases h'' with ⟨y, h_in', h_unique⟩
+    have h_matching_nodeId := uF.matching_nodeId x h_in
+    rw [h_eq] at h_matching_nodeId
+    rcases h_matching_nodeId with ⟨y, h_in', h_unique⟩
     refine ⟨y, ?_⟩
     simp [h_in']
-  let x := List.choose (fun x => x.nodeId = id) uF.linkList h'
-  if x.ccId = x.nodeId
-    then
-      x.ccId
-    else
-      have h_x_in : x ∈ uF.linkList := by
-        exact List.choose_mem (fun x => x.nodeId = id) uF.linkList h'
-      have h'' := uF.matching_ccId x h_x_in
-      have h''' : ∃ x_1 ∈ nodeList, x_1.id = x.ccId := by
-        rcases h'' with ⟨y, h_in_and_eq, h_rest⟩
-        refine ⟨y, ?_⟩
-        simp [h_in_and_eq]
-      connected_component_of_unionFind_of_id_helper uF x h_x_in
+  let uFL := List.choose (fun x => x.nodeId = id) uF.linkList h_ex_uFL
+  have h_uFL_in : uFL ∈ uF.linkList := by
+    exact List.choose_mem (fun x => x.nodeId = id) uF.linkList h_ex_uFL
+  connected_component_of_unionFind_of_unionFindLink uF uFL h_uFL_in
 
-theorem exist_unionFindLink_of_connected_component_of_unionFind_of_id_helper {nodeList : List node} (uF : unionFind nodeList) (x : unionFindLink nodeList) (h_x_in : x ∈ uF.linkList) : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id_helper uF x h_x_in ∧ uFL.ccId = connected_component_of_unionFind_of_id_helper uF x h_x_in := by
-  induction x, h_x_in using connected_component_of_unionFind_of_id_helper.induct with
+theorem exist_unionFindLink_of_connected_component_of_unionFind_of_unionFindLink {nodeList : List node} (uF : unionFind nodeList) (x : unionFindLink nodeList) (h_x_in : x ∈ uF.linkList) : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_unionFindLink uF x h_x_in ∧ uFL.ccId = connected_component_of_unionFind_of_unionFindLink uF x h_x_in := by
+  induction x, h_x_in using connected_component_of_unionFind_of_unionFindLink.induct with
   | case1 x h_x_in h =>
-    unfold connected_component_of_unionFind_of_id_helper
+    unfold connected_component_of_unionFind_of_unionFindLink
     simp [h]
     refine ⟨x, h_x_in, rfl, h⟩
   | case2 x h_x_in h y h_y_in h_r ih =>
-    unfold connected_component_of_unionFind_of_id_helper
+    unfold connected_component_of_unionFind_of_unionFindLink
     simp [h]
     exact ih
 
@@ -538,13 +530,7 @@ theorem exist_unionFindLink_of_connected_component_of_unionFind_of_id {nodeList 
     simp [h_in']
   let x := List.choose (fun x => x.nodeId = id) uF.linkList h'
   have h_x_in : x ∈ uF.linkList := List.choose_mem (fun x => x.nodeId = id) uF.linkList h'
-
-  simp [connected_component_of_unionFind_of_id]
-  by_cases h_eq_id : x.ccId = x.nodeId
-  · refine ⟨x, ?_⟩
-    simp [x, h_eq_id, h_x_in]
-  · simp [x, h_eq_id]
-    simp [exist_unionFindLink_of_connected_component_of_unionFind_of_id_helper]
+  simp [connected_component_of_unionFind_of_id, exist_unionFindLink_of_connected_component_of_unionFind_of_unionFindLink]
 
 theorem update_unionFind_matching_nodeId
   (nodeList : List node)
