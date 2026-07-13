@@ -6,7 +6,7 @@ namespace SimpleGraph
 
 variable {V : Type*} (G : SimpleGraph V)
 
-noncomputable instance [Fintype V] {G : SimpleGraph V} : Fintype (G.edgeSet) :=
+noncomputable instance edgeSet_Fintype [Fintype V] {G : SimpleGraph V} : Fintype (G.edgeSet) :=
   Fintype.ofFinite ↑G.edgeSet
 
 lemma IsAcyclic.card_edgeFinset_le [Fintype V] [Nonempty V] (hG : G.IsAcyclic) : Finset.card G.edgeFinset + 1 ≤ Fintype.card V := by
