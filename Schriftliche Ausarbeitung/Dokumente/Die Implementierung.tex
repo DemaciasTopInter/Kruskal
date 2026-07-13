@@ -294,7 +294,12 @@ theorem (.\KruskalunionFindranksuccisLt.)  {nodeList : List node} (uF : unionFin
 \end{lstlisting}
 
 Bei der union-Funktion oder wie ich sie gennat habe \KruskalupdateunionFind, habe ich zuerst den Fall ausgeschlossen, dass es sich um die selbe Zusammenhangskomponente handelt.
-Danach habe ich direkt mit der nächsten Fallunterscheidung weiter gemacht, 
+Danach habe ich mir die Zeiger gehohlt und anschließend direkt mit der nächsten Fallunterscheidung weiter gemacht und unterschieden, welcher Zeiger den höheren Rang hat.
+In beiden Fällen habe ich fast das selbe gemacht nur, dass ich $x$ und $y$ sowie ihre jeweiligen Zeiger getauscht habe.
+Ich erstelle zwei neue Zeiger für $x$ und $y$.
+Der mit kleineren Rang (oder gleichem Rang der erste) zeigt jetzt auf den anderen und der wiederum bekommt seinen Rang upgedatet.
+Dann erstelle ich eine neue Zeiger-Liste, die auf der alten Liste beruht, aber bei der die beiden alten Zeiger durch die neuen ersetzt sind.
+Danach muss ich noch zeigen, dass die Bedingungen aus \KruskalunionFind für die neue Liste gelten.
 
 \begin{lstlisting}
 def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : unionFind nodeList :=
@@ -308,15 +313,15 @@ def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList)
     have h_uFLy_in : uFLy ∈ uF.linkList := …
     have h_uFLx_prop : uFLx.nodeId = x ∧ uFLx.ccId = x := …
     have h_uFLy_prop : uFLy.nodeId = y ∧ uFLy.ccId = y:= …
-    if h_rank_lt : uFLx.rank < uFLy.rank
+    if h_rank_lt' : uFLy.rank < uFLx.rank
       then
-        have h_rank_succ_le : uFLx.rank.val.succ ≤ uFLy.rank.val := …
-        have h_rank_succ_isLt : uFLx.rank.val.succ < nodeList.length := …
-        let uFLx' : unionFindLink nodeList := ⟨uFLx.nodeId, uFLy.ccId, uFLx.rank⟩
-        let uFLy' : unionFindLink nodeList := ⟨uFLy.nodeId, uFLy.ccId, ⟨max uFLy.rank.val uFLx.rank.val.succ, by simp [h_rank_succ_isLt]⟩⟩
-        let linkList' : List (unionFindLink nodeList) := (uF.linkList.set (uF.linkList.idxOf uFLx) uFLx').set (uF.linkList.idxOf uFLy) uFLy'
-        have h_uFLx'_in : uFLx' ∈ linkList' := …
+        have h_rank_succ_le : uFLy.rank.val.succ ≤ uFLx.rank.val := …
+        have h_rank_succ_isLt : uFLy.rank.val.succ < nodeList.length := …
+        let uFLy' : unionFindLink nodeList := ⟨uFLy.nodeId, uFLx.ccId, uFLy.rank⟩
+        let uFLx' : unionFindLink nodeList := ⟨uFLx.nodeId, uFLx.ccId, ⟨max uFLx.rank.val uFLy.rank.val.succ, by simp [h_rank_succ_isLt]⟩⟩
+        let linkList' : List (unionFindLink nodeList) := (uF.linkList.set (uF.linkList.idxOf uFLy) uFLy').set (uF.linkList.idxOf uFLx) uFLx'
         have h_uFLy'_in : uFLy' ∈ linkList' := …
+        have h_uFLx'_in : uFLx' ∈ linkList' := …
         have matching_nodeId' : ∀ x ∈ nodeList, ∃! y ∈ linkList', x.id = y.nodeId := …
         have matching_ccId' : ∀ y ∈ linkList', ∃! x ∈ nodeList, x.id = y.ccId := …
         have matching_length' : nodeList.length = linkList'.length := …
@@ -325,45 +330,53 @@ def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList)
         have rankInvariant' : (z : unionFindLink nodeList) → z ∈ linkList' → (linkList'.filter (fun y => y.rank < z.rank ∧ ¬y.nodeId = y.ccId)).length ≥ z.rank := …
         ⟨linkList', matching_nodeId', matching_ccId', matching_length', matching_rank', nodup', rankInvariant'⟩
       else
-        if h_rank_lt' : uFLy.rank < uFLx.rank
-          then
-            -- Das selbe aber uFLx und uFLy vertauscht
-          else
-            have h_rank_eq : uFLx.rank = uFLy.rank := by
-              simp at h_rank_lt h_rank_lt'
-              apply eq_of_le_of_ge h_rank_lt' h_rank_lt
-            have h_rank_succ_isLt : uFLx.rank.val.succ < nodeList.length := by
+        have h_rank_succ_isLt : uFLx.rank.val.succ < nodeList.length := by
+            by_cases h_rank_lt : uFLx.rank < uFLy.rank
+            · have h_rank_succ_le : uFLx.rank.val.succ ≤ uFLy.rank.val := …
+              simp [Nat.lt_of_le_of_lt h_rank_succ_le]
+            · have h_rank_eq : uFLx.rank = uFLy.rank := …
               apply uF.rank_succ_isLt uFLx uFLy ?_ h_uFLx_in h_uFLy_in ?_ ?_ h_rank_eq
-              · intro h_uFL_eq
-                simp [h_uFL_eq, h_uFLy_prop₁, ne_comm.mp h_eq] at h_uFLx_prop₁
-              · simp [h_uFLx_prop]
-              · simp [h_uFLy_prop]
-            -- Der rest ist gleich
+              …
+        -- Der rest ist fast gleich aber mit x und y und uFLx und uFLy jeweils vertauscht
 \end{lstlisting}
 
-\KruskalupdateunionFindmatchingnodeId
+Die Beweise für die \KruskalunionFind Bedingungen habe ich ausgelagert.
+Da diese sehr groß sind und auch eine Menge Argumente übergeben bekommen erwähne ich hier lediglich die Namen.
+
 % update_unionFind_matching_nodeId
+Bei \KruskalupdateunionFindmatchingnodeId geht es darum, dass es fürjeden Knoten genau einen Zeiger gibt.
+Sei also $z$ ein beliebiger Knoten.
+Ich mache eine Fallunterscheidung, ob $z$ gleich $x, y$ oder irgend ein anderer Knoten ist.
+Im Fall, dass $z = x$ (bzw. $y$), zeige ich, dass erstens der neue Zeiger passt und Teil der Liste ist und zweitens alle anderen insbesondere der andere neue Zeiger nicht passen.
+Im Fall, dass $z$ weder $x$ noch $y$ ist, zeige ich, dass sowohl die beide neuen als auch die beiden alten Zeiger von $x$
+und $y$ nicht zu $z$ passen und dem entsprechend der ursprüngliche Zeiger von $z$ noch immer in der Liste sein muss.
 
-\KruskalupdateunionFindmatchingccId
 % update_unionFind_matching_ccId
+Bei der Gegenrichtung in \KruskalupdateunionFindmatchingccId ist der Beweis deutlich kürzer.
+Ich kann zeigen, dass jedes Element der neuen Liste einer der beiden neuen Zeiger oder ein Element der alten Liste ist.
+Für alle Elemente der alten Liste weis ich bereits, dass es gilt und die neuen Zeiger zeigen auf $x$ oder $y$, was auch einzigartige Knoten sind, weshalb es auch für die neuen gilt.
 
-\KruskalupdateunionFindmatchinglength
 % update_unionFind_matching_length
+Das Lemma \KruskalupdateunionFindmatchinglength habe ich nur der einheitlichkeit halber ausgelagert.
+Es ist nur ein simp, da sich an der Länge nichts geändert hat.
 
-\KruskalupdateunionFindnodup
 % update_unionFind_nodup
+Für \KruskalupdateunionFindnodup nutze ich das Hilfslemma \nodupsetofnotmem, das besagt,
+dass wenn ich in einer Liste ohne Duplikate ein Element durch ein neues ersetze, dass in der Liste nicht vorkommt, die neue Liste auch keine Duplikate hat.
+Ich habe also gezeigt, dass die neuen Zeiger entweder nicht in der alten Liste waren oder gleich dem Element sind, welches sie ersetzen, wodurch sich die Liste nicht ändert.
+In jedem Fall enthällt die neue Liste also auch keine Duplikate.
 
-\KruskalupdateunionFindmatchingrank
 % update_unionFind_matching_rank
+\KruskalupdateunionFindmatchingrank
 
-\KruskalupdateunionFindrankInvariant
 % update_unionFind_rankInvariant
+\KruskalupdateunionFindrankInvariant
 
-\KruskalupdateunionFindrankInvariantofrankeq
 % update_unionFind_rankInvariant_of_rank_eq
+\KruskalupdateunionFindrankInvariantofrankeq
 
-\KruskalupdateunionFindhuFLxprimein
 % update_unionFind_h_uFLx'_in
+\KruskalupdateunionFindhuFLxprimein
 
 
 

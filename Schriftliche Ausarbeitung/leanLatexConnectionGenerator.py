@@ -1,6 +1,17 @@
 import os
 import re
 
+
+# Example usage:
+root_folder = "/Users/jasper/Desktop/Uni/Bachelorarbeit/kruskal/Kruskal"
+relativ_root_folder = "Kruskal"
+repo_url = "https://gitlab.hrz.tu-chemnitz.de/jovon-at-tu-chemnitz.de/Kruskal/-/blob/main"
+target_extensions = [".py", ".lean"]
+excluded_folders = [".lake", "lake-packages", 'transitiveClosureBenchmarkExponentialExtension', 'transitiveClosureBenchmarkAllFacts', 'transitiveClosureBenchmarkSingleFact', 'transitiveClosureToyExample', 'elReasoning', 'OUTDATED-transitiveClosureBenchmarkExtreme']
+
+
+
+
 splitSymbols= r'[(\s\:]'
 namespace_regex = r'namespace (.+)\n'
 
@@ -42,7 +53,7 @@ def process_file(root, file):
                 # allow string to be valid latex
                 resultName = result[1].replace("_", "").replace(".", "").replace("'", "prime").replace("?", "")
                 resultName = replaceNumber(resultName)
-                textVersion =  result[1].replace("_", "\_") # .replace("'", "\\textsc{\char13}")
+                textVersion =  result[1] # .replace("_", "\_") # .replace("'", "\\textsc{\char13}")
                 # if "'" in result[1]:
                 #     continue
 
@@ -56,7 +67,7 @@ def process_file(root, file):
                 result = re.split(splitSymbols, line)
                 # allow string to be valid latex
                 resultName = result[2].replace("_", "").replace(".", "").replace("'", "2")
-                textVersion =  result[2].replace("_", "\_") # .replace("'", "\\textsc{\char13}")
+                textVersion =  result[2] # .replace("_", "\_") # .replace("'", "\\textsc{\char13}")
                 # if "'" in result[2]:
                 #     continue
 
@@ -69,10 +80,10 @@ def process_file(root, file):
     return commands
 
 # Function to traverse directories and process files
-def traverse_folders(root_folder, relativ_root_folder, repo_url, target_extensions, excluded_folders):
+def traverse_folders():
     commands = [
         f"\\newcommand{{\\repoUrl}}{{{repo_url}}}", 
-        "\\newcommand{\\repoLinkBase}[2]{\href{\\repoUrl/#1}{\\textcolor{symbolcolor}{\\texttt{#2}}}\\xspace}",
+        "\\newcommand{\\repoLinkBase}[2]{\href{\\repoUrl/#1}{\\textcolor{symbolcolor}{\\path{#2}}}\\xspace}",
         f"\\newcommand{{\\repoLinkCode}}[2]{{\\repoLinkBase{{{relativ_root_folder}/#1}}{{#2}}}}"
     ]
     for root, dirs, files in os.walk(root_folder):
@@ -90,12 +101,5 @@ def traverse_folders(root_folder, relativ_root_folder, repo_url, target_extensio
         for cmd in commands:
             f.write(cmd + "\n")
 
-# Example usage:
-root_folder = "/Users/jasper/Desktop/Uni/Bachelorarbeit/kruskal/Kruskal"
-relativ_root_folder = "Kruskal"
-repo_url = "https://gitlab.hrz.tu-chemnitz.de/jovon-at-tu-chemnitz.de/Kruskal/-/blob/main"
-target_extensions = [".py", ".lean"]
-excluded_folders = [".lake", "lake-packages", 'transitiveClosureBenchmarkExponentialExtension', 'transitiveClosureBenchmarkAllFacts', 'transitiveClosureBenchmarkSingleFact', 'transitiveClosureToyExample', 'elReasoning', 'OUTDATED-transitiveClosureBenchmarkExtreme']
 
-
-traverse_folders(root_folder, relativ_root_folder, repo_url, target_extensions, excluded_folders)
+traverse_folders()
