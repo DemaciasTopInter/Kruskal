@@ -117,6 +117,31 @@ theorem mem_set_of_ne_index [BEq α] [ReflBEq α] [LawfulBEq α] : a ∈ l → l
         have h' := ih₁ h_a_in h_idx_neq
         simp [List.set, h']
 
+theorem mem_set_of_ne_index' [BEq α] [ReflBEq α] [LawfulBEq α] (h : j < l.length) : l[j]'h = a → j ≠ i → a ∈ l.set i b := by
+  intro h_eq h_ne
+  induction l generalizing i j with
+  | nil =>
+    simp at h
+  | cons c l ih =>
+    cases j with
+    | zero =>
+      simp at h_eq
+      cases i with
+      | zero =>
+        simp at h_ne
+      | succ i =>
+        simp [h_eq]
+    | succ j =>
+      simp at h h_eq
+      cases i with
+      | zero =>
+        grind
+      | succ i =>
+        simp at h_ne ⊢
+        have ih := ih h h_eq h_ne
+        right
+        exact ih
+
 theorem idxOf_set (h₁ : i < l.length) (h₃ : ∀ j, (h₂ : j < i) → l[j]'(by simp [Nat.lt_trans h₂ h₁]) ≠ a) [BEq α] [ReflBEq α] [LawfulBEq α] : List.idxOf a (l.set i a) = i := by
   induction l generalizing i with
   | nil =>
