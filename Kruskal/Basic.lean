@@ -1607,12 +1607,13 @@ def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind
 def kruskal (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
     let edgeListSorted : List edge := edgeList.mergeSort
     let uF : unionFind nodeList := init_unionFind nodeList h_nodup
+    let edgesSoFar : List edge := []
     have h_matching_edge : matching_edge edgeListSorted nodeList := by
       intro e h_e_in
       simp [edgeListSorted] at h_e_in
       simp [matching_edge] at h_matching_edge
       exact h_matching_edge e h_e_in
-    kruskal_helper edgeListSorted nodeList uF [] h_matching_edge h_nodup
+    kruskal_helper edgeListSorted nodeList uF edgesSoFar h_matching_edge h_nodup
 
 
 
