@@ -1846,9 +1846,9 @@ theorem le_two_pow_minus_one (n : Nat) : n ≤ 2^n-1 := by
     rw [h]
     exact Nat.lt_two_pow_self
 
-def unionFind.rankInvariant' {nodeList : List node} (uF : unionFind nodeList) := ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path (uFL := x) (uF := uF) h_x_in else False)).length ≥ 2^(uFL.rank.val)
+def unionFind.rankInvariant_strict {nodeList : List node} (uF : unionFind nodeList) := ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path (uFL := x) (uF := uF) h_x_in else False)).length ≥ 2^(uFL.rank.val)
 
-theorem unionFind.rankInvariant_of_rankInvariant' {nodeList : List node} {uF : unionFind nodeList} (h_rankInvariant : uF.rankInvariant') : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => x.rank < uFL.rank ∧ ¬x.nodeId = x.ccId)).length ≥ uFL.rank := by
+theorem unionFind.rankInvariant_of_rankInvariant_strict {nodeList : List node} {uF : unionFind nodeList} (h_rankInvariant : uF.rankInvariant_strict) : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => x.rank < uFL.rank ∧ ¬x.nodeId = x.ccId)).length ≥ uFL.rank := by
   intro uFL h_in
   -- rcases uFL with ⟨nodeId, ccId, rank⟩
   -- rcases rank with ⟨rank, h_lt⟩
@@ -1886,8 +1886,8 @@ theorem unionFind.rankInvariant_of_rankInvariant' {nodeList : List node} {uF : u
       grind
     simp [h, pow_add]
 
-theorem init_unionFind.rankInvariant' {nodeList : List node} (h_nodup : nodeList.Nodup) : (init_unionFind nodeList h_nodup).rankInvariant' := by
-  simp [unionFind.rankInvariant', init_unionFind, init_unionFind.linkList]
+theorem init_unionFind.rankInvariant_strict {nodeList : List node} (h_nodup : nodeList.Nodup) : (init_unionFind nodeList h_nodup).rankInvariant_strict := by
+  simp [unionFind.rankInvariant_strict, init_unionFind, init_unionFind.linkList]
   by_cases h_empty : nodeList = []
   · simp [h_empty]
   · simp [h_empty]
@@ -1905,8 +1905,8 @@ theorem init_unionFind.rankInvariant' {nodeList : List node} (h_nodup : nodeList
     simp [init_unionFind, init_unionFind.linkList, h_empty] at h_length
     exact h_length
 
-theorem update_unionFind.rankInvariant' {nodeList : List node} (uF : unionFind nodeList) (x y : ℕ) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant') : (update_unionFind uF x y h₁ h₂).rankInvariant' := by
-  simp [unionFind.rankInvariant', update_unionFind]
+theorem update_unionFind.rankInvariant_strict {nodeList : List node} (uF : unionFind nodeList) (x y : ℕ) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : (update_unionFind uF x y h₁ h₂).rankInvariant_strict := by
+  simp [unionFind.rankInvariant_strict, update_unionFind]
   set linklist' := (update_unionFind uF x y h₁ h₂).linkList with ← h_linklist'
   set uFLx := List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₁ with ← h_uFLx
   set uFLy := List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h₂ with ← h_uFLy
@@ -1956,7 +1956,7 @@ theorem update_unionFind.rankInvariant' {nodeList : List node} (uF : unionFind n
   --       simp [h, h_uFLy_prop] at h_uFLx_prop
   --       simp [h_uFLx_prop] at h_eq
   --   intro uFL h_uFL_in
-  --   simp [unionFind.rankInvariant'] at h_rankInvariant
+  --   simp [unionFind.rankInvariant_strict] at h_rankInvariant
   --   by_cases h_uFL_eq : uFL = uFLx'
   --   · have h := h_rankInvariant uFLx h_uFLx_in
   --     set l1 := List.filter (fun x => if h : x ∈ uF.linkList then decide (uFLx ∈ get_parent_path h) else false) uF.linkList with ← h_l1
@@ -1997,10 +1997,10 @@ theorem update_unionFind.rankInvariant' {nodeList : List node} (uF : unionFind n
   · sorry
   · sorry
 
-theorem max_rank {nodeList : List node} {uF : unionFind nodeList} (h_rankInvariant : uF.rankInvariant') : ∀ uFL ∈ uF.linkList, uFL.rank.val ≤ Nat.log 2 nodeList.length := by
+theorem max_rank {nodeList : List node} {uF : unionFind nodeList} (h_rankInvariant : uF.rankInvariant_strict) : ∀ uFL ∈ uF.linkList, uFL.rank.val ≤ Nat.log 2 nodeList.length := by
   intro uFL h_uFL_in
   by_cases h_contra : uFL.rank.val > Nat.log 2 nodeList.length
-  · simp [unionFind.rankInvariant'] at h_rankInvariant
+  · simp [unionFind.rankInvariant_strict] at h_rankInvariant
     have h := h_rankInvariant uFL h_uFL_in
     have h : 2 ^ uFL.rank.val ≤ uF.linkList.length := by
       apply le_trans h
