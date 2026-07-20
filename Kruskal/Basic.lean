@@ -167,24 +167,24 @@ instance unionFindLink_LawfulBEq {nodeList : List node} : LawfulBEq (unionFindLi
     cases b
     simp_all
 
-theorem exists_parent_link {nodeList : List node} (linkList : List (unionFindLink nodeList)) (matching_nodeId : ∀ x ∈ nodeList, ∃! y ∈ linkList, x.id = y.nodeId) (matching_ccId : ∀ y ∈ linkList, ∃! x ∈ nodeList, x.id = y.ccId) : ∀ x ∈ linkList, ∃ y ∈ linkList, y.nodeId = x.ccId := by
-  intro x h_x_in
-  have h := ExistsUnique.exists (matching_ccId x h_x_in)
+theorem exists_parent_link {nodeList : List node} (linkList : List (unionFindLink nodeList)) (matching_nodeId : ∀ x ∈ nodeList, ∃! uFL ∈ linkList, x.id = uFL.nodeId) (matching_ccId : ∀ uFL ∈ linkList, ∃! x ∈ nodeList, x.id = uFL.ccId) : ∀ uFLx ∈ linkList, ∃ uFLy ∈ linkList, uFLy.nodeId = uFLx.ccId := by
+  intro uFLx h_uFLx_in
+  have h := ExistsUnique.exists (matching_ccId uFLx h_uFLx_in)
   rcases h with ⟨z, h_z_in, h_z_eq⟩
   have h := ExistsUnique.exists (matching_nodeId z h_z_in)
-  rcases h with ⟨y, h_y_in, h_y_eq⟩
-  refine ⟨y, h_y_in, ?_⟩
-  simp [← h_y_eq, h_z_eq]
+  rcases h with ⟨uFLy, h_uFLy_in, h_uFLy_eq⟩
+  refine ⟨uFLy, h_uFLy_in, ?_⟩
+  simp [← h_uFLy_eq, h_z_eq]
 
 structure unionFind (nodeList : List node) : Type where
   mk ::
   linkList : List (unionFindLink nodeList)
-  matching_nodeId : ∀ x ∈ nodeList, ∃! y ∈ linkList, x.id = y.nodeId
-  matching_ccId : ∀ y ∈ linkList, ∃! x ∈ nodeList, x.id = y.ccId
+  matching_nodeId : ∀ x ∈ nodeList, ∃! uFL ∈ linkList, x.id = uFL.nodeId
+  matching_ccId : ∀ uFL ∈ linkList, ∃! x ∈ nodeList, x.id = uFL.ccId
   matching_length : nodeList.length = linkList.length
-  matching_rank (y : unionFindLink nodeList) (h : y ∈ linkList) : y.nodeId = y.ccId ∨ y.rank < (List.choose (fun x => x.nodeId = y.ccId) linkList (exists_parent_link linkList matching_nodeId matching_ccId y h)).rank
+  matching_rank (uFLx : unionFindLink nodeList) (h : uFLx ∈ linkList) : uFLx.nodeId = uFLx.ccId ∨ uFLx.rank < (List.choose (fun uFLy => uFLy.nodeId = uFLx.ccId) linkList (exists_parent_link linkList matching_nodeId matching_ccId uFLx h)).rank
   nodup : linkList.Nodup
-  rankInvariant (x : unionFindLink nodeList) : x ∈ linkList → (linkList.filter (fun y => y.rank < x.rank ∧ ¬y.nodeId = y.ccId)).length ≥ x.rank
+  rankInvariant (uFLx : unionFindLink nodeList) : uFLx ∈ linkList → (linkList.filter (fun uFLy => uFLy.rank < uFLx.rank ∧ ¬uFLy.nodeId = uFLy.ccId)).length ≥ uFLx.rank
 
 theorem unionFind.rank_succ_isLt  {nodeList : List node} (uF : unionFind nodeList) (x y : unionFindLink nodeList) : x ≠ y → x ∈ uF.linkList → y ∈ uF.linkList → x.nodeId = x.ccId → y.nodeId = y.ccId → x.rank = y.rank → x.rank.val.succ < nodeList.length := by
   intro h_ne h_x_in h_y_in h_x_selfcon h_y_selfcon h_rank_eq
@@ -245,30 +245,30 @@ theorem init_unionFind.linkList.helper_all_rank_zero (nodeList l : List node) (h
     · simp [h_eq]
     · exact ih h_in
 
-theorem init_unionFind.linkList.matching_nodeId {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ nodeList, ∃! y, y ∈ (init_unionFind.linkList nodeList h_nonempty) ∧ x.id = y.nodeId := by
+theorem init_unionFind.linkList.matching_nodeId {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ nodeList, ∃! uFL, uFL ∈ (init_unionFind.linkList nodeList h_nonempty) ∧ x.id = uFL.nodeId := by
   intro x h_in
-  set y : unionFindLink nodeList := ⟨x.id, x.id, ⟨0, zero_lt_iff.mpr h_nonempty⟩⟩
+  set uFLx : unionFindLink nodeList := ⟨x.id, x.id, ⟨0, zero_lt_iff.mpr h_nonempty⟩⟩
   rcases (mem_split h_in) with ⟨l₁, l₂, h_split, h_nin⟩
-  have h_y_in : y ∈ (init_unionFind.linkList nodeList h_nonempty) := by
-    simp [init_unionFind.linkList, y, h_split, init_unionFind.linkList.helper_append]
+  have h_uFLx_in : uFLx ∈ (init_unionFind.linkList nodeList h_nonempty) := by
+    simp [init_unionFind.linkList, uFLx, h_split, init_unionFind.linkList.helper_append]
     right
     simp [init_unionFind.linkList.helper]
-  refine ⟨y, ?_⟩
+  refine ⟨uFLx, ?_⟩
   constructor
   · constructor
-    · exact h_y_in
-    · simp [y]
-  · intro z h_z
-    rcases h_z with ⟨h_z_in, h_z_eq_id⟩
-    simp [init_unionFind.linkList] at h_z_in
-    have h_z_eq_self := init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty z h_z_in
-    have h_z_eq_cc : x.id = z.ccId := by
-      rw [← h_z_eq_self]
-      exact h_z_eq_id
-    have h_z_rank_zero := init_unionFind.linkList.helper_all_rank_zero nodeList nodeList h_nonempty z h_z_in
-    simp [y]
-    nth_rewrite 1 [h_z_eq_id]
-    rw [h_z_eq_cc, ← h_z_rank_zero]
+    · exact h_uFLx_in
+    · simp [uFLx]
+  · intro uFLy h_uFLy
+    rcases h_uFLy with ⟨h_uFLy_in, h_uFLy_eq_id⟩
+    simp [init_unionFind.linkList] at h_uFLy_in
+    have h_uFLy_eq_self := init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty uFLy h_uFLy_in
+    have h_uFLy_eq_cc : x.id = uFLy.ccId := by
+      rw [← h_uFLy_eq_self]
+      exact h_uFLy_eq_id
+    have h_uFLy_rank_zero := init_unionFind.linkList.helper_all_rank_zero nodeList nodeList h_nonempty uFLy h_uFLy_in
+    simp [uFLx]
+    nth_rewrite 1 [h_uFLy_eq_id]
+    rw [h_uFLy_eq_cc, ← h_uFLy_rank_zero]
 
 theorem init_unionFind.linkList.helper_matching_length (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) : (init_unionFind.linkList.helper nodeList h_nonempty l).length = l.length := by
   induction l with

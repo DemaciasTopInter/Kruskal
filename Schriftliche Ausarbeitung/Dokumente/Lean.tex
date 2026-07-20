@@ -1,0 +1,49 @@
+\section{Lean}
+\subsection{Was ist Lean}
+Lean\cite{10.1007/978-3-030-79876-5_37} ist beides eine funktionale Progammiersprache und ein Beweis Assistent für formale Beweise.
+Das Projekt wurde 2013 von Leonardo de Moura und Sebastian Ullrich ins Leben gerufen.
+Die aktuelle Version Lean 4 ist selbst in Lean geschrieben und wurde im September 2023 released.
+
+Lean basiert stark auf seinem Typen-System
+Dieses ordnet jedem Term in Lean einen Typ zu, welcher wiederum selbst ein Term ist.
+Hier ein par Beispiele:
+\begin{lstlisting}
+"Hello World!" : String
+16 : Nat
+{ val := 16, isLt := by omega } : Fin 32
+16 < 32 : Prop
+isLt : 16 < 32
+Nat : Type
+Prop : Type
+Fin : Nat → Type
+Type : Type 1
+Type 1 : Type 2
+\end{lstlisting}
+Ein String ist eine Zeichenkette und Nat oder auch $\mathbb{N}$ eine natürliche Zahl.
+Fin n mit einer natürlichen Zahl n ist die Menge der natürlichen Zahlen, die kleiner als n sind.
+Ein Element von Fin n besteht zum einen aus einer Zahl val und zum anderen aus einem Nachweis isLt, dass val kleiner als n ist.
+Thesen (engl. Propositions) sind vom Typ Prop.
+Dabei ist jede These selbst wider ein Typ und die Elemente dieses Typs sind die Beweise, die sie belegen.
+Was Thesen von anderen Typen unterseidet, ist, dass alle ihre Elemente gleich sind.
+Es macht für Lean keinen Unterschied, wie eine These bewiesen wurde, solange es mindestens einen Beweis gibt.
+Alle Typen wie String, Nat, Fin 32 oder Prop haben den Typ Type.
+Auch Funktionen haben Typen, nämlich den von wo nach wo sie abbilden.
+Fin ist zum Beispiel vom Typ der Funktionen, die von Nat auf Type abbilden.
+Da in Lean alles einen Typ hat, gilt das auch Type.
+Type, was das gleiche ist wie Type 0, ist vom Typ Type 1.
+Type 1 ist wiederum vom Typ Type 2 und so weiter.
+
+Eigene Typen definieren:
+abbrev
+def
+structure
+inductiv
+
+Der Taktik Modus
+
+Für mehr Informationen über Lean und seine Geschiche können auf der Lean Webseite\cite{lean_lang} oder der Lean Sprach Referenz\cite{lean_lang_doc} nachgelesen werden.
+
+\subsection{Anwendung}
+\subsection{Mathlib}
+\cite{mathlib2020}
+\subsection{Lean und KI}

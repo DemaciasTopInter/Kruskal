@@ -36,10 +36,22 @@
 }
 
 \usepackage{url} % Erlaubt flexible Umbrüche in Pfaden/Code
+\usepackage{xurl} % Erlaubt flexible Umbrüche in Pfaden/Code
 \usepackage{xspace} % Automatische Leerzeichen hinter befehlen.
 \input{codeCommands.tex} % Für Links zu den richtigen Stellen im Repo
 
+\usepackage{algorithm}
+\usepackage{algpseudocode} % pseudocode
+
+\usepackage{amsthm} % proof
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\usepackage{todonotes}
+
 \begin{document}
+
+\listoftodos
 
 \include{Dokumente/Titelseite}
 
@@ -51,7 +63,7 @@
 
 \include{Dokumente/Der Algorithmus von Kruskal}
 
-\include{Dokumente/Das Potential von Lean}
+\include{Dokumente/Lean}
 
 \include{Dokumente/Die Implementierung}
 
