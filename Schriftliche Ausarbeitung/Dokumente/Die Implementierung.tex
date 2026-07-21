@@ -459,6 +459,9 @@ Bevor ich nun zum eigentlichen Kruskal-Algorithmus komme definiere ich noch eine
 Der Algorithmus wird auf graphen angewendet und als input übergebe ich die Knoten-Liste und die Kanten-Liste.
 \Kruskalmatchingedge sagt nun aus, dass diese Listen auch tatsächlich zu einander passen, also dass alle Knoten, die von den Kanten verbunden werden, auch tatsächlich in der Knoten-Liste vorkommen.
 
+\begin{definition}[\Kruskalmatchingedge]
+  
+\end{definition}
 \begin{lstlisting}
 def (.\Kruskalmatchingedge.)  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x ∈ edgeList, (∃ y ∈ nodeList, x.node1 = y.id) ∧ (∃ z ∈ nodeList, x.node2 = z.id)
 \end{lstlisting}
@@ -467,6 +470,9 @@ Den Algorithmus habe ich in zwei Funktionen aufgeteilt.
 In \Kruskalkruskal sortiere ich die Kanten-List und initialisiere die Union-Find-Struktur und die ErgebnisKantenListe.
 Das Iterieren über die Kanten-Liste passiert dann in \Kruskalkruskalhelper.
 
+\begin{definition}[\Kruskalkruskal]
+  
+\end{definition}
 \begin{lstlisting}
 def (.\Kruskalkruskal.) (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
     let edgeListSorted : List edge := edgeList.mergeSort
@@ -481,6 +487,9 @@ def (.\Kruskalkruskal.) (edgeList : List edge) (nodeList : List node) (h_matchin
 
 
 
+\begin{definition}[\Kruskalkruskalhelper]
+  
+\end{definition}
 \begin{lstlisting}
 def (.\Kruskalkruskalhelper.) (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
   match edgeList with
@@ -508,12 +517,18 @@ Um \Kruskalkruskalhelper kompakter zu halten habe ich die Fallunterscheidung bei
 ob die Zusammenhangskomponenten $x$ und $y$ gliech sind, ausgelagert.
 Das macht die Funktion zum einen halb so groß und zum anderen lässt sich so in späteren Lemmas besser eine induktion über die funktion führen.
 
+\begin{definition}[\KruskalupdateedgesSoFar]
+  
+\end{definition}
 \begin{lstlisting}
 def (.\KruskalupdateedgesSoFar.) (edgesSoFar : List edge) (e : edge) (x y : Nat) : List edge := if x = y then edgesSoFar else e :: edgesSoFar
 \end{lstlisting}
 
 
 
+\begin{definition}[\KruskalnodeListofedgeListhelper]
+  
+\end{definition}
 \begin{lstlisting}
 def (.\KruskalnodeListofedgeListhelper.) (edgeList : List edge) (nodeList : List node) : List node :=
   match edgeList with
@@ -541,7 +556,9 @@ def (.\KruskalnodeListofedgeListhelper.) (edgeList : List edge) (nodeList : List
 \end{lstlisting}
 
 
-
+\begin{definition}[\KruskalnodeListofedgeList]
+  
+\end{definition}
 \begin{lstlisting}
 def (.\KruskalnodeListofedgeList.) (edgeList : List edge) : List node :=
   nodeList_of_edgeList_helper edgeList []
@@ -549,36 +566,69 @@ def (.\KruskalnodeListofedgeList.) (edgeList : List edge) : List node :=
 
 
 
+\begin{lemma}[\KruskalnodeListofedgeListhelpereq]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
 \begin{lstlisting}
 theorem (.\KruskalnodeListofedgeListhelpereq.) (edgeList : List edge) (nodeList : List node) : nodeList_of_edgeList_helper edgeList nodeList = ((nodeList_of_edgeList_helper edgeList []).filter (fun x => x ∉ nodeList)) ++ nodeList
 \end{lstlisting}
 
 
 
+\begin{lemma}[\KruskalmemnodeListofedgeListhelperiffnodeinedgeList]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
 \begin{lstlisting}
 theorem (.\KruskalmemnodeListofedgeListhelperiffnodeinedgeList.) (edgeList : List edge) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList [] ↔ ∃ y ∈ edgeList, y.node1 = x.id ∨ y.node2 = x.id
 \end{lstlisting}
 
 
 
+\begin{lemma}[\KruskalmemnodeListofedgeListhelperiffmemnodeListofedgeListhelperofnilormemnodeList]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
 \begin{lstlisting}
 theorem (.\KruskalmemnodeListofedgeListhelperiffmemnodeListofedgeListhelperofnilormemnodeList.) (edgeList : List edge) (nodeList : List node) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList nodeList ↔ x ∈ nodeList_of_edgeList_helper edgeList [] ∨ x ∈ nodeList
 \end{lstlisting}
 
 
 
+\begin{lemma}[\KruskalmatchingedgefornodeListofedgeList]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
 \begin{lstlisting}
 theorem (.\KruskalmatchingedgefornodeListofedgeList.) (edgeList : List edge) : matching_edge edgeList (nodeList_of_edgeList edgeList)
 \end{lstlisting}
 
 
 
+\begin{lemma}[\KruskalnodeListofedgeListnodup]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
 \begin{lstlisting}
 theorem (.\KruskalnodeListofedgeListnodup.) (edgeList : List edge) : (nodeList_of_edgeList edgeList).Nodup
 \end{lstlisting}
 
 
 
+\begin{definition}[\KruskalkruskalofedgeList]
+  Test
+\end{definition}
 \begin{lstlisting}
 def (.\KruskalkruskalofedgeList.) (edgeList : List edge) : List edge :=
   kruskal edgeList (nodeList_of_edgeList edgeList) (matching_edge_for_nodeList_of_edgeList edgeList) (nodeList_of_edgeList_nodup edgeList)

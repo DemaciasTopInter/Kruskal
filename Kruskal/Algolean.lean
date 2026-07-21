@@ -426,14 +426,14 @@ theorem kruskal_time3 (edgeList : List edge) (nodeList : List node) (h_matching_
 
 
 
-structure found' {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) : Type where
+structure found_parent {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) : Type where
   mk ::
   p : unionFindLink nodeList
   isIn : p ∈ uF.linkList
   rank_gt : p.rank > uFL.rank
 
 inductive find_query (nodeList : List node) : Type → Type _ where
-  | parent {uF : unionFind nodeList} (uFL : unionFindLink nodeList) (h_in : uFL ∈ uF.linkList) (h_not_self_con : uFL.nodeId ≠ uFL.ccId) : find_query nodeList (found' uF uFL)
+  | parent {uF : unionFind nodeList} (uFL : unionFindLink nodeList) (h_in : uFL ∈ uF.linkList) (h_not_self_con : uFL.nodeId ≠ uFL.ccId) : find_query nodeList (found_parent uF uFL)
   | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : find_query nodeList (unionFind_strict nodeList)
 
 def connected_component_of_unionFind_of_unionFindLink_prog {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) : Prog (find_query nodeList) (found nodeList uF) := do
@@ -441,7 +441,7 @@ def connected_component_of_unionFind_of_unionFindLink_prog {nodeList : List node
     then
       return ⟨uFL.ccId, by refine ⟨uFL, h_uFL_in, h_self_connected.symm, rfl⟩⟩
     else
-      let f : (found' uF uFL) ← find_query.parent uFL h_uFL_in (ne_comm.mp h_self_connected)
+      let f : (found_parent uF uFL) ← find_query.parent uFL h_uFL_in (ne_comm.mp h_self_connected)
       let p : unionFindLink nodeList := f.p
       have h_p_in : p ∈ uF.linkList := f.isIn
       have h_r : p.rank > uFL.rank := f.rank_gt
@@ -511,7 +511,7 @@ theorem connected_component_of_unionFind_of_id_prog_eval {nodeList : List node} 
   simp [connected_component_of_unionFind_of_id, connected_component_of_unionFind_of_id_prog]
   exact connected_component_of_unionFind_of_unionFindLink_prog_eval _ _ _
 
-theorem connected_component_of_unionFind_of_unionFindLink_prog_tim_log {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) (h_rankInvariant : uF.rankInvariant_strict) : (connected_component_of_unionFind_of_unionFindLink_prog uF uFL h_uFL_in).time (find_model nodeList) ≤ (Nat.log 2 nodeList.length - uFL.rank.val, 0) := by
+theorem connected_component_of_unionFind_of_unionFindLink_prog_time_log {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) (h_rankInvariant : uF.rankInvariant_strict) : (connected_component_of_unionFind_of_unionFindLink_prog uF uFL h_uFL_in).time (find_model nodeList) ≤ (Nat.log 2 nodeList.length - uFL.rank.val, 0) := by
   have h_max_rank := max_rank h_rankInvariant
   fun_induction connected_component_of_unionFind_of_unionFindLink_prog with
   | case1 uFL h_uFL_in h_self_con =>
@@ -527,7 +527,7 @@ theorem connected_component_of_unionFind_of_unionFindLink_prog_tim_log {nodeList
       have h := uF.matching_rank uFL h_uFL_in
       simp [ne_comm.mp h_not_self_con] at h
       exact h
-    let f : found' uF uFL := ⟨p, h_p_in, h_rank⟩
+    let f : found_parent uF uFL := ⟨p, h_p_in, h_rank⟩
     have ih := ih f
     simp [find_model, h_p]
     simp [find_model, f] at ih
@@ -539,7 +539,7 @@ theorem connected_component_of_unionFind_of_unionFindLink_prog_tim_log {nodeList
     · simp
     · exact ih
 
-theorem connected_component_of_unionFind_of_id_prog_tim_log {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) (h_rankInvariant : uF.rankInvariant_strict) : (connected_component_of_unionFind_of_id_prog uF id h).time (find_model nodeList) ≤ (Nat.log 2 nodeList.length, 0) := by
+theorem connected_component_of_unionFind_of_id_prog_time_log {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) (h_rankInvariant : uF.rankInvariant_strict) : (connected_component_of_unionFind_of_id_prog uF id h).time (find_model nodeList) ≤ (Nat.log 2 nodeList.length, 0) := by
   simp [connected_component_of_unionFind_of_id_prog]
   set uFL := List.choose (fun a => a.nodeId = id) uF.linkList (connected_component_of_unionFind_of_id_prog._proof_2 uF id (connected_component_of_unionFind_of_id_prog._proof_1 id h)) with ← h_uFL
   have h_uFL_in := List.choose_mem (fun a => a.nodeId = id) uF.linkList (connected_component_of_unionFind_of_id_prog._proof_2 uF id (connected_component_of_unionFind_of_id_prog._proof_1 id h))
@@ -547,7 +547,7 @@ theorem connected_component_of_unionFind_of_id_prog_tim_log {nodeList : List nod
   have h_le : (Nat.log 2 nodeList.length - uFL.rank.val, 0) ≤ (Nat.log 2 nodeList.length, 0) := by
     simp
   apply le_trans ?_ h_le
-  exact connected_component_of_unionFind_of_unionFindLink_prog_tim_log uF uFL h_uFL_in h_rankInvariant
+  exact connected_component_of_unionFind_of_unionFindLink_prog_time_log uF uFL h_uFL_in h_rankInvariant
 
 
 
@@ -581,7 +581,7 @@ theorem model_cost_le {nodeList : List node} : ∀ {l} (q : (kruskal_query_stric
   cases q with
   | find uF id h h_rankInvariant =>
     simp [reduction, kruskal_model3]
-    exact connected_component_of_unionFind_of_id_prog_tim_log _ _ _ h_rankInvariant
+    exact connected_component_of_unionFind_of_id_prog_time_log _ _ _ h_rankInvariant
   | union uF x y h₁ h₂ _ =>
     simp [find_model, kruskal_model3, reduction]
 

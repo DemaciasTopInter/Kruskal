@@ -1,2 +1,451 @@
 \section{Der Beweis über die Laufzeit}
 Der Code aus diesem Abschnitt ist in der Datei Algolean.lean zu finden.
+
+\subsection{Model 1 und 2}
+
+
+\begin{definition}[\Kruskalkruskalquery]
+  
+\end{definition}
+\begin{lstlisting}
+inductive (.\Kruskalkruskalquery.) (nodeList : List node) : Type → Type _ where
+  | find (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) : kruskal_query nodeList (found nodeList uF)
+  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : kruskal_query nodeList (unionFind nodeList)
+\end{lstlisting}
+
+
+
+\begin{definition}[\Kruskalfound]
+  
+\end{definition}
+\begin{lstlisting}
+structure (.\Kruskalfound.) (nodeList : List node) (uF : unionFind nodeList) : Type where
+  mk ::
+  id : Nat
+  ex : ∃ (uFL : unionFindLink nodeList), uFL ∈ uF.linkList ∧ uFL.nodeId = id ∧ uFL.ccId = id
+\end{lstlisting}
+
+
+
+\begin{definition}[\Kruskalkruskalhelperprog]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\Kruskalkruskalhelperprog.) (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : Prog (kruskal_query nodeList) (List edge) := do
+  match edgeList with
+  | [] => return edgesSoFar
+  | e::es =>
+    have h : ∃ x ∈ nodeList, x.id = e.node1 := by
+      have h : (∃ x ∈ nodeList, e.node1 = x.id) → (∃ x ∈ nodeList, x.id = e.node1) := by simp [eq_comm]
+      simp [h (h_matching_edge e List.mem_cons_self).left]
+    let found_x : (found nodeList uF) ← kruskal_query.find uF e.node1 h
+    let x := found_x.id
+    have h' : ∃ x ∈ nodeList, x.id = e.node2 := by
+      have h' : (∃ x ∈ nodeList, e.node2 = x.id) → (∃ x ∈ nodeList, x.id = e.node2) := by simp [eq_comm]
+      simp [h' (h_matching_edge e List.mem_cons_self).right]
+    let found_y : (found nodeList uF) ← kruskal_query.find uF e.node2 h'
+    let y := found_y.id
+    have h_matching_edge' : ∀ x ∈ es, (∃ y ∈ nodeList, x.node1 = y.id) ∧ ∃ z ∈ nodeList, x.node2 = z.id := by
+      intro z h_in
+      simp [h_matching_edge z (List.mem_cons_of_mem e h_in)]
+    let updated_uF := ← kruskal_query.union uF x y found_x.ex found_y.ex
+    let updated_edgesSoFar := update_edgesSoFar edgesSoFar e x y
+    return ← kruskal_helper_prog es nodeList updated_uF updated_edgesSoFar h_matching_edge' h_nodup
+\end{lstlisting}
+
+
+
+\begin{definition}[\Kruskalkruskalprog]
+  
+\end{definition}
+
+
+
+\begin{definition}[\Kruskalkruskalmodelone]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\Kruskalkruskalmodelone.) (nodeList : List node) : Model (kruskal_query nodeList) (Nat × Nat) where
+  evalQuery
+    | .find (uF : unionFind nodeList) id h =>
+      let cc := connected_component_of_unionFind_of_id uF id h
+      have h_ex := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF id h
+      ⟨cc, h_ex⟩
+    | .union (uF : unionFind nodeList) x y h₁ h₂ => update_unionFind uF x y h₁ h₂
+  cost
+    | .find _ _ _ => (1, 0)
+    | .union _ _ _ _ _ => (0, 1)
+\end{lstlisting}
+
+
+
+\begin{theorem}
+    \Kruskalkruskalprog macht im Model \Kruskalkruskalmodelone das Gleiche wie \Kruskalkruskal und ruft dabei höchstens $2 |E|$ mal find auf und höchstens $|E|$ mal union.
+\end{theorem}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelperevalone]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalevalone]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelpertimeone]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskaltimeone]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{definition}[\Kruskalkruskalmodeltwo]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\Kruskalkruskalmodeltwo.) (nodeList : List node) : Model (kruskal_query nodeList) (Nat × Nat) where
+  evalQuery
+    | .find (uF : unionFind nodeList) id h =>
+      let cc := connected_component_of_unionFind_of_id uF id h
+      have h_ex := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF id h
+      ⟨cc, h_ex⟩
+    | .union (uF : unionFind nodeList) x y h₁ h₂ => update_unionFind uF x y h₁ h₂
+  cost
+    | .find _ _ _ => (1, 0)
+    | .union _ x y _ _ => if x = y then (0, 0) else (0, 1)
+\end{lstlisting}
+
+
+
+\begin{theorem}
+    \Kruskalkruskalprog macht im Model \Kruskalkruskalmodeltwo das Gleiche wie \Kruskalkruskal und ruft dabei höchstens $2 |E|$ mal find auf und höchstens $|V|$ mal union.
+\end{theorem}
+
+
+
+\begin{lemma}[\Kruskalevalkruskalmodeltwoeqevalkruskalmodelone]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+Dadurch werden \Kruskalkruskalhelperevaltwo und \Kruskalkruskalevaltwo direkt erledigt, da sie das gleiche sind wie \Kruskalkruskalhelperevalone und \Kruskalkruskalevalone.
+
+
+
+\begin{lemma}[\KruskalkruskalhelpertimetwoindependentedgesSoFar]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelpertimetworight]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelpertimetwo]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskaltimetwo]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\subsection{Model 3 und find}
+
+
+
+\begin{definition}[\KruskalunionFindstrict]
+  
+\end{definition}
+\begin{lstlisting}
+structure (.\KruskalunionFindstrict.) (nodeList : List node) : Type where
+  mk ::
+  uF : unionFind nodeList
+  rankInvariant_strict : uF.rankInvariant_strict
+\end{lstlisting}
+
+
+
+\begin{definition}[\Kruskalkruskalquerystrict]
+  
+\end{definition}
+\begin{lstlisting}
+inductive (.\Kruskalkruskalquerystrict.) (nodeList : List node) : Type → Type _ where
+  | find (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) (h_rankInvariant : uF.rankInvariant_strict) : kruskal_query_strict nodeList (found nodeList uF)
+  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : kruskal_query_strict nodeList (unionFind_strict nodeList)
+\end{lstlisting}
+
+
+
+\begin{definition}[\Kruskalkruskalmodelthree]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\Kruskalkruskalmodelthree.) (nodeList : List node) : Model (kruskal_query_strict nodeList) (Nat × Nat) where
+  evalQuery
+    | .find (uF : unionFind nodeList) id h _ =>
+      let cc := connected_component_of_unionFind_of_id uF id h
+      have h_ex := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF id h
+      ⟨cc, h_ex⟩
+    | .union (uF : unionFind nodeList) x y h₁ h₂ h_rankInvariant => ⟨update_unionFind uF x y h₁ h₂, update_unionFind.rankInvariant_strict _ _ _ _ _ h_rankInvariant⟩
+  cost
+    | .find _ _ _ _ => (Nat.log 2 nodeList.length, 0)
+    | .union _ x y _ _ _ => if x = y then (0, 0) else (0, 1)
+\end{lstlisting}
+
+
+
+\begin{definition}[\Kruskalkruskalhelperprogstrict]
+  
+\end{definition}
+
+
+
+\begin{definition}[\Kruskalkruskalprogstrict]
+  
+\end{definition}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelperevalthree]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalevalthree]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalkruskalhelpertimethreeindependentedgesSoFar]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelpertimethreeright]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelpertimethree]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskaltimethree]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{definition}[\Kruskalfoundparent]
+  
+\end{definition}
+\begin{lstlisting}
+structure (.\Kruskalfoundparent.) {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) : Type where
+  mk ::
+  p : unionFindLink nodeList
+  isIn : p ∈ uF.linkList
+  rank_gt : p.rank > uFL.rank
+\end{lstlisting}
+
+
+
+\begin{definition}[\Kruskalfindquery]
+  
+\end{definition}
+\begin{lstlisting}
+inductive (.\Kruskalfindquery.) (nodeList : List node) : Type → Type _ where
+  | parent {uF : unionFind nodeList} (uFL : unionFindLink nodeList) (h_in : uFL ∈ uF.linkList) (h_not_self_con : uFL.nodeId ≠ uFL.ccId) : find_query nodeList (found_parent uF uFL)
+  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : find_query nodeList (unionFind_strict nodeList)
+\end{lstlisting}
+
+
+
+\begin{definition}[\KruskalconnectedcomponentofunionFindofunionFindLinkprog]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalconnectedcomponentofunionFindofunionFindLinkprog.) {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) : Prog (find_query nodeList) (found nodeList uF) := do
+  if h_self_connected : uFL.ccId = uFL.nodeId
+    then
+      return ⟨uFL.ccId, by refine ⟨uFL, h_uFL_in, h_self_connected.symm, rfl⟩⟩
+    else
+      let f : (found_parent uF uFL) ← find_query.parent uFL h_uFL_in (ne_comm.mp h_self_connected)
+      let p : unionFindLink nodeList := f.p
+      have h_p_in : p ∈ uF.linkList := f.isIn
+      have h_r : p.rank > uFL.rank := f.rank_gt
+      return ← connected_component_of_unionFind_of_unionFindLink_prog uF p h_p_in
+termination_by nodeList.length - uFL.rank
+  decreasing_by
+  grind
+\end{lstlisting}
+
+
+
+\begin{definition}[\KruskalconnectedcomponentofunionFindofidprog]
+  
+\end{definition}
+
+
+
+\begin{definition}[\Kruskalfindmodel]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\Kruskalfindmodel.) (nodeList : List node) : Model (find_query nodeList) (Nat × Nat) where
+  evalQuery
+    | .parent uFL h_in h_not_self_con =>
+      let p := parent uFL h_in
+      have h_p_in := by
+        rename_i uF
+        have h_p_in : p ∈ uF.linkList := by
+          simp [p, parent, List.choose_mem]
+        exact h_p_in
+      have h_rank : p.rank > uFL.rank := by
+        rename_i uF
+        simp [p, parent]
+        have h := uF.matching_rank uFL h_in
+        simp [h_not_self_con] at h
+        exact h
+      ⟨p, h_p_in, h_rank⟩
+    | .union (uF : unionFind nodeList) x y h₁ h₂ h_rankInvariant => ⟨update_unionFind uF x y h₁ h₂, update_unionFind.rankInvariant_strict _ _ _ _ _ h_rankInvariant⟩
+  cost
+    | .parent _ _ _ => (1, 0)
+    | .union _ x y _ _ _ => if x = y then (0, 0) else (0, 1)
+\end{lstlisting}
+
+
+
+\begin{lemma}[\KruskalconnectedcomponentofunionFindofunionFindLinkprogeval]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalconnectedcomponentofunionFindofidprogeval]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalconnectedcomponentofunionFindofunionFindLinkprogtimelog]
+  
+\end{lemma} \todo{Fixen}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalconnectedcomponentofunionFindofidprogtimelog]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\subsection{Reduktion}
+
+
+
+\begin{definition}[\Kruskalreduction]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\Kruskalreduction.) {nodeList : List node} : Reduction (kruskal_query_strict nodeList) (find_query nodeList) where
+  reduce
+    | .find uF id h _ => connected_component_of_unionFind_of_id_prog uF id h
+    | .union uF x y h₁ h₂ h_rankInvariant => do find_query.union uF x y h₁ h₂ h_rankInvariant
+\end{lstlisting}
+
+
+
+\begin{lemma}[\KruskalmodelevalQueryeq]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalmodelcostle]
+  
+\end{lemma}
+\begin{proof}
+  
+\end{proof}

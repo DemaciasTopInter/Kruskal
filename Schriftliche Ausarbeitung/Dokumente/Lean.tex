@@ -33,11 +33,14 @@ Da in Lean alles einen Typ hat, gilt das auch Type.
 Type, was das gleiche ist wie Type 0, ist vom Typ Type 1.
 Type 1 ist wiederum vom Typ Type 2 und so weiter.
 
-Eigene Typen definieren:
+Um eigene Typen beziehungsweise Terme definieren, gibt es in Lean verschiedene Möglichkeiten:
+Mit def oder abbrev lassen sich vor allem Funktionen definieren, aber auch konstante Elemente eines Typs oder einfache zusammen gesetzte Typen, wie zum Beispiel Tupel.
+Der Hauptunterschied dabei ist, dass aus sicht von Lean def etwas neues kreiert über das noch nichts bekannt ist, wärend abbrev eher ein Alias mit neuem Namen erzeugt.
+Komplexere Typen lassen sich als structure definieren was an Klassen aus dem objektorientierten Progammieren erinnert mit beliebig vielen Atributen und Methoden.
 abbrev
 def
 structure
-inductiv
+inductive
 
 Der Taktik Modus
 
