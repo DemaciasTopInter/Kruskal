@@ -1637,82 +1637,61 @@ def nodeList_of_edgeList_helper (edgeList : List edge) (nodeList : List node) : 
               then
                 nodeList_of_edgeList_helper es (x::nodeList)
               else
-                if x = y
-                  then
-                    nodeList_of_edgeList_helper es (x::nodeList)
-                  else
-                    nodeList_of_edgeList_helper es (x::y::nodeList)
+                nodeList_of_edgeList_helper es (x::y::nodeList)
 
 def nodeList_of_edgeList (edgeList : List edge) : List node :=
   nodeList_of_edgeList_helper edgeList []
 
 theorem nodeList_of_edgeList_helper_eq (edgeList : List edge) (nodeList : List node) : nodeList_of_edgeList_helper edgeList nodeList = ((nodeList_of_edgeList_helper edgeList []).filter (fun x => x ∉ nodeList)) ++ nodeList := by
-  induction edgeList generalizing nodeList with -- generalizing nodeList
+  induction edgeList generalizing nodeList with
   | nil =>
     simp [nodeList_of_edgeList_helper]
   | cons x edgeList ih =>
     simp [nodeList_of_edgeList_helper]
     by_cases h_both_in : { id := x.node1 } ∈ nodeList ∧ { id := x.node2 } ∈ nodeList
     · simp [h_both_in]
-      by_cases h_eq : x.node1 = x.node2
-      · simp [h_eq, ih [{ id := x.node2 }]]
-        simp [h_both_in.right]
-        have h : (fun a => !decide (a ∈ nodeList) && !decide (a = { id := x.node2 })) = (fun a => !decide (a ∈ nodeList)) := by
-          funext a
-          by_cases h : a = { id := x.node2 }
-          · simp [h, h_both_in]
-          · simp [h]
-        simp [h, ih nodeList]
-      · simp [h_eq, ih [{ id := x.node1 }, { id := x.node2 }]]
-        simp [h_both_in]
-        have h : (fun a => !decide (a ∈ nodeList) && (!decide (a = { id := x.node1 }) && !decide (a = { id := x.node2 }))) = (fun a => !decide (a ∈ nodeList)) := by
-          funext a
-          by_cases h : a = { id := x.node1 }
-          · simp [h, h_both_in]
-          · by_cases h' : a = { id := x.node2 }
-            · simp [h', h_both_in]
-            · simp [h, h']
-        simp [h, ih nodeList]
+      simp [ih [{ id := x.node1 }, { id := x.node2 }]]
+      simp [h_both_in]
+      have h : (fun a => !decide (a ∈ nodeList) && (!decide (a = { id := x.node1 }) && !decide (a = { id := x.node2 }))) = (fun a => !decide (a ∈ nodeList)) := by
+        funext a
+        by_cases h : a = { id := x.node1 }
+        · simp [h, h_both_in]
+        · by_cases h' : a = { id := x.node2 }
+          · simp [h', h_both_in]
+          · simp [h, h']
+      simp [h, ih nodeList]
     · simp [h_both_in]
       by_cases h_1_in : { id := x.node1 } ∈ nodeList
       · simp [h_1_in]
-        by_cases h_eq : x.node1 = x.node2
-        · simp [h_eq] at h_1_in
-          simp [h_eq, h_1_in] at h_both_in
-        · simp [h_1_in] at h_both_in
-          simp [h_eq, ih [{ id := x.node1 }, { id := x.node2 }], h_1_in, h_both_in]
-          have h : (fun a => !decide (a ∈ nodeList) && (!decide (a = { id := x.node1 }) && !decide (a = { id := x.node2 }))) = (fun a => !decide (a ∈ { id := x.node2 }::nodeList)) := by
-            funext a
-            by_cases h : a = { id := x.node1 }
-            · simp [h, h_1_in]
-            · simp [h]
-              by_cases h' : a = { id := x.node2 }
-              · simp [h']
-              · simp [h']
-          simp [h, ih ({ id := x.node2 } :: nodeList)]
+        simp [h_1_in] at h_both_in
+        simp [ih [{ id := x.node1 }, { id := x.node2 }], h_1_in, h_both_in]
+        have h : (fun a => !decide (a ∈ nodeList) && (!decide (a = { id := x.node1 }) && !decide (a = { id := x.node2 }))) = (fun a => !decide (a ∈ { id := x.node2 }::nodeList)) := by
+          funext a
+          by_cases h : a = { id := x.node1 }
+          · simp [h, h_1_in]
+          · simp [h]
+            by_cases h' : a = { id := x.node2 }
+            · simp [h']
+            · simp [h']
+        simp [h, ih ({ id := x.node2 } :: nodeList)]
       · simp [h_1_in]
         by_cases h_2_in : { id := x.node2 } ∈ nodeList
         · simp [h_2_in]
-          by_cases h_eq : x.node1 = x.node2
-          · simp [h_eq] at h_1_in
-            simp [h_1_in] at h_2_in
-          · simp [h_eq, ih [{ id := x.node1 }, { id := x.node2 }], h_1_in, h_2_in]
-            have h : (fun a => !decide (a ∈ nodeList) && (!decide (a = { id := x.node1 }) && !decide (a = { id := x.node2 }))) = (fun a => !decide (a ∈ { id := x.node1 }::nodeList)) := by
-              funext a
-              by_cases h : a = { id := x.node2 }
-              · simp [h, h_2_in]
-              · simp [h, Bool.and_comm]
-            simp [h, ih ({ id := x.node1 } :: nodeList)]
+          simp [ih [{ id := x.node1 }, { id := x.node2 }], h_1_in, h_2_in]
+          have h : (fun a => !decide (a ∈ nodeList) && (!decide (a = { id := x.node1 }) && !decide (a = { id := x.node2 }))) = (fun a => !decide (a ∈ { id := x.node1 }::nodeList)) := by
+            funext a
+            by_cases h : a = { id := x.node2 }
+            · simp [h, h_2_in]
+            · simp [h, Bool.and_comm]
+          simp [h, ih ({ id := x.node1 } :: nodeList)]
         · simp [h_2_in]
-          by_cases h_eq : x.node1 = x.node2
-          · simp [h_eq, ih [{ id := x.node2 }], h_2_in, ih ({ id := x.node2 } :: nodeList), Bool.and_comm]
-          · simp [h_eq, ih [{ id := x.node1 }, { id := x.node2 }], h_1_in, h_2_in, ih ({ id := x.node1 }::{ id := x.node2 } :: nodeList), Bool.and_comm]
-            have h : (fun x_1 => !decide (x_1 = { id := x.node1 }) && (!decide (x_1 ∈ nodeList) && !decide (x_1 = { id := x.node2 }))) = (fun a => !decide (a ∈ nodeList) && (!decide (a = { id := x.node1 }) && !decide (a = { id := x.node2 }))) := by
-              funext a
-              rw [← Bool.and_assoc]
-              nth_rewrite 2 [Bool.and_comm]
-              simp [Bool.and_assoc]
-            simp [h]
+          simp [ih [{ id := x.node1 }, { id := x.node2 }], h_1_in, h_2_in, ih ({ id := x.node1 }::{ id := x.node2 } :: nodeList), Bool.and_comm]
+          have h : (fun x_1 => !decide (x_1 = { id := x.node1 }) && (!decide (x_1 ∈ nodeList) && !decide (x_1 = { id := x.node2 }))) = (fun a => !decide (a ∈ nodeList) && (!decide (a = { id := x.node1 }) && !decide (a = { id := x.node2 }))) := by
+            funext a
+            rw [← Bool.and_assoc]
+            nth_rewrite 2 [Bool.and_comm]
+            simp [Bool.and_assoc]
+          simp [h]
 
 theorem mem_nodeList_of_edgeList_helper_iff_node_in_edgeList (edgeList : List edge) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList [] ↔ ∃ y ∈ edgeList, y.node1 = x.id ∨ y.node2 = x.id := by
   constructor
@@ -1725,21 +1704,13 @@ theorem mem_nodeList_of_edgeList_helper_iff_node_in_edgeList (edgeList : List ed
       by_cases h_eq_or : e.node1 = x.id ∨ e.node2 = x.id
       · refine ⟨e, List.mem_cons_self, h_eq_or⟩
       · simp [h_eq_or]
-        by_cases h : e.node1 = e.node2
-        · simp [h] at h_eq_or
-          simp [h, nodeList_of_edgeList_helper_eq edgeList [{ id := e.node2 }]] at h_x_in
-          rcases h_x_in with ⟨h_x_in, h_x_eq⟩ | ⟨h_x_eq⟩
-          · rcases ih h_x_in with ⟨y, h_y_in, h_y_eq_or⟩
-            refine ⟨y, h_y_in, h_y_eq_or⟩
+        simp [nodeList_of_edgeList_helper_eq edgeList [{ id := e.node1 }, { id := e.node2 }]] at h_x_in
+        rcases h_x_in with ⟨h_x_in, h_x_eq_or⟩ | ⟨h_x_eq_or⟩
+        · exact ih h_x_in
+        · by_cases h_x_eq : x = { id := e.node1 }
           · simp [h_x_eq] at h_eq_or
-        · simp [h, nodeList_of_edgeList_helper_eq edgeList [{ id := e.node1 }, { id := e.node2 }]] at h_x_in
-          rcases h_x_in with ⟨h_x_in, h_x_eq_or⟩ | ⟨h_x_eq_or⟩
-          · exact ih h_x_in
-          · by_cases h_x_eq : x = { id := e.node1 }
-            · simp [h_x_eq] at h_eq_or
-            · simp [h_x_eq] at h_x_eq_or
-              simp [h_x_eq_or] at h_eq_or
-
+          · simp [h_x_eq] at h_x_eq_or
+            simp [h_x_eq_or] at h_eq_or
   · intro h_ex_y
     rcases h_ex_y with ⟨y, h_y_in, h_y_eq_or⟩
     induction edgeList with
@@ -1749,30 +1720,23 @@ theorem mem_nodeList_of_edgeList_helper_iff_node_in_edgeList (edgeList : List ed
       simp at h_y_in
       rcases h_y_in with ⟨h_y_eq⟩ | ⟨h_y_in⟩
       · simp [nodeList_of_edgeList_helper, ← h_y_eq]
-        by_cases h_eq : y.node1 = y.node2
-        · simp [h_eq] at h_y_eq_or
-          simp [h_eq, h_y_eq_or, nodeList_of_edgeList_helper_eq edgeList [{ id := x.id }]]
-        · simp [h_eq, nodeList_of_edgeList_helper_eq edgeList [{ id := y.node1 }, { id := y.node2 }]]
-          right
-          by_cases h_x_eq : y.node1 = x.id
-          · simp [h_x_eq]
-          · simp [h_x_eq] at h_y_eq_or
-            simp [h_y_eq_or]
+        simp [nodeList_of_edgeList_helper_eq edgeList [{ id := y.node1 }, { id := y.node2 }]]
+        right
+        by_cases h_x_eq : y.node1 = x.id
+        · simp [h_x_eq]
+        · simp [h_x_eq] at h_y_eq_or
+          simp [h_y_eq_or]
       · have ih := ih h_y_in
         simp [nodeList_of_edgeList_helper]
-        by_cases h_eq : e.node1 = e.node2
-        · simp [h_eq, nodeList_of_edgeList_helper_eq edgeList [{ id := e.node2 }], ih]
-          by_cases h : x = { id := e.node2 }
-          · simp [h]
-          · simp [h]
-        · simp [h_eq, nodeList_of_edgeList_helper_eq edgeList [{ id := e.node1 }, { id := e.node2 }], ih]
-          by_cases h : x = { id := e.node1 }
-          · simp [h]
-          · simp [h]
-            by_cases h' : x = { id := e.node2 }
-            · simp [h']
-            · simp [h']
+        simp [nodeList_of_edgeList_helper_eq edgeList [{ id := e.node1 }, { id := e.node2 }], ih]
+        by_cases h : x = { id := e.node1 }
+        · simp [h]
+        · simp [h]
+          by_cases h' : x = { id := e.node2 }
+          · simp [h']
+          · simp [h']
 
+-- unused
 theorem mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList (edgeList : List edge) (nodeList : List node) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList nodeList ↔ x ∈ nodeList_of_edgeList_helper edgeList [] ∨ x ∈ nodeList := by
   constructor
   · intro h_in
@@ -1808,64 +1772,13 @@ theorem matching_edge_for_nodeList_of_edgeList (edgeList : List edge) : matching
   · simp [nodeList_of_edgeList]
     let x : node := ⟨e.node1⟩
     refine ⟨x, ?_, by simp [x]⟩
-    induction edgeList with
-    | nil =>
-      simp at h_e_in
-    | cons f es ih =>
-      by_cases h_eq : e = f
-      · simp [nodeList_of_edgeList_helper]
-        by_cases h : f.node1 = f.node2
-        · simp [h]
-          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node2 }] x).mpr
-          right
-          rw [← h]
-          simp [← h_eq, x]
-        · simp [h]
-          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node1 }, { id := f.node2 }] x).mpr
-          right
-          simp [← h_eq, x]
-      · simp [h_eq] at h_e_in
-        simp [h_e_in] at ih
-        simp [nodeList_of_edgeList_helper]
-        by_cases h : f.node1 = f.node2
-        · simp [h]
-          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node2 }] x).mpr
-          left
-          exact ih
-        · simp [h]
-          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node1 }, { id := f.node2 }] x).mpr
-          left
-          exact ih
+    apply (mem_nodeList_of_edgeList_helper_iff_node_in_edgeList edgeList x).mpr
+    refine ⟨e, h_e_in, by simp [x]⟩
   · simp [nodeList_of_edgeList]
     let x : node := ⟨e.node2⟩
     refine ⟨x, ?_, by simp [x]⟩
-    induction edgeList with
-    | nil =>
-      simp at h_e_in
-    | cons f es ih =>
-      by_cases h_eq : e = f
-      · simp [nodeList_of_edgeList_helper]
-        by_cases h : f.node1 = f.node2
-        · simp [h]
-          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node2 }] x).mpr
-          right
-          simp [← h_eq, x]
-        · simp [h]
-          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node1 }, { id := f.node2 }] x).mpr
-          right
-          simp [← h_eq, x]
-      · simp [h_eq] at h_e_in
-        simp [h_e_in] at ih
-        simp [nodeList_of_edgeList_helper]
-        by_cases h : f.node1 = f.node2
-        · simp [h]
-          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node2 }] x).mpr
-          left
-          exact ih
-        · simp [h]
-          apply (mem_nodeList_of_edgeList_helper_iff_mem_nodeList_of_edgeList_helper_of_nil_or_mem_nodeList es [{ id := f.node1 }, { id := f.node2 }] x).mpr
-          left
-          exact ih
+    apply (mem_nodeList_of_edgeList_helper_iff_node_in_edgeList edgeList x).mpr
+    refine ⟨e, h_e_in, by simp [x]⟩
 
 theorem nodeList_of_edgeList_nodup (edgeList : List edge) : (nodeList_of_edgeList edgeList).Nodup := by
   simp [nodeList_of_edgeList]
@@ -1874,15 +1787,9 @@ theorem nodeList_of_edgeList_nodup (edgeList : List edge) : (nodeList_of_edgeLis
     simp [nodeList_of_edgeList_helper]
   | cons e edgeList ih =>
     simp [nodeList_of_edgeList_helper]
-    by_cases h : e.node1 = e.node2
-    · simp [h]
-      simp [nodeList_of_edgeList_helper_eq edgeList [{ id := e.node2 }]]
-      simp [List.nodup_append_comm]
-      simp [List.Nodup.filter (fun x => !decide (x = { id := e.node2 })) ih]
-    · simp [h]
-      simp [nodeList_of_edgeList_helper_eq edgeList [{ id := e.node1 }, { id := e.node2 }]]
-      simp [List.nodup_append_comm]
-      simp [List.Nodup.filter (fun x => !decide (x = { id := e.node1 }) && !decide (x = { id := e.node2 })) ih, h]
+    simp [nodeList_of_edgeList_helper_eq edgeList [{ id := e.node1 }, { id := e.node2 }]]
+    simp [List.nodup_append_comm]
+    simp [List.Nodup.filter (fun x => !decide (x = { id := e.node1 }) && !decide (x = { id := e.node2 })) ih, ne_of_lt e.nodesLt]
 
 def kruskal_of_edgeList (edgeList : List edge) : List edge :=
   kruskal edgeList (nodeList_of_edgeList edgeList) (matching_edge_for_nodeList_of_edgeList edgeList) (nodeList_of_edgeList_nodup edgeList)

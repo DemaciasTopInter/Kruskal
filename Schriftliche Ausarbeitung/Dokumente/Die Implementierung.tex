@@ -344,7 +344,9 @@ Ich erstelle zwei neue Zeiger für $x$ und $y$.
 Der mit kleineren Rang (oder gleichem Rang der erste) zeigt jetzt auf den anderen und der wiederum bekommt seinen Rang upgedatet.
 Dann erstelle ich eine neue Zeiger-Liste, die auf der alten Liste beruht, aber bei der die beiden alten Zeiger durch die neuen ersetzt sind.
 Danach muss ich noch zeigen, dass die Bedingungen aus \KruskalunionFind für die neue Liste gelten.
-
+\begin{definition}
+  \label{KruskalupdateunionFind}
+\end{definition}
 \begin{lstlisting}
 def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : unionFind nodeList :=
   if h_eq : x = y
@@ -457,10 +459,11 @@ nur muss hier auch beachtet werden, dass \textit{uFLy} ersetzt wird.
 \subsection{Kruskal}
 Bevor ich nun zum eigentlichen Kruskal-Algorithmus komme definiere ich noch eine Eigenschaft, die den input validiert.
 Der Algorithmus wird auf graphen angewendet und als input übergebe ich die Knoten-Liste und die Kanten-Liste.
-\Kruskalmatchingedge sagt nun aus, dass diese Listen auch tatsächlich zu einander passen, also dass alle Knoten, die von den Kanten verbunden werden, auch tatsächlich in der Knoten-Liste vorkommen.
+% \Kruskalmatchingedge sagt nun aus, dass diese Listen auch tatsächlich zu einander passen, also dass alle Knoten, die von den Kanten verbunden werden, auch tatsächlich in der Knoten-Liste vorkommen.
+Ich stelle sicher, dass diese auch im Sinne eine Graphen zusammen passen und dass es in der Konten-Liste keine Dopplungen gibt.
 
-\begin{definition}[\Kruskalmatchingedge]
-  
+\begin{definition}[\Kruskalmatchingedge]\label{Kruskalmatchingedge}
+  Eine Kanten-Liste und eine Knoten-Liste passen zusammen, wenn für jede Kante der Kanten-Liste die Knoten, die sie verbindet auch in der Knoten-Liste sind.
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalmatchingedge.)  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x ∈ edgeList, (∃ y ∈ nodeList, x.node1 = y.id) ∧ (∃ z ∈ nodeList, x.node2 = z.id)
@@ -468,27 +471,33 @@ def (.\Kruskalmatchingedge.)  (edgeList : List edge) (nodeList : List node) : Pr
 
 Den Algorithmus habe ich in zwei Funktionen aufgeteilt.
 In \Kruskalkruskal sortiere ich die Kanten-List und initialisiere die Union-Find-Struktur und die ErgebnisKantenListe.
-Das Iterieren über die Kanten-Liste passiert dann in \Kruskalkruskalhelper.
+Das Iterieren über die Kanten-Liste passiert dann rekursiv in \Kruskalkruskalhelper.\todo{?}
 
 \begin{definition}[\Kruskalkruskal]
-  
+  Die Funktion \Kruskalkruskal nimmt die Knoten-Liste und die Kanten-Liste eines Graphen und gibt eine Kanten-Liste zurück, die auf dem Graph einen minimalen Spannbaum bildet.
+  Dafür sortiert sie die übergebene Kanten-Liste und initialisiert die Union-Find-Struktur und die ErgebnisKantenListe.
+  Dann übergibt sie alles an die Funktion \Kruskalkruskalhelper.
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalkruskal.) (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
     let edgeListSorted : List edge := edgeList.mergeSort
     let uF : unionFind nodeList := init_unionFind nodeList h_nodup
+    let edgesSoFar : List edge := []
     have h_matching_edge : matching_edge edgeListSorted nodeList := by
       intro e h_e_in
       simp [edgeListSorted] at h_e_in
       simp [matching_edge] at h_matching_edge
       exact h_matching_edge e h_e_in
-    kruskal_helper edgeListSorted nodeList uF [] h_matching_edge h_nodup
+    kruskal_helper edgeListSorted nodeList uF edgesSoFar h_matching_edge h_nodup
 \end{lstlisting}
 
 
 
 \begin{definition}[\Kruskalkruskalhelper]
-  
+  Für jede Kante $e$ der Kanten-Liste:
+  Seien $x$ und $y$ die Zusammenhangskomponenten der Knoten, die sie verbindet.
+  Update die Union-Find-Struktur mit der vereinigung von $x$ und $y$.
+  Und update die ErgebnisKantenListe mit der $e$.
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalkruskalhelper.) (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
@@ -513,21 +522,34 @@ def (.\Kruskalkruskalhelper.) (edgeList : List edge) (nodeList : List node) (uF 
     kruskal_helper es nodeList updated_uF updated_edgesSoFar h_matching_edge' h_nodup
 \end{lstlisting}
 
-Um \Kruskalkruskalhelper kompakter zu halten habe ich die Fallunterscheidung beim updaten der ErgebnisKantenListe und der Union-Find-Struktur, je nach dem,
-ob die Zusammenhangskomponenten $x$ und $y$ gliech sind, ausgelagert.
+Um \Kruskalkruskalhelper kompakter zu halten habe ich die Fallunterscheidung beim updaten der Union-Find-Struktur (Definition \ref{KruskalupdateunionFind}\todo{besseres ref}) und der ErgebnisKantenListe,
+je nach dem, ob die Zusammenhangskomponenten $x$ und $y$ gliech sind, ausgelagert.
 Das macht die Funktion zum einen halb so groß und zum anderen lässt sich so in späteren Lemmas besser eine induktion über die funktion führen.
 
 \begin{definition}[\KruskalupdateedgesSoFar]
-  
+  Falls $x$ und $y$ bereits die selbe Zusammenhangskomponente sind, belasse die ErgebnisKantenListe wie sie ist.
+  Falls nicht, füge die Kante $e$ der ErgebnisKantenListe hinzu.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalupdateedgesSoFar.) (edgesSoFar : List edge) (e : edge) (x y : Nat) : List edge := if x = y then edgesSoFar else e :: edgesSoFar
 \end{lstlisting}
 
+Damit ist der Kruskal Algorithmus fertig implementiert.
+Allerdings habe ich da noch nicht aufgehört, da ich auch eine Möglichkeit wollte, nur eine Kanten-Liste anzugeben, durch die eine Knoten-Liste impliziert wird.
+Dafür brauchte ich zuerst eine Funktion, die aus einer Kanten-Liste eine Passende Knoten-Liste Erzeugt.
 
+\begin{definition}[\KruskalnodeListofedgeList]
+  Die Funktion ruft nur ihre Hilfsfunktion auf und übergibt ihr die Kanten-Liste und eine leere Knoten-Liste.
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalnodeListofedgeList.) (edgeList : List edge) : List node :=
+  nodeList_of_edgeList_helper edgeList []
+\end{lstlisting}
 
 \begin{definition}[\KruskalnodeListofedgeListhelper]
-  
+  Die Hilfsfunktion nimmt eine Kanten-Liste und eine Knoten-Liste und fügt
+  für jede Kante der Kanten-Liste ihre Knoten, die sie verbindet, der Knoten-Liste hinzu, falls diese noch nicht darin enthalten sind.
+  Dann gibt sie die Knoten-Liste zurück.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalnodeListofedgeListhelper.) (edgeList : List edge) (nodeList : List node) : List node :=
@@ -548,41 +570,52 @@ def (.\KruskalnodeListofedgeListhelper.) (edgeList : List edge) (nodeList : List
         then
           nodeList_of_edgeList_helper es (x::nodeList)
         else
-          if x = y
-          then
-            nodeList_of_edgeList_helper es (x::nodeList)
-          else
-            nodeList_of_edgeList_helper es (x::y::nodeList)
+          nodeList_of_edgeList_helper es (x::y::nodeList)
 \end{lstlisting}
 
+Um \Kruskalkruskal mit dieser Knoten-Liste aufrufen zu können, muss ich noch zeigen, dass das ein valider Input ist.
 
-\begin{definition}[\KruskalnodeListofedgeList]
-  
-\end{definition}
-\begin{lstlisting}
-def (.\KruskalnodeListofedgeList.) (edgeList : List edge) : List node :=
-  nodeList_of_edgeList_helper edgeList []
-\end{lstlisting}
+\begin{theorem}
+  Ein Kanten-Liste passt mit der aus ihr erzeugten Knoten-Liste im Sinne von Definition \ref{Kruskalmatchingedge}\todo{besseres ref} zusammen.
+  Und die aus ihr erzeugten Knoten-Liste hat keine Dopplungen.
+\end{theorem}
 
-
+Hierfür brauche ich zunächst zwei Hilfslemma, die \dots\todo{…}
 
 \begin{lemma}[\KruskalnodeListofedgeListhelpereq]
-  
+  Für eine Kanten-Liste macht es keinen Unterschied, ob \KruskalnodeListofedgeListhelper für sie mit einer gegebenen Knoten-Liste aufgerufen wird, oder mit einer leeren,
+  wobei dann alle Knoten aus der gegebenen Konten-Liste aus dem aus der Ergebnis-Liste rausgefiltert und anschließend hinten angehängt werden.
 \end{lemma}
-\begin{proof}
-  
-\end{proof}
 \begin{lstlisting}
 theorem (.\KruskalnodeListofedgeListhelpereq.) (edgeList : List edge) (nodeList : List node) : nodeList_of_edgeList_helper edgeList nodeList = ((nodeList_of_edgeList_helper edgeList []).filter (fun x => x ∉ nodeList)) ++ nodeList
 \end{lstlisting}
+\begin{proof}
+  Der Beweis erfolgt per induktion über die Kanten-Listen.
+  Im Basisfall verbleibt auf beiden Seiten der Gleichung nur die Knoten-Liste.
+  Im induktionsschritt gibt es eine extra Kante, deren Knoten, je nach dem, ob und wenn ja welche in der Knoten-Liste enthalten sind, aufgenommen werden.
+  In jedem Fall lässt das Filtern auf der anderen Seite die gleichen Knoten übrig und sie werden in die Knoten-Liste aufgenommen
+  und die Gleichung entspricht nun der Induktionshypothese.
+\end{proof}
 
-
+Das folgende Hilfslemma beschreibt genau die Eigenschaft, die \KruskalnodeListofedgeList definiert.
 
 \begin{lemma}[\KruskalmemnodeListofedgeListhelperiffnodeinedgeList]
-  
+  Ein Konten ist genau dann in der aus einer Kanten-Liste erzeugten Knoten-Liste, wenn es in der entsprechenden Kanten-Liste eine Kante gibt, die ihn mit einem anderen Knoten verbindet.
 \end{lemma}
 \begin{proof}
-  
+  Da es eine \glqq genau dann wenn\grqq -Aussage ist, muss ich es in beide Richtungen zeigen.
+  In beiden Fällen mache ich das mit einer induktion über die Kanten-Liste.
+
+  $\rightarrow:$
+  Im Basisfall ist die erzeugte Knoten-Liste leer und es gibt kein entsprechenden Knoten.
+  Im induktionsschritt kann ich dank des vorherigen Hilfslemma unterscheiden, entweder ist die neue Kante die gesuchte, oder die gesuchte ist in der restlichen Kanten-Liste
+  und ich kann die Kante ignorieren und die Induktionshypothese greift.
+
+  $\leftarrow:$
+  Die gegenrichtung funktioniert sehr ähnlich.
+  Hier gibt es im Basisfall keine entsprechende Kante, da die Kanten-Liste leer ist.
+  Und im induktionsschritt ist entweder die neue Kante die gesuchte, oder die gesuchte ist in der restlichen Kanten-Liste und ich kann die Induktionshypothese anwenden.
+  Beiden Fälle kann ich dann durch das vorherige Hilfslemma auflösen.
 \end{proof}
 \begin{lstlisting}
 theorem (.\KruskalmemnodeListofedgeListhelperiffnodeinedgeList.) (edgeList : List edge) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList [] ↔ ∃ y ∈ edgeList, y.node1 = x.id ∨ y.node2 = x.id
@@ -590,23 +623,11 @@ theorem (.\KruskalmemnodeListofedgeListhelperiffnodeinedgeList.) (edgeList : Lis
 
 
 
-\begin{lemma}[\KruskalmemnodeListofedgeListhelperiffmemnodeListofedgeListhelperofnilormemnodeList]
-  
-\end{lemma}
-\begin{proof}
-  
-\end{proof}
-\begin{lstlisting}
-theorem (.\KruskalmemnodeListofedgeListhelperiffmemnodeListofedgeListhelperofnilormemnodeList.) (edgeList : List edge) (nodeList : List node) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList nodeList ↔ x ∈ nodeList_of_edgeList_helper edgeList [] ∨ x ∈ nodeList
-\end{lstlisting}
-
-
-
 \begin{lemma}[\KruskalmatchingedgefornodeListofedgeList]
-  
+  Eine Kanten-Liste und die aus ihr erzeugte Knoten-Liste passen zusammen.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt direkt aus Lemma \KruskalmemnodeListofedgeListhelperiffnodeinedgeList.
 \end{proof}
 \begin{lstlisting}
 theorem (.\KruskalmatchingedgefornodeListofedgeList.) (edgeList : List edge) : matching_edge edgeList (nodeList_of_edgeList edgeList)
@@ -615,19 +636,24 @@ theorem (.\KruskalmatchingedgefornodeListofedgeList.) (edgeList : List edge) : m
 
 
 \begin{lemma}[\KruskalnodeListofedgeListnodup]
-  
+  Die aus einer Kanten-Liste erzeugte Knoten-Liste enthält keine Dopplungen.
 \end{lemma}
 \begin{proof}
-  
+  Auch der Beweis erfolgt per induktion über die Kanten-Listen.
+  Der Basisfall ist klar, denn eine leere liste hat keine Dopplungen.
+  Im induktionsschritt werden die beiden Knoten der extra Kante in die Knoten-Liste aufgenommen.
+  Nach Lemma \KruskalnodeListofedgeListhelpereq kann ich sie dann aus der Funktion raus filtern und hinten anhängen.
+  Da es keine Selbskanten gibt, sind diese Knoten unterschiedlich und kommen wegen dem Filter also nicht doppelt vor.
+  Und für die restliche Funktion greift die Induktionshypothese.
 \end{proof}
 \begin{lstlisting}
 theorem (.\KruskalnodeListofedgeListnodup.) (edgeList : List edge) : (nodeList_of_edgeList edgeList).Nodup
 \end{lstlisting}
 
-
+Damit ist das Theorem abgeschlossen und ich kann Kruskal mit nur der Kanten-Liste als Input definieren.
 
 \begin{definition}[\KruskalkruskalofedgeList]
-  Test
+  Kruskal mit einer Kanten-Liste und der aus ihr erzeugten Knoten-Liste.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalkruskalofedgeList.) (edgeList : List edge) : List edge :=
