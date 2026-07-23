@@ -133,7 +133,7 @@ theorem (.\Kruskalexistsparentlink.) {nodeList : List node} (linkList : List (un
 
 
 
-\subsection{Die Initialisierung der Union-Find-Struktur}\todo{sub\-section Init}
+\subsection{Die Initialisierung der Union-Find-Struktur}
 Die Funktion, die für eine gültige Knoten-Liste, also eine ohne Duplikate, die Union-Find-Struktur initialisiert, muss zum einen die Zeiger-Liste erstellen
 und zum anderen die Nachweise erbringen, dass alle an sie gestellten Bedingungen auch erfüllt werden.
 
@@ -272,8 +272,8 @@ theorem init_unionFind.linkList.helper_injectiv (nodeList : List node) (h_nonemp
 \end{proof}
 \begin{lstlisting}
 theorem (.\KruskalinitunionFindlinkListhelperappendreverse.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List (unionFindLink nodeList)) (h_split : init_unionFind.linkList.helper nodeList h_nonempty nodeList = l₁ ++ l₂) : ∃ k₁ k₂, nodeList = k₁ ++ k₂ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₂ = l₂ := by
-  let k₁ := nodeList_of_unionFindLinkList nodeList l₁
-  let k₂ := nodeList_of_unionFindLinkList nodeList l₂
+  let k₁ := nodeList_of_unionFind.linkList nodeList l₁
+  let k₂ := nodeList_of_unionFind.linkList nodeList l₂
   refine ⟨k₁, k₂, ?_⟩
   have h_eq₂ : init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ := …
 
@@ -288,10 +288,19 @@ theorem (.\KruskalinitunionFindlinkListhelperappendreverse.) (nodeList : List no
   Die Liste erfüllt matching\_ccId, also gibt es für jeden Zeiger aus \KruskalinitunionFindlinkList genau einen Knoten aus der Knoten-Liste, auf den er zeigt.
 \end{lemma}
 \begin{proof}
-  \todo{todo}
+  Sei $nodeList$ eine Knoten-Liste, $uFL$ ein Zeiger in init\_unionFind.linkList.\-helper $nodeList$ und sei $x$ sein Knoten.
+  Dann ist $x$ der gesuchte Knoten.
+
+  Dafür muss ich zeigen, dass $x$ in $nodeList$ ist und dass jeder Knoten auf den $uFL$ zeigt der Gleiche Knoten $x$ ist.
+  Letzteres folgt direkt aus der Tatsache, dass $uFL$ auf seinen eigenen Knoten zeigt.
+  Da $uFL$ Teil der Liste ist, lässt sie sich aufteilen in eine Subliste $l_1$ davor, $uFL$ selbst und eine Subliste $l_2$ danach.
+  Also init\_unionFind.linkList.helper $nodeList$ = $l_1$ ++ $uFL :: l_2$.
+  Dann kann ich nach \KruskalinitunionFindlinkListhelperappend $nodeList$ in zwei Listen $k_1$ und $k_2$ aufteilen
+  und das erste Element von $k_2$ ist tatsächlich $x$.
+  Also ist $x$ in $nodeList$.
 \end{proof}
 \begin{lstlisting}
-theorem (.\KruskalinitunionFindlinkListmatchingccId.) {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ y ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = y.ccId
+theorem (.\KruskalinitunionFindlinkListmatchingccId.) {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ uFL ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = uFL.ccId
 \end{lstlisting}
 
 Der Beweis für matching\_length lässt sich durch eine einfache Listen-Induktion zeigen, diese hat aber einen Harken.
@@ -357,9 +366,12 @@ tut er das nicht, geht man weiter zum Zeiger des Knoten, auf den er Zeigt.
 
 Da das eine rekursive Funktion ist, und es kein Element gibt, das in jedem Schritt kleiner wird, braucht Lean einen Nachweis, dass diese Funktion auch terminiert.
 Über matching\_rank zeige ich, dass der Rang des neuen Zeigers höher ist als der des aktuellen.
-Dadurch habe ich doch eine natürlische Zahl, die in jedem Schritt kleiner wird, nämlich die Rang Oberschranke - der Rang des aktuellen Zeigers.
+Dadurch habe ich doch eine natürlische Zahl, die in jedem Schritt kleiner wird, nämlich die Rang Oberschranke minus der Rang des aktuellen Zeigers.
 Das ist auch der grund, warum ich den Rang überhaupt beschränke.
 
+\begin{definition}[\KruskalconnectedcomponentofunionFindofunionFindLink]
+  Die Funktion nimmt einen Zeiger und gibt die Knoten-ID des Repräsentanten der Zusammenhangskomponente zurück.
+\end{definition}
 \begin{lstlisting}
 def (.\KruskalconnectedcomponentofunionFindofunionFindLink.) {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList): Nat :=
   if h_self_connected : uFL.ccId = uFL.nodeId

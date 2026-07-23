@@ -370,32 +370,32 @@ theorem init_unionFind.linkList.helper_append_reverse (nodeList : List node) (h_
 
   refine ⟨h_eq₁, h_eq₂, h_eq₃⟩
 
-theorem init_unionFind.linkList.matching_ccId {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ y ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = y.ccId := by
-  intro y h_in
-  set x : node := ⟨y.nodeId⟩
+theorem init_unionFind.linkList.matching_ccId {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ uFL ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = uFL.ccId := by
+  intro uFL h_in
+  set x : node := ⟨uFL.nodeId⟩
   refine ⟨x, ?_⟩
   constructor
   · simp
     constructor
     · rcases (mem_split h_in) with ⟨l₁,l₂, h_linkList_eq, h_nin⟩
       simp [init_unionFind.linkList] at h_linkList_eq
-      have h_split := init_unionFind.linkList.helper_append_reverse nodeList h_nonempty l₁ (y::l₂) h_linkList_eq
+      have h_split := init_unionFind.linkList.helper_append_reverse nodeList h_nonempty l₁ (uFL::l₂) h_linkList_eq
       rcases h_split with ⟨k₁, k₂, h_eq₁, h_eq₂,h_eq₃⟩
       cases k₂ with
       | nil =>
         simp [init_unionFind.linkList.helper] at h_eq₃
       | cons z k₂ =>
         simp [init_unionFind.linkList.helper] at h_eq₃
-        rcases h_eq₃ with ⟨h_y_eq, h_eq₃⟩
+        rcases h_eq₃ with ⟨h_uFL_eq, h_eq₃⟩
         have h_x_eq : x = z := by
-          simp [x, ← h_y_eq]
+          simp [x, ← h_uFL_eq]
         rw [h_x_eq]
         simp [h_eq₁]
     · simp [init_unionFind.linkList] at h_in
-      simp [x, init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty y h_in]
+      simp [x, init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty uFL h_in]
   · simp
     intro z h_z_in h_z_eq
-    simp [x, init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty y h_in, ← h_z_eq]
+    simp [x, init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty uFL h_in, ← h_z_eq]
 
 theorem init_unionFind.linkList.helper_nodup (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) (h_nodup : l.Nodup) : (init_unionFind.linkList.helper nodeList h_nonempty l).Nodup := by
   induction l with
