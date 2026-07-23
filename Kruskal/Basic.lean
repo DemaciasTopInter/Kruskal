@@ -277,16 +277,16 @@ theorem init_unionFind.linkList.helper_matching_length (nodeList : List node) (h
   | cons x xs ih =>
     simp [init_unionFind.linkList.helper, ih]
 
-theorem init_unionFind.linkList.helper_eq_input (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List node) (h_init_eq : init_unionFind.linkList.helper nodeList h_nonempty l₁ = init_unionFind.linkList.helper nodeList h_nonempty l₂) : l₁ = l₂ := by
+theorem init_unionFind.linkList.helper_injectiv (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List node) (h_init_eq : init_unionFind.linkList.helper nodeList h_nonempty l₁ = init_unionFind.linkList.helper nodeList h_nonempty l₂) : l₁ = l₂ := by
   have h_eq_length : l₁.length = l₂.length := by
     have h := init_unionFind.linkList.helper_matching_length nodeList h_nonempty
     simp [← h l₁, ← h l₂, h_init_eq]
   induction l₁ generalizing l₂ with
   | nil =>
-    induction l₂ with
+    cases l₂ with
     | nil =>
       rfl
-    | cons y ys ih₂ =>
+    | cons y ys =>
       simp [init_unionFind.linkList.helper] at h_init_eq
   | cons x xs ih =>
     cases l₂ with
@@ -365,7 +365,7 @@ theorem init_unionFind.linkList.helper_append_reverse (nodeList : List node) (h_
   have h_eq₁ : nodeList = k₁ ++ k₂ := by
     have h := init_unionFind.linkList.helper_append nodeList k₁ k₂ h_nonempty
     rw [h_eq₂, h_eq₃, ← h_split] at h
-    have h_eq := init_unionFind.linkList.helper_eq_input nodeList h_nonempty nodeList (k₁ ++ k₂) h.symm
+    have h_eq := init_unionFind.linkList.helper_injectiv nodeList h_nonempty nodeList (k₁ ++ k₂) h.symm
     exact h_eq
 
   refine ⟨h_eq₁, h_eq₂, h_eq₃⟩
@@ -1579,7 +1579,6 @@ def matching_edge  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x
 
 def update_edgesSoFar (edgesSoFar : List edge) (e : edge) (x y : Nat) : List edge := if x = y then edgesSoFar else e :: edgesSoFar
 
--- Liste mitgeben mit edgesSoFar für bessere Laufzeit siehe nodeList_of_edgeList_helper
 def kruskal_helper (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : List edge :=
   -- dbg_trace s!"edgeList = {edgeList}" -- debug output
   -- dbg_trace s!"uF.linkList = {uF.linkList}" -- debug output

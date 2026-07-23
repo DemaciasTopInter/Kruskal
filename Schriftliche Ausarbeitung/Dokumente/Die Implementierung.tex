@@ -159,8 +159,7 @@ def (.\KruskalinitunionFindlinkList.) (nodeList : List node) (h_nonempty : nodeL
 \end{theorem}
 
 \begin{lemma}[\KruskalinitunionFindlinkListmatchingnodeId]
-  Die Liste \KruskalinitunionFindlinkList erfüllt matching\_nodeId.
-  Also für jeden Knoten aus der Knoten-List gibt es genau einen zugehörigen Zeiger in \KruskalinitunionFindlinkList.
+  Die Liste \KruskalinitunionFindlinkList erfüllt matching\_nodeId, also für jeden Knoten aus der Knoten-List gibt es genau einen zugehörigen Zeiger in \KruskalinitunionFindlinkList.
 \end{lemma}
 \begin{proof}
   Sie $x$ ein Knoten aus der Knoten-List und sei $uFLx$ ein Zeiger von $x$, der auf $x$ zeigt und Rang 0 hat.
@@ -200,8 +199,9 @@ theorem (.\KruskalinitunionFindlinkListmatchingnodeId.) {nodeList : List node} (
     rw [h_uFLy_eq_cc, ← h_uFLy_rank_zero]
   \end{lstlisting}
 
-Zuerst habe ich mir dafür jedoch drei Hilfslemma geschrieben, die sich alle durch eine einfache Listen-Induktion Zeigen ließen.
-Nämlich, dass eine geteilte Knoten-Liste eine geteilte Zeiger-Liste bedeutet, dass die Zeiger alle auf ihren eigenen Knoten Zeigen und das sie alle Rang 0 haben.
+Um diesen Beweis so führen zu können, musste ich zuerst jedoch noch die folgenden drei Hilfslemma aufstellen, die sich alle je durch eine einfache Listen-Induktion Zeigen lassen,
+da ihr Aussagen in direktem Zusammenhang mit der Definition der Funktion stehen.
+% Nämlich, dass eine geteilte Knoten-Liste eine geteilte Zeiger-Liste bedeutet, dass die Zeiger alle auf ihren eigenen Knoten Zeigen und das sie alle Rang 0 haben.
 \begin{lemma}[\KruskalinitunionFindlinkListhelperappend]
   Die Funktion init\_unionFind.linkList.helper lässt sich spliten.
   Also für zwei Zeiger listen $l_1$ und $l_2$ ist init\_unionFind.linkList.helper ($l_1$ ++ $l_2$) = init\_unionFind.linkList.helper $l_1$ ++ init\_unionFind.linkList.helper $l_2$.
@@ -210,17 +210,24 @@ Nämlich, dass eine geteilte Knoten-Liste eine geteilte Zeiger-Liste bedeutet, d
 theorem (.\KruskalinitunionFindlinkListhelperappend.) (nodeList l₁ l₂ : List node) (h_nonempty : nodeList.length ≠ 0) : init_unionFind.linkList.helper nodeList h_nonempty (l₁ ++ l₂) = (init_unionFind.linkList.helper nodeList h_nonempty l₁) ++ (init_unionFind.linkList.helper nodeList h_nonempty l₂)
 \end{lstlisting}
 
+Dass ich diese Aussage nicht über \KruskalinitunionFindlinkList sondern deren innere Hilfsfunktion treffe, liegt daran, dass der Typ der Zeiger von der Knoten-Liste abhängt.
+Und es ist relevant, dass alle Zeiger den selben Typ haben, um die Listen vergleichen oder an einander hängen zu können.
+
 \begin{lemma}[\KruskalinitunionFindlinkListhelperallselfconnected]
-  \todo{Ab hier weiter anpassen}
+  Alle Zeiger der Liste zeigen auf ihren eigenen Knoten.
 \end{lemma}
 \begin{lstlisting}
 theorem (.\KruskalinitunionFindlinkListhelperallselfconnected.) (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.nodeId = x.ccId
 \end{lstlisting}
+
+\begin{lemma}[\KruskalinitunionFindlinkListhelperallrankzero]
+  Alle Zeiger der Liste haben Rang 0.
+\end{lemma}
 \begin{lstlisting}
 theorem (.\KruskalinitunionFindlinkListhelperallrankzero.) (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.rank = ⟨0, zero_lt_iff.mpr h_nonempty⟩
 \end{lstlisting}
 
-Der Beweis für matching\_ccId ist dem für matching\_nodeId sehr ähnlich nur andersrum, da ich jetzt für einen generischen Zeiger den entsprechenden Knoten baue.
+Der Beweis für matching\_ccId ist dem für matching\_nodeId sehr ähnlich nur andersrum, da ich jetzt für einen Zeiger den entsprechenden Knoten baue.
 Dem entsprechend brauchte ich auch das Teilungs-Lemma in die andere Richtung.
 Das war jedoch komplexer als die Hinrichtung, da ich zuerst definieren musste, wie ich aus einer Zeiger-Liste auf eine Knoten-Liste schließe
 und anschließend beweisen, dass es in diesem Fall die selbe ist, aus der die Zeiger-Liste selbst erzeugt wurde.
@@ -232,7 +239,38 @@ und anschließend beweisen, dass es in diesem Fall die selbe ist, aus der die Ze
 def (.\KruskalnodeListofunionFindLinkList.) (nodeList : List node) : List (unionFindLink nodeList) → List node
   | [] => []
   | x::xs => ⟨x.nodeId⟩ :: (nodeList_of_unionFindLinkList nodeList xs)
+\end{lstlisting}
 
+Außerdem musste ich für das Teilungs-Lemma noch zeigen, das die Funktion injektiv ist.
+
+\begin{lemma}[\KruskalinitunionFindlinkListhelperinjectiv]
+  Die innere Hilfsfunktion init\_unionFind.linkList.helper ist injektiv.
+\end{lemma}
+\begin{proof}
+  Der Beweis ergibt sich direkt aus einer verschachtelten Induktion beziehungsweise Fallunterscheidung über beide Listen.
+\end{proof}
+\begin{lstlisting}
+theorem init_unionFind.linkList.helper_injectiv (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List node) (h_init_eq : init_unionFind.linkList.helper nodeList h_nonempty l₁ = init_unionFind.linkList.helper nodeList h_nonempty l₂) : l₁ = l₂ := by
+\end{lstlisting}
+
+\begin{lemma}[\KruskalinitunionFindlinkListhelperappendreverse]
+  Sei nodeList eine Knoten-Liste.
+  Wenn es zwei Zeiger-Listen $l_1$ und $l_2$ gibt, sodass \\ init\_unionFind.linkList.helper nodeList = $l_1$ ++ $l_2$,
+  dann lässt sich auch nodeList in zwei Listen $k_1$ und $k_2$ aufteilen, sodass init\_unionFind.linkList.helper $k_1$ = $l_1$
+  und init\_unionFind.linkList.helper $k_2$ = $l_2$.
+\end{lemma}
+\begin{proof}
+  Seien $k_1$ und $k_2$ je die \KruskalnodeListofunionFindLinkList entsprechenden Knoten-Listen von $l_1$ und $l_2$.
+  Zunächst gilt, dass init\_unionFind.linkList.helper von $k_1$ (bzw. $k_2$) gleich $l_1$ (bzw. $l_2$) ist anhand einer Induktion über $l_1$ (bzw. $l_2$).
+  Im Basisfall ist $l_*$ leer, damit ist auch $k_*$ leer und damit auch init\_unionFind.linkList.helper von $k_*$.
+  Im Induktionsschritt hat $l_*$ einen extra Zeiger demnach $k_*$ den zugehörigen Knoten.
+  Da alle von init\_unionFind.linkList.helper erzeugten Zeiger den gleichen Aufbau haben, erzeugt sie für den Knoten also auch wieder den gleichen extra Zeiger von $l_*$
+  und der Rest der Liste ist per Induktionshypothese gleich.
+  
+  Aus \KruskalinitunionFindlinkListhelperappend folgt nun, dass init\_union\-Find.linkList.helper von ($k_1$ ++ $k_2$) gleich $l_1$ ++ $l_2$ ist.
+  Und da die Funktion injektiv ist, folgt nodeList = $k_1$ ++ $k_2$.
+\end{proof}
+\begin{lstlisting}
 theorem (.\KruskalinitunionFindlinkListhelperappendreverse.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List (unionFindLink nodeList)) (h_split : init_unionFind.linkList.helper nodeList h_nonempty nodeList = l₁ ++ l₂) : ∃ k₁ k₂, nodeList = k₁ ++ k₂ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₂ = l₂ := by
   let k₁ := nodeList_of_unionFindLinkList nodeList l₁
   let k₂ := nodeList_of_unionFindLinkList nodeList l₂
@@ -244,19 +282,38 @@ theorem (.\KruskalinitunionFindlinkListhelperappendreverse.) (nodeList : List no
   have h_eq₁ : nodeList = k₁ ++ k₂ := …
 
   refine ⟨h_eq₁, h_eq₂, h_eq₃⟩
+\end{lstlisting}
 
+\begin{lemma}[\KruskalinitunionFindlinkListmatchingccId]
+  Die Liste erfüllt matching\_ccId, also gibt es für jeden Zeiger aus \KruskalinitunionFindlinkList genau einen Knoten aus der Knoten-Liste, auf den er zeigt.
+\end{lemma}
+\begin{proof}
+  \todo{todo}
+\end{proof}
+\begin{lstlisting}
 theorem (.\KruskalinitunionFindlinkListmatchingccId.) {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ y ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = y.ccId
 \end{lstlisting}
 
 Der Beweis für matching\_length lässt sich durch eine einfache Listen-Induktion zeigen, diese hat aber einen Harken.
-Da der Typ der Ränge der Zeiger von der Länge der Knoten-Liste abhängt, hätten bei einer Induktion über die Knoten-Liste
-die Zeiger-Listen in der Induktionshypothese und im Ziel einen verschiedenen Typ und die Induktionshypothese ließe sich nicht anwenden.
-Deshalb führe ich den Beweis nicht über init\_unionFind.linkList und die Knoten-Liste, sonder über die innere Hilfsfunktion und eine beliebige Knoten-Liste.
-Gleiches gilt für den Beweis von nodup, den ich durch eine doppelte Induktion gelöst habe.
+Wie schon bei den Teilungs-Lemmata ist das Problem, dass der Typ Zeiger von dder Knoten-Liste abhängt.
+Deshalb hätten bei einer Induktion über die Knoten-Liste die Zeiger-Listen in der Induktionshypothese und im Ziel einen verschiedenen Typ und die Induktionshypothese ließe sich nicht anwenden.
+Entsprechend führe ich auch hier den Beweis nicht über init\_unionFind.linkList und die Knoten-Liste, sonder über die innere Hilfsfunktion und eine beliebige Knoten-Liste.
+Gleiches gilt für den Beweis von nodup.
 
+\begin{lemma}[\KruskalinitunionFindlinkListhelpermatchinglength]
+  Für eine Knoten-Liste l ist die Länge von init\_unionFind.linkList.helper von l gleich der Länge von l.
+\end{lemma}
 \begin{lstlisting}
 theorem (.\KruskalinitunionFindlinkListhelpermatchinglength.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) : (init_unionFind.linkList.helper nodeList h_nonempty l).length = l.length
+\end{lstlisting}
 
+\begin{lemma}[\KruskalinitunionFindlinkListhelpernodup]
+  Für eine Knoten-Liste l hat init\_unionFind.linkList.helper von l keine Dopplungen unter der Bedingung, dass auch l schon keine Doppelten Knoten hat.
+\end{lemma}
+\begin{proof}
+  Der Beweis erfolgt über eine verschachtelte Induktion und ein einfaches Vergleichen möglicher Fälle.
+\end{proof}
+\begin{lstlisting}
 theorem (.\KruskalinitunionFindlinkListhelpernodup.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) (h_nodup : l.Nodup) : (init_unionFind.linkList.helper nodeList h_nonempty l).Nodup
 \end{lstlisting}
 
@@ -617,7 +674,7 @@ theorem (.\KruskalnodeListofedgeListhelpereq.) (edgeList : List edge) (nodeList 
 \begin{proof}
   Der Beweis erfolgt per induktion über die Kanten-Listen.
   Im Basisfall verbleibt auf beiden Seiten der Gleichung nur die Knoten-Liste.
-  Im induktionsschritt gibt es eine extra Kante, deren Knoten, je nach dem, ob und wenn ja welche in der Knoten-Liste enthalten sind, aufgenommen werden.
+  Im Induktionsschritt gibt es eine extra Kante, deren Knoten, je nach dem, ob und wenn ja welche in der Knoten-Liste enthalten sind, aufgenommen werden.
   In jedem Fall lässt das Filtern auf der anderen Seite die gleichen Knoten übrig und sie werden in die Knoten-Liste aufgenommen
   und die Gleichung entspricht nun der Induktionshypothese.
 \end{proof}
@@ -633,13 +690,13 @@ Das folgende Hilfslemma beschreibt genau die Eigenschaft, die \KruskalnodeListof
 
   $\rightarrow:$
   Im Basisfall ist die erzeugte Knoten-Liste leer und es gibt kein entsprechenden Knoten.
-  Im induktionsschritt kann ich dank des vorherigen Hilfslemma unterscheiden, entweder ist die neue Kante die gesuchte, oder die gesuchte ist in der restlichen Kanten-Liste
+  Im Induktionsschritt kann ich dank des vorherigen Hilfslemma unterscheiden, entweder ist die neue Kante die gesuchte, oder die gesuchte ist in der restlichen Kanten-Liste
   und ich kann die Kante ignorieren und die Induktionshypothese greift.
 
   $\leftarrow:$
   Die gegenrichtung funktioniert sehr ähnlich.
   Hier gibt es im Basisfall keine entsprechende Kante, da die Kanten-Liste leer ist.
-  Und im induktionsschritt ist entweder die neue Kante die gesuchte, oder die gesuchte ist in der restlichen Kanten-Liste und ich kann die Induktionshypothese anwenden.
+  Und im Induktionsschritt ist entweder die neue Kante die gesuchte, oder die gesuchte ist in der restlichen Kanten-Liste und ich kann die Induktionshypothese anwenden.
   Beiden Fälle kann ich dann durch das vorherige Hilfslemma auflösen.
 \end{proof}
 \begin{lstlisting}
@@ -666,7 +723,7 @@ theorem (.\KruskalmatchingedgefornodeListofedgeList.) (edgeList : List edge) : m
 \begin{proof}
   Auch der Beweis erfolgt per induktion über die Kanten-Listen.
   Der Basisfall ist klar, denn eine leere liste hat keine Dopplungen.
-  Im induktionsschritt werden die beiden Knoten der extra Kante in die Knoten-Liste aufgenommen.
+  Im Induktionsschritt werden die beiden Knoten der extra Kante in die Knoten-Liste aufgenommen.
   Nach Lemma \KruskalnodeListofedgeListhelpereq kann ich sie dann aus der Funktion raus filtern und hinten anhängen.
   Da es keine Selbskanten gibt, sind diese Knoten unterschiedlich und kommen wegen dem Filter also nicht doppelt vor.
   Und für die restliche Funktion greift die Induktionshypothese.
