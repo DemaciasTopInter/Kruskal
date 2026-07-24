@@ -585,33 +585,8 @@ theorem update_unionFind_matching_nodeId
   · refine ⟨uFLx', ?_⟩
     constructor
     · constructor
-      · apply mem_set_of_ne_index
-        · apply List.mem_set
-          simp [h_idxOf_uFLx]
-        · have h_only_one_x : ∀ (j : ℕ) (h₂ : j < List.idxOf uFLx uF.linkList), uF.linkList[j]'(Nat.lt_trans h₂ h_idxOf_uFLx) ≠ uFLx' := by
-            intro j h_lt h_getElem_eq
-            have h := uF.matching_nodeId z h_z_in
-            simp [ExistsUnique] at h
-            rcases h with ⟨w, h_w, h_unique⟩
-            have h_uFLx'_eq_w := h_unique (uF.linkList[j]'(Nat.lt_trans h_lt h_idxOf_uFLx))
-            simp at h_uFLx'_eq_w
-            -- have h_uFLx'_eq : uFLx' = { nodeId := uFLx.nodeId, ccId := uFLy.ccId, rank := uFLx.rank } := by
-            --   simp [uFLx']
-            simp [h_getElem_eq, h_uFLx'_eq] at h_uFLx'_eq_w
-            simp [← h_uFLx'_eq] at h_uFLx'_eq_w
-            simp [h_uFLx_prop₁.symm,h_z_eq_x] at h_uFLx'_eq_w
-            have h_uFLx_eq_w := h_unique uFLx h_uFLx_in
-            simp [h_z_eq_x, h_uFLx_prop₁] at h_uFLx_eq_w
-            simp [h_uFLx'_eq_w, ← h_uFLx_eq_w] at h_getElem_eq
-            have h := List.Nodup.idxOf_getElem uF.nodup j (Nat.lt_trans h_lt h_idxOf_uFLx)
-            simp [h_getElem_eq] at h
-            simp [h] at h_lt
-          simp [idxOf_set h_idxOf_uFLx h_only_one_x]
-          have h_idxOf_inj : List.idxOf uFLx uF.linkList = List.idxOf uFLy uF.linkList ↔ uFLx = uFLy := List.idxOf_inj h_uFLx_in
-          apply (Iff.ne h_idxOf_inj).mpr
-          intro h_uFL_eq
-          simp [h_uFL_eq, h_uFLy_prop₁] at h_uFLx_prop₁
-          simp [h_uFLx_prop₁] at h_eq
+      · rw [← h_linkList'_eq]
+        exact update_unionFind_h_uFLx'_in nodeList linkList' uF uFLx uFLy uFLx' uFLy' x y h_eq h_uFLx_prop₁ h_uFLy_prop₁ h_idxOf_uFLx h_linkList'_eq
       · simp [h_uFLx'_eq, h_z_eq_x, h_uFLx_prop₁]
     · intro w h_w_in h_w_eq
       have h_w_in := mem_or_eq_of_mem_set h_w_in

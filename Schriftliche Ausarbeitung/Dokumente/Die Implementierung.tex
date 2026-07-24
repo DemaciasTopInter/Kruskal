@@ -1,4 +1,4 @@
-\section{Die Implementierung}\todo{section Implementierung}
+\section{Die Implementierung}
 Der Code aus diesem Abschnitt ist in der Datei Basic.lean zu finden.
 
 
@@ -359,7 +359,7 @@ def (.\KruskalinitunionFind.) (nodeList : List node) (h_nodup : nodeList.Nodup) 
 
 
 
-\subsection{Find}\todo{sub\-section Find}
+\subsection{Find}
 Um für einen Zeiger die Zusammenhangskomponente zu finden, geht man die Kette der Zeiger bis zum Ende.
 Zeigt der aktuelle Zeiger auf seinen eigenen Knoten ist man am Ende angekommen und der Knoten repräsentiert die Zusammenhangskomponente,
 tut er das nicht, geht man weiter zum Zeiger des Knoten, auf den er Zeigt.
@@ -397,8 +397,12 @@ termination_by nodeList.length - uFL.rank
   · exact h_r
 \end{lstlisting}
 
-Um die Zusammenhangskomponente für eine gegebene Knoten-ID zu finden, mache ich nun diese Funktion, ich muss nur einmal zeigen, dass es den dazugehörigen Zeiger gibt.
+Um die Zusammenhangskomponente für eine gegebene Knoten-ID zu finden, rufe ich \KruskalconnectedcomponentofunionFindofunionFindLink für den dazugehörigen Zeiger auf.
+Dafür ich muss nur einmal zeigen, dass es den dazugehörigen Zeiger in der Zeiger-Liste gibt.
 
+\begin{definition}[\KruskalconnectedcomponentofunionFindofid]
+  Die Funktion nimmt eine Knoten-ID und gibt die Knoten-ID des Repräsentanten der Zusammenhangskomponente zurück.
+\end{definition}
 \begin{lstlisting}
 def (.\KruskalconnectedcomponentofunionFindofid.) {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) : Nat :=
   have h_ex_uFL : ∃ uFL ∈ uF.linkList, uFL.nodeId = id := by
@@ -417,29 +421,37 @@ def (.\KruskalconnectedcomponentofunionFindofid.) {nodeList : List node} (uF : u
 
 
 
-\subsection{Union}\todo{sub\-section Union}
+\subsection{Union}
 Da beim Verbinden zweier Zusammenhangskomponenten mit gleichem Rang der Rang des einen Zeigers um eins erhöht wird,
 brauchte ich zuerst den Nachweise, dass dadurch nicht die Rang-Obergrenze überschritten werden.
-Das habe ich wie folgt beweisen:
 
-Seien $x$ und $y$ die Zeiger der Repräsentanten und $M$ die Menge der Zeiger mit kleinerem Rang.
-Gemäs der Rang-Invariante ist $|M| \le$  Rang von $x$ und per Definition sind $x$ und $y \notin M$.
-Deshalb ist die Rang-Obergrenze sprich die Gesamtmenge aller Knoten $|N|$ mindestens $|M| + 2$.
-Also ist Rang von $x + 1 \le |M| + 1 < |M| + 2 \le |N|$.
-
+\begin{lemma}[\KruskalunionFindranksuccisLt]
+  Seien \textit{uFLx} und \textit{uFLy} die Zeiger der Repräsentanten zweier verschiedener Zusammenhangskomponenten.
+  Und haben \textit{uFLx} und \textit{uFLy} den gleichen Rang, dann ist ein Rang der um eins höher ist immernoch unter der Rang-Oberschranke.
+\end{lemma}
+\begin{proof}
+  Sei $M$ die Menge der Zeiger mit kleinerem Rang als \textit{uFLx} und \textit{uFLy}.
+  Gemäs der Rang-Invariante ist $|M| \ge$  Rang von \textit{uFLx} und per Definition sind \textit{uFLx} und \textit{uFLy} $\notin M$.
+  Deshalb ist die Rang-Obergrenze sprich die Gesamtmenge aller Knoten $|N|$ mindestens $|M| + 2$.
+  Also ist der Rang von \textit{uFLx} $+ 1 \le |M| + 1 < |M| + 2 \le |N|$.
+\end{proof}
 \begin{lstlisting}
 theorem (.\KruskalunionFindranksuccisLt.)  {nodeList : List node} (uF : unionFind nodeList) (x y : unionFindLink nodeList) : x ≠ y → x ∈ uF.linkList → y ∈ uF.linkList → x.nodeId = x.ccId → y.nodeId = y.ccId → x.rank = y.rank → x.rank.val.succ < nodeList.length
 \end{lstlisting}
 
-Bei der union-Funktion oder wie ich sie gennat habe \KruskalupdateunionFind, habe ich zuerst den Fall ausgeschlossen, dass es sich um die selbe Zusammenhangskomponente handelt.
-Danach habe ich mir die Zeiger gehohlt und anschließend direkt mit der nächsten Fallunterscheidung weiter gemacht und unterschieden, welcher Zeiger den höheren Rang hat.
+Bei der union-Funktion, oder wie ich sie gennat habe \KruskalupdateunionFind, die zwei Zusammenhangskomponenten mit Repräsentanten $x$ und $y$ verbindet,
+habe ich zuerst den Fall ausgeschlossen, dass es sich um die selbe Zusammenhangskomponente handelt.
+Danach habe ich mir die Zeiger der Repräsentanten gehohlt und anschließend direkt mit der nächsten Fallunterscheidung weiter gemacht und unterschieden, welcher Zeiger den höheren Rang hat.
 In beiden Fällen habe ich fast das selbe gemacht nur, dass ich $x$ und $y$ sowie ihre jeweiligen Zeiger getauscht habe.
+
 Ich erstelle zwei neue Zeiger für $x$ und $y$.
-Der mit kleineren Rang (oder gleichem Rang der erste) zeigt jetzt auf den anderen und der wiederum bekommt seinen Rang upgedatet.
+Der mit kleineren Rang (oder bei gleichem Rang der erste) zeigt jetzt auf den anderen und der wiederum bekommt seinen Rang upgedatet.
 Dann erstelle ich eine neue Zeiger-Liste, die auf der alten Liste beruht, aber bei der die beiden alten Zeiger durch die neuen ersetzt sind.
 Danach muss ich noch zeigen, dass die Bedingungen aus \KruskalunionFind für die neue Liste gelten.
-\begin{definition}
-  \label{KruskalupdateunionFind}
+
+\begin{definition}[\KruskalupdateunionFind]\label{KruskalupdateunionFind}
+  Die Funktion nimmt eine Union-Find-Struk\-tur und die IDs der Repräsentanten zweier Zusammenhangskomponenten und gibt eine Union-Find-Struktur zurück,
+  in der die beiden Zusammenhangskomponenten zu einer vereinigt sind.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : unionFind nodeList :=
@@ -471,82 +483,146 @@ def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList)
 
 Ich habe unter anderem die Beweise für die \KruskalunionFind Bedingungen ausgelagert.
 Da diese teilweise sehr groß sind und vor allem eine Menge Argumente übergeben bekommen erwähne ich hier lediglich die Namen.
+
+\begin{theorem}
+  Die neue Liste erfüllt immernoch die Bedingungen der Union-Find-Struktur.
+\end{theorem}
+
 Seien im Folgenden \textit{uFLx} und \textit{uFLy} die alten Zeiger von $x$ und $y$ und seinen weiter \textit{uFLx'} und \textit{uFLy'} die neuen.
 Sei weiter ohne Beschrenkung der Algemeinheit der Rang von \textit{uFLx} kleinergleich dem von \textit{uFLy}.
 
-In den folgenden Lemmas benutze ich immer wieder Hilfslemma.
-Zum einen \memoreqofmemset, das aussagt, dass ein Element,
-das Teil einer Liste ist, in der ein Element ersetzt wurde, entweder Teil der Liste ist oder gleich dem ersetzenden Element.
-Zum anderen \memsetofneindex, das besagt, dass wenn ein Element an einer stellen in einer Liste vorkommt, auch noch in der Liste vorkommt, wenn an einer anderen stelle ein Element ersetzt wird.
-Beide zeige ich per verschachtelter Induktion, einmal über die Liste und einmal über den Index an dem ersetzt wird.
+In den nachfolgenden Lemmas benutze ich immer wieder die folgenden beiden Hilfslemma.
+
+\begin{lemma}[\memoreqofmemset]
+  Ein Element, das Teil einer Liste ist, in der ein Element ersetzt wurde, entweder Teil der Liste ist oder gleich dem ersetzenden Element.
+\end{lemma}
+\begin{lemma}[\memsetofneindex]
+  Ein Element, dass an einer Stelle in einer Liste vorkommt, kommt auch noch in der Liste vor, wenn an einer anderen stelle ein Element ersetzt wird.
+\end{lemma}
+\begin{proof}
+  Beide zeige ich per verschachtelter Induktion, einmal über die Liste und einmal über den Index an dem ersetzt wird.
+\end{proof}
+
+Bevor ich zu den \KruskalunionFind Bedingungen komme, muss ich erst noch folgendes zeigen:
 
 % update_unionFind_h_uFLx'_in
-Bevor ich zu den \KruskalunionFind Bedingungen komme, habe ich erst noch den Beweis, dass \textit{uFLx'} in der neuen Liste ist \KruskalupdateunionFindhuFLxprimein.
-Der Beweis, dass \textit{uFLy'} in der neuen Liste ist, ist dadurch gezeigt, dass der Index, an dem ersetzt wird die Länge der Liste nicht überschreitet.
-Für \textit{uFLx'} muss aber zusätzlich noch gezeigt werden, dass er nicht direkt von \textit{uFLy'} ersetzt wird.
-Das wäre der Fall, wenn beide beim gleichen Index ersetzen.
-Die Inizes hängen aber von \textit{uFLx} und \textit{uFLy} ab und da die unterschiedlich sind, sind es auch ihre Indizes.
+\begin{lemma}[\KruskalupdateunionFindhuFLxprimein]
+  Der Zeiger \textit{uFLx'} ist in der neuen Liste.
+\end{lemma}
+\begin{proof}
+  Der Beweis, dass \textit{uFLy'} in der neuen Liste ist, ist dadurch gezeigt, dass der Index, an dem ersetzt wird die Länge der Liste nicht überschreitet.
+  Für \textit{uFLx'} muss aber zusätzlich noch gezeigt werden, dass er nicht direkt von \textit{uFLy'} ersetzt wird.
+  Das wäre der Fall, wenn beide beim gleichen Index ersetzen.
+  Die Inizes hängen aber von \textit{uFLx} und \textit{uFLy} ab und da die unterschiedlich sind, sind es auch ihre Indizes.
+\end{proof}
+
+Jetzt zu den eigentlichen Lemmata des Theorems:
 
 % update_unionFind_matching_nodeId
-Bei \KruskalupdateunionFindmatchingnodeId geht es darum, dass es für jeden Knoten genau einen Zeiger gibt.
-Sei also $z$ ein beliebiger Knoten.
-Ich mache eine Fallunterscheidung, ob $z$ gleich $x, y$ oder irgend ein anderer Knoten ist.
-Im Fall, dass $z = x$, zeige ich, dass erstens \textit{uFLx'} passt und Teil der Liste ist und zweitens alle anderen insbesondere der \textit{uFLy'} nicht passen.
-Im Fall, dass $z = x$ genau umgekehrt.
-Und im Fall, dass $z$ weder $x$ noch $y$ ist, zeige ich, dass sowohl die beide neuen als auch die beiden alten Zeiger von $x$
-und $y$ nicht zu $z$ passen und dem entsprechend der ursprüngliche Zeiger von $z$ noch immer in der Liste sein muss.
+\begin{lemma}[\KruskalupdateunionFindmatchingnodeId]
+  Die neue Liste entspricht matching\_nodeId, es gibt also noch immer für jeden Knoten genau einen Zeiger.
+\end{lemma}
+\begin{proof}
+  Sei $z$ ein beliebiger Knoten.
+  Dann unterscheide ich, ob $z$ gleich $x, y$ oder irgend ein anderer Knoten ist:
+  Im Fall, dass $z = x$, zeige ich, dass erstens \textit{uFLx'} passt und Teil der Liste ist und zweitens alle anderen insbesondere der \textit{uFLy'} nicht passen.
+  Im Fall, dass $z = y$ genau umgekehrt.
+  Das Passen bzw. Nichtpassen der neuen Zeiger ist ein einfacher abgleich der Knoten-ID. 
+  Und dass alle anderen nicht passen, begründe ich damit, dass sie davor schon nicht gepasst haben, da der einzige, der davor gepasst hat ersetzt wurde.
+  Und im Fall, dass $z$ weder $x$ noch $y$ ist, zeige ich, dass sowohl die beide neuen als auch die beiden alten Zeiger von $x$
+  und $y$ nicht zu $z$ passen und dem entsprechend der ursprüngliche Zeiger von $z$ noch immer in der Liste sein muss, da er nicht ersetzt wurde.
+\end{proof}
 
 % update_unionFind_matching_ccId
-Bei der Gegenrichtung in \KruskalupdateunionFindmatchingccId ist der Beweis deutlich kürzer.
-Ich kann zeigen, dass jedes Element der neuen Liste einer der beiden neuen Zeiger oder ein Element der alten Liste ist.
-Für alle Elemente der alten Liste weis ich bereits, dass es gilt und \textit{uFLx'} und \textit{uFLy'} zeigen auf $x$ und $y$, was auch einzigartige Knoten sind, weshalb es auch für die neuen gilt.
+\begin{lemma}[\KruskalupdateunionFindmatchingccId]
+  Auch die Zeiger der neuen Liste zeigen noch immer auf genau eiene Knoten.
+\end{lemma}
+\begin{proof}
+  Ich kann mit \memoreqofmemset zeigen, dass jedes Element der neuen Liste einer der beiden neuen Zeiger oder ein Element der alten Liste ist.
+  Für alle Elemente der alten Liste weis ich bereits, dass es gilt und \textit{uFLx'} und \textit{uFLy'} zeigen auf $x$ und $y$, was auch einzigartige Knoten sind, weshalb es auch für die neuen gilt.
+\end{proof}
 
 % update_unionFind_matching_length
-Das Lemma \KruskalupdateunionFindmatchinglength habe ich nur der einheitlichkeit halber ausgelagert.
-Es ist nur ein simp, da sich an der Länge nichts geändert hat.
+\begin{lemma}[\KruskalupdateunionFindmatchinglength]
+  Die neue Liste ist immer noch so Lang wie die Knoten-Liste.
+\end{lemma}
+\begin{proof}
+  Das Lemma habe ich nur der einheitlichkeit halber ausgelagert.
+  Es ist nur ein simp, da sich an der Länge nichts geändert hat.
+\end{proof}
+
+Für das nachfolgende Lemma beötige ich noch ein wieters Hilfslemma.
+
+\begin{lemma}[\nodupsetofnotmem]
+  Wenn ich in einer Liste ohne Duplikate ein Element durch ein neues ersetze, dass in der Liste nicht vorkommt, die neue Liste auch keine Duplikate hat.
+\end{lemma}
+\begin{proof}
+  Der Beweis folgt direkt aus einer doppelten Induktion über die Liste und \memoreqofmemset.
+\end{proof}
 
 % update_unionFind_nodup
-Für \KruskalupdateunionFindnodup nutze ich das Hilfslemma \nodupsetofnotmem, das besagt,
-dass wenn ich in einer Liste ohne Duplikate ein Element durch ein neues ersetze, dass in der Liste nicht vorkommt, die neue Liste auch keine Duplikate hat.
-Ich habe also gezeigt, dass die neuen Zeiger entweder nicht in der alten Liste waren oder gleich dem Element sind, welches sie ersetzen, wodurch sich die Liste nicht ändert.
-In jedem Fall enthällt die neue Liste also auch keine Duplikate.
+\begin{lemma}[\KruskalupdateunionFindnodup]
+  Die neue Liste enthält keine Duplikate.
+\end{lemma}
+\begin{proof}
+  Für den Beweis benutze ich \nodupsetofnotmem.
+  Dafür habe ich gezeigt, dass die neuen Zeiger entweder nicht in der alten Liste waren oder,
+  was im Fall von \textit{uFLy'} auch auftreten kann, gleich dem Element sind, welches sie ersetzen, wodurch sich die Liste aber nicht ändert.
+  In jedem Fall enthält die neue Liste also auch keine Duplikate.
+\end{proof}
 
 % update_unionFind_matching_rank
-Bei \KruskalupdateunionFindmatchingrank splitte ich das Ziel zuerst zweimal mit \memoreqofmemset auf.
-Sei also \textit{uFLz} ein beliebiger Zeiger aus der neune Liste, dann ist \textit{uFLz} also \textit{uFLx'}, \textit{uFLy'} oder ein Zeiger aus der altern Liste.
-Falls \textit{uFLz} $=$ \textit{uFLy'} zeigt er auf $y$ also seinen eigenen Knoten und erfüllt die Bedingung.
-Falls \textit{uFLz} $=$ \textit{uFLx'} zeigt er auch auf $y$ und da der Rang von \textit{uFLy'} größer als der von \textit{uFLx'} ist, ist auch hier die Bedingung erfüllt.
-Im Fall, dass \textit{uFLz} Teil der alten Liste ist unterscheide ich weiter:
-Zeigt \textit{uFLz} auf seinen eigenen Knoten, ist die Bedingung erfüllt.
-Zeigt \textit{uFLz} auf $x$, dann folgt daraus, dass der Rang von \textit{uFLz} kleiner ist als der von \textit{uFLx} 
-und da dieser kleinergleich dem von \textit{uFLx'} ist, ist so die Bedingung erfüllt.
-Äquivalent dazu ist der Fall, wenn \textit{uFLz} auf $y$ zeigt.
-Es bleibt also noch der Fall, dass \textit{uFLz} auf einen Beliebigen anderen Knoten zeigt und dem entsprechend einen niedrigeren Rang hat als dessen Zeiger.
-Und dieser Zeiger ist auch in der neuen Liste der einzigartige Zeiger dieses Knotens.
-Und somit ist auch in diesem Fall die Bedingung erfüllt.
+\begin{lemma}[\KruskalupdateunionFindmatchingrank]
+  Alle Zeiger der neuen Liste zeigen auf ihren eigenen Knoten oder haben in der neuen Liste einen Nachfolger mit höherem Rang.
+\end{lemma}
+\begin{proof}
+  Ich splitte das Ziel zuerst zweimal mit \memoreqofmemset auf.
+  Sei also \textit{uFLz} ein beliebiger Zeiger aus der neune Liste, dann ist \textit{uFLz} also \textit{uFLx'}, \textit{uFLy'} oder ein Zeiger aus der altern Liste.
+  Falls \textit{uFLz} $=$ \textit{uFLy'} zeigt er auf $y$ also seinen eigenen Knoten und erfüllt die Bedingung.
+  Falls \textit{uFLz} $=$ \textit{uFLx'} zeigt er auch auf $y$ und da der Rang von \textit{uFLy'} größer als der von \textit{uFLx'} ist, ist auch hier die Bedingung erfüllt.
+  Im Fall, dass \textit{uFLz} Teil der alten Liste ist unterscheide ich weiter:
+  Zeigt \textit{uFLz} auf seinen eigenen Knoten, ist die Bedingung erfüllt.
+  Zeigt \textit{uFLz} auf $x$, dann folgt daraus, dass der Rang von \textit{uFLz} kleiner ist als der von \textit{uFLx} 
+  und da dieser kleinergleich dem von \textit{uFLx'} ist, ist so die Bedingung erfüllt.
+  Äquivalent dazu ist der Fall, wenn \textit{uFLz} auf $y$ zeigt.
+  Es bleibt also noch der Fall, dass \textit{uFLz} auf einen Beliebigen anderen Knoten zeigt und dem entsprechend einen niedrigeren Rang hat als dessen Zeiger.
+  Und dieser Zeiger ist auch in der neuen Liste der einzigartige Zeiger dieses Knotens.
+  Und somit ist auch in diesem Fall die Bedingung erfüllt.
+\end{proof}
 
-% update_unionFind_rankInvariant
 Für die Rang-Invariante habe ich zwei Lemma geschrieben.
 \KruskalupdateunionFindrankInvariant ist für den Fall, dass der Rang von \textit{uFLx} kleiner als der von \textit{uFLy} ist.
-In diesem Fall ist \textit{uFLy'} $=$ \textit{uFLy} und \textit{uFLx'} und \textit{uFLx} haben den gleichen Rang.
-Das ersetzen von \textit{uFLy} durch \textit{uFLy'} verändert also die Liste nicht.
-Sei \textit{uFLz} ein beliebiger Zeiger aus der neune Liste, dann ist \textit{uFLz} $=$ \textit{uFLx'} oder ein Zeiger aus der altern Liste.
-Ist \textit{uFLz} $=$ \textit{uFLx'}, dann ist der Rang von \textit{uFLz} gleich dem von \textit{uFLx} und es gibt ebenso viele Zeiger in der alten Liste mit kleinerem Rang,
-die nicht auf ihren eigenen Knoten zeigen.
-Und da keiner dieser Zeiger \textit{uFLx} ist, wird auch keiner davon ersetzt, also sind sie auch alle in der neuen Liste.
-Ist \textit{uFLz} Teil der alten Liste, gibt es Rang von \textit{uFLz} viele Zeiger in der alten Liste mit kleinerem Rang, die nicht auf ihren eigenen Knoten zeigen.
-Und auch hier ist keiner davon \textit{uFLx}, also sind sie auch hier alle in der neuen Liste.
+Und \KruskalupdateunionFindrankInvariantofrankeq für den Fall, dass die Ränge gleich sind.
+
+% update_unionFind_rankInvariant
+\begin{lemma}[\KruskalupdateunionFindrankInvariant]
+  Falls der Rang von \textit{uFLx} kleiner ist als der von \textit{uFLy}, gilt für die neue Liste die Rang-Invariante.
+\end{lemma}
+\begin{proof}
+  In diesem Fall ist \textit{uFLy'} $=$ \textit{uFLy} und \textit{uFLx'} und \textit{uFLx} haben den gleichen Rang.
+  Das ersetzen von \textit{uFLy} durch \textit{uFLy'} verändert also die Liste nicht.
+  Sei \textit{uFLz} ein beliebiger Zeiger aus der neune Liste, dann ist \textit{uFLz} $=$ \textit{uFLx'} oder ein Zeiger aus der altern Liste.
+  Ist \textit{uFLz} $=$ \textit{uFLx'}, dann ist der Rang von \textit{uFLz} gleich dem von \textit{uFLx} und es gibt ebenso viele Zeiger in der alten Liste mit kleinerem Rang,
+  die nicht auf ihren eigenen Knoten zeigen.
+  Und da keiner dieser Zeiger \textit{uFLx} ist, wird auch keiner davon ersetzt, also sind sie auch alle in der neuen Liste.
+  Ist \textit{uFLz} Teil der alten Liste, gibt es Rang von \textit{uFLz} viele Zeiger in der alten Liste mit kleinerem Rang, die nicht auf ihren eigenen Knoten zeigen.
+  Und auch hier ist keiner davon \textit{uFLx}, denn \textit{uFLx} zeigt auf seinen eigenen Knoten, also sind sie auch hier alle in der neuen Liste.
+\end{proof}
 
 % update_unionFind_rankInvariant_of_rank_eq
-Für den Fall, dass der Rang von \textit{uFLx} $=$ dem von \textit{uFLy} ist, habe ich \KruskalupdateunionFindrankInvariantofrankeq.
-Auch hier haben \textit{uFLx'} und \textit{uFLx} den gleichen Rang, allerdings ist der Rang von \textit{uFLy'} um eins höher.
-Der Beweis verläuft ähnlich nur, dass jetzt auch \textit{uFLy} und \textit{uFLy'} beachtet werden müssen.
-Ist \textit{uFLz} $=$ \textit{uFLy'}, dann betrachte ich die Menge der Zeiger in der alten Liste mit kleinerem Rang als \textit{uFLy}, die nicht auf ihren eigenen Knoten zeigen.
-Keiner diser Zeiger wird ersetzt, da \textit{uFLx} und \textit{uFLy} kein Teil dieser Menge sind,
-also sind sie alle Teil der neuen Liste und somit Teil der Menge an Zeigern in der neuen Listee mit kleinerem Rang als \textit{uFLy'}, die nicht auf ihren eigenen Knoten zeigen.
-Da auch \textit{uFLx'} Teil dieser zweiten Menge ist, ist diese mindestens um eins größer also mindestens so groß wie der Rang von \textit{uFLy'}.
-Die Fälle, dass \textit{uFLz} gleich \textit{uFLx'} oder Teil der alten Liste ist, verlaufen so ähnlich wie bei \KruskalupdateunionFindrankInvariant,
-nur muss hier auch beachtet werden, dass \textit{uFLy} ersetzt wird.
+\begin{lemma}[\KruskalupdateunionFindrankInvariantofrankeq]
+  Falls die Ränge von \textit{uFLx} und \textit{uFLy} gleich sind, gilt für die neue Liste die Rang-Invariante.
+\end{lemma}
+\begin{proof}
+  Auch hier haben \textit{uFLx'} und \textit{uFLx} den gleichen Rang, allerdings ist der Rang von \textit{uFLy'} um eins höher.
+  Der Beweis verläuft ähnlich nur, dass jetzt auch \textit{uFLy} und \textit{uFLy'} beachtet werden müssen.
+  Ist \textit{uFLz} $=$ \textit{uFLy'}, dann betrachte ich die Menge der Zeiger in der alten Liste mit kleinerem Rang als \textit{uFLy}, die nicht auf ihren eigenen Knoten zeigen.
+  Keiner diser Zeiger wird ersetzt, da \textit{uFLx} und \textit{uFLy} kein Teil dieser Menge sind,
+  also sind sie alle Teil der neuen Liste und somit Teil der Menge an Zeigern in der neuen Liste mit kleinerem Rang als \textit{uFLy'}, die nicht auf ihren eigenen Knoten zeigen.
+  Da auch \textit{uFLx'} Teil dieser zweiten Menge ist, ist diese mindestens um eins größer also mindestens so groß wie der Rang von \textit{uFLy'}.
+  Die Fälle, dass \textit{uFLz} gleich \textit{uFLx'} oder Teil der alten Liste ist, verlaufen so ähnlich wie bei \KruskalupdateunionFindrankInvariant,
+  nur muss hier auch beachtet werden, dass \textit{uFLy} ersetzt wird.
+\end{proof}
 
 
 
