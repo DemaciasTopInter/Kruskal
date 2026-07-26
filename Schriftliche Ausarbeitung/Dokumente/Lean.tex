@@ -42,14 +42,33 @@ def
 structure
 inductive
 
-Der Taktik Modus
+Der Taktik Modus und das Laufen beim Schreiben
 
 Für mehr Informationen über Lean und seine Geschiche können auf der Lean Webseite\cite{lean_lang} oder der Lean Sprach Referenz\cite{lean_lang_doc} nachgelesen werden.
 
 \subsection{Anwendung}\todo{sub\-section Anwendung}
-
-\cite{microsoftresearchblog}
+Microsoft nutzt Lean um nachweislich sichere Kryptographie zu Produzieren.
+Wie in diesem Bolg-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft um die Einhaltung von Standarts zu verifizieren.
+Da in der Kryptographie der Code häufig sehr hardwarenah und architekturabhängig geschrieben wird
+und Laufzeitoptimirungen enthält sieht er selten genau so aus, wie der Algorithmus aus dem Standart.
+Um hierbei sicher zu gehen, dass die Funktionsweise immer noch die gleiche ist, reicht Testen nicht immer aus, da ein kleiner Fehler die Sicherheit des gesamten Systhems untergraben kann.
+Deshalb formalizieren sie die Standarts in Lean.
+Eine Implementation in Rust wird dann auf eine äquivalente Implementatierung in Lean abgebildet.
+Der Vorteil gegenüber dem Testen ist, dass nun bewiesen werden kann, dass für alle möglichen Inputs, die eventuelle Vorbedingungen erfüllen, auch ein korrekter Output erzeugt wird.
+Wohingegen Testen immer nur für begrenzt viele Inputs zeigen kann, dass der Output korrekt ist.
 
 \subsection{Mathlib}\todo{sub\-section Mathlib}
 \cite{mathlib2020}
+
 \subsection{Lean und KI}\todo{sub\-section KI}
+
+Sobalt das mathematische Problem formaliziert wurde, kann KI versuchen es zu lösen.
+Oder wenn bereits ein Beweis bekannt ist, kann KI probieren einen einfacheren oder schnelleren zuu finden.
+
+In \cite{microsoftresearchblog} wird erklärt, wie KI bereits zum Einsatz kommt und welche Aufgaben sie übernimmt.
+Zum einen das Übersetzen von Standarts in Lean Spezifikationen.
+Diese müssen natürlich getestet und von Menschen geprüft werden, spraren unterm Strich aber trozdem Arbeit.
+Zum anderen beim automatischen Schreiben und Aktualisieren von Beweisen.
+Das Schöne ist, das Lean garantiert, dass ein Beweis auch funktioniert, sofer also der Fehler nicht schon in der Formulierung der zu beweisenden Aussage liegt,
+kann ein Beweis, der von einer KI geschrieben wurde, nicht fälschlich positiv Sein.
+Menschen müssen nur die Beweise per Hand schreiben, bei denen die KI scheitert.
