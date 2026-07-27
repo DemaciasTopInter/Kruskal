@@ -32,23 +32,116 @@ Fin ist zum Beispiel vom Typ der Funktionen, die von Nat auf Type abbilden.
 Da in Lean alles einen Typ hat, gilt das auch Type.
 Type, was das gleiche ist wie Type 0, ist vom Typ Type 1.
 Type 1 ist wiederum vom Typ Type 2 und so weiter.
+Es gibt in Lean auf die weise unendlich viele Typ-Universen.
 
-Um eigene Typen beziehungsweise Terme definieren, gibt es in Lean verschiedene Möglichkeiten:
+Um eigene Typen und Funktionen definieren, gibt es in Lean verschiedene Möglichkeiten:
 Mit def oder abbrev lassen sich vor allem Funktionen definieren, aber auch konstante Elemente eines Typs oder einfache zusammen gesetzte Typen, wie zum Beispiel Tupel.
 Der Hauptunterschied dabei ist, dass aus sicht von Lean def etwas neues kreiert über das noch nichts bekannt ist, wärend abbrev eher ein Alias mit neuem Namen erzeugt.
 Komplexere Typen lassen sich als structure definieren was an Klassen aus dem objektorientierten Progammieren erinnert mit beliebig vielen Atributen und Methoden.
-abbrev
-def
-structure
-inductive
+\begin{lstlisting}
+    
+\end{lstlisting}
+\textbf{abbrev}
+\textbf{def}
+\textbf{structure}
+\textbf{inductive}
+\begin{lstlisting}
+inductive myList (α : Type) where
+  | nil : myList α
+  | cons (head : α) (tail : myList α) : myList α
+\end{lstlisting}
 
-Der Taktik Modus und das Laufen beim Schreiben
+% Der Taktik Modus und das Laufen beim Schreiben
+Mit \textbf{theorem} (oder wenn man die Mathlib Bibliothek verwendet, äquivalent mit \textbf{lemma}) lassen sich Beweise für Aussagen definieren.
+Das ähnelt vom Aufbau her der Definition mit def nur das der Typ jetzt die Aussage ist.
+Bewiesen wird die Aussage dann im Taktik Modus, einer interaktiven Beweisumgebung.
+Diese wird durch \textbf{by} nach dem := geöffnet.
+Im Kontext des Taktik Modus befinden sich die aktuellen lokalen Konstanten und Hypothesen sowie das Ziel, das durch $\vdash$ gekennzeichnet ist.
+Diese können nun mit Taktiken Stück für Stück verändert und angepasst werden, bis das das Ziel geschlossen ist.
+Dabei kann es auch vorkommen, dass zwischenzeitlich weitere Ziele geöffnet werden, diese müssen in dem Fall alle der Reihe nach geschlossen werden, damit die Aussage bewiesen ist.
+
+Lean hat die Besonderheit, das es den Code bereits beim schreiben auswertet und mitlaufen lässt und einem so immer den aktuelln Zustand des Kontextes im Editor anzeigt.
+In Abbildung \ref{leaninvscode} kann man das in aktion sehen.
+
+Die von mir am häufigsten verwendeten Taktiken stelle ich im folgenden einmal kurz vor.
+
+Die Taktik \textbf{rw} (kurz für rewrite) nimmt als Argument eine Liste von Gleichungen, also eine Aussagen der Form $x = y$ und ersetzt im Ziel dann alle Vorkommen von Term $x$ durch Term $y$.
+Alternativ ersetzt die Taktik \textbf{nth\_rewrite} nur des n-te Vorkommen.
+
+Die Taktik \textbf{apply} funktioniert so ähnlich und nimmt als Argument eine Aussage der Form $a \rightarrow b$.
+War das Ziel ein Beweis für Aussage $b$, ist nun das neue Ziel ein Beweis für Aussage $a$.
+
+Die nächsten zwei Taktiken sind Automatisationen, die einem Beweisarbeit abnehmen.
+\textbf{simp} versucht das Ziel so weit es geht zu vereinfachen und tut dies quasi durch wiederholtes Verwenden von rw.
+Dafür nimmt sie wie rw als Argument eine Liste von Gleichungen, allerdings probiert sie auch alle bereits existierenden Beweise, die mit dem Tag simp markiert wurden.
+Davon gibt es in Lean schon von Haus aus viele, aber durch Bibliotheken, wie zum Beispiel Mathlib, oder auch eigene Theoreme kommen noch mehr hinzu.
+Mit dem optionalen Argument only kann man dafür sorgen, dass nur die übergebenen Gleichungen verwendet werden.
+Es gibt auch die option nur einzelne Gleichungen auszuschließen, indem man sie in der Liste mit aufführt und je ein Minus davor schreibt.
+rw und simp lassen sich ausßerdem mit dem Zusatz \textbf{at} auch auf eine oder mehrere Hypothesen anwenden.
+
+Ein Beispiel, wie man mit den Gleichungen h1 und h2 die Aussagen h3, h4 und h5 vereinfachen würde:
+\begin{lstlisting}
+simp [h1, h2] at h3 h4 h5
+\end{lstlisting}
+
+Die andere Automatisierung ist \textbf{grind}.
+Sie ist von modernen SMT Solvern inspiriert und versucht ein Ziel zu schließen, indem sie aus allen bekanten Fakten immer weitere Fakten ableitet und dabei hofft auf einen Widerspruch zu stoßen.
+
+Die Taktiken \textbf{let} und \textbf{have} sind die lokalen Varianten von def und theorem. 
+Mit let können lokale Konstanten und Funktionen definiert werden und mit have quasi lokale Hilfslemma.
+Diese müssen natürlich auch erst einmal bewiesen werden und erzeugen ein vorrangiges Ziel, das zuerst geschlossenwerden muss, bevor es im eigentlichen Ziel weiter geht.
+
+Mit der Taktik \textbf{intro} kann eine Bedingung aus dem dem Ziel holen und als Konstante oder Hypothese in den Kontext aufnehmen.
+Als Argument nimmt sie den Namen, den das Element dann bekommt.
+Aus dem Ziel $a \rightarrow b$ wird dann durch intro h die neue Hypothese $h : a$ angelegt und das Ziel ist dann nurnoch $b$.
+Man kan auch mehrere Namen angeben, was den Effekt hat, als würde man intro mehrmals hinter einander aufrufen.
+
+\textbf{revert} ist die Umkehrfunktion von intro.
+Sie nimmt als Argument einen oder mehrere Namen und fügt die entsprechenden Elemente als Bedingungen dem Ziel hinzu.
+
+\textbf{by\_cases}
+Eine \textbf{induktion} lässt sich anwenden, wenn man im Kontext ein Element mit einem induktiven Typ hat,
+häufig eine natürliche Zahl oder eine Liste, oder wenn man eine Aussage über eine rekursive Funktion trifft.
+\textbf{cases}
+\textbf{rcases}
+rcases benutze ich zum Beispiel häufiger um eine Existenzaussage in ihre Einzelteile zu zerlegen. Beispiel:
+\begin{lstlisting}
+-- Kontext vorher
+id : Nat
+nodeList : List node
+h : ∃ x ∈ nodeList, x.id = id
+--
+rcases h with ⟨x, h_x_in, h_eq⟩
+-- Kontext danach
+id : Nat
+nodeList : List node
+x : node
+h_x_in : x ∈ nodeList
+h_eq : x.id = id
+--
+\end{lstlisting}
+
+\textbf{left} und \textbf{right} machen aus dem Ziel, wenn es die Form $a \lor b$ hat nurnoch $a$ bzw. $b$.
+
+\textbf{constructor}
+\textbf{refine}
+\textbf{exact}
+
+\textbf{\_}
+\textbf{?\_}
+
 
 Für mehr Informationen über Lean und seine Geschiche können auf der Lean Webseite\cite{lean_lang} oder der Lean Sprach Referenz\cite{lean_lang_doc} nachgelesen werden.
 
+\begin{figure}
+    \missingfigure{Bild vom Lean Kontext}
+    \caption{Lean Beweisführung in VS Code: Links der Quellcode und Rechts der Kontext}
+    \label{leaninvscode}
+\end{figure}
+
 \subsection{Anwendung}\todo{sub\-section Anwendung}
 Microsoft nutzt Lean um nachweislich sichere Kryptographie zu Produzieren.
-Wie in diesem Bolg-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft um die Einhaltung von Standarts zu verifizieren.
+Wie in diesem Bolg-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft Lean um die Einhaltung von Standarts zu verifizieren.
 Da in der Kryptographie der Code häufig sehr hardwarenah und architekturabhängig geschrieben wird
 und Laufzeitoptimirungen enthält sieht er selten genau so aus, wie der Algorithmus aus dem Standart.
 Um hierbei sicher zu gehen, dass die Funktionsweise immer noch die gleiche ist, reicht Testen nicht immer aus, da ein kleiner Fehler die Sicherheit des gesamten Systhems untergraben kann.

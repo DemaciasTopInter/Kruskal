@@ -30,3 +30,24 @@ class Group (α : Type) (add : α → α → α) where
 inductive Tree (α : Type) : Type where
     | Leaf (a : α) : Tree α
     | Brach (a : α) (children : List (Tree α)) : Tree α
+
+universe u
+
+inductive myList (α : Type) : Type where
+  | nil : myList α
+  | cons (head : α) (tail : myList α) : myList α
+
+#check myList myType
+
+
+inductive myPropList (α : Prop) : Prop where
+  | nil : myPropList α
+  | cons (head : α) (tail : myPropList α) : myPropList α
+
+
+#check myPropList (3 = 2 + 1)
+
+theorem test_myPropList : myPropList (3 = 2 + 1) := .cons (by omega) .nil
+
+#check test_myPropList
+-- #eval test_myPropList
