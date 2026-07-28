@@ -35,21 +35,28 @@ Type 1 ist wiederum vom Typ Type 2 und so weiter.
 Es gibt in Lean auf die weise unendlich viele Typ-Universen.
 
 Um eigene Typen und Funktionen definieren, gibt es in Lean verschiedene Möglichkeiten:
-Mit def oder abbrev lassen sich vor allem Funktionen definieren, aber auch konstante Elemente eines Typs oder einfache zusammen gesetzte Typen, wie zum Beispiel Tupel.
+Mit \textbf{def} oder \textbf{abbrev} lassen sich vor allem Funktionen definieren, aber auch konstante Elemente eines Typs oder einfache zusammen gesetzte Typen, wie zum Beispiel Tupel.
 Der Hauptunterschied dabei ist, dass aus sicht von Lean def etwas neues kreiert über das noch nichts bekannt ist, wärend abbrev eher ein Alias mit neuem Namen erzeugt.
-Komplexere Typen lassen sich als structure definieren was an Klassen aus dem objektorientierten Progammieren erinnert mit beliebig vielen Atributen und Methoden.
+Komplexere Typen lassen sich als \textbf{structure} definieren was an Klassen aus dem objektorientierten Progammieren erinnert mit beliebig vielen Atributen und Methoden.
 \begin{lstlisting}
     
-\end{lstlisting}
-\textbf{abbrev}
-\textbf{def}
-\textbf{structure}
-\textbf{inductive}
+\end{lstlisting}\todo{Bei\-spiele}
+Mit \textbf{inductive} lassen sich induktive Typen definieren.
+Über diese lassen sich dann auch Induktionen führen.
+Die häfigsten Beispiele dafür sind die natürlichen Zahlen und Listen.
 \begin{lstlisting}
-inductive myList (α : Type) where
+inductive myNat : Type where
+  | zero : myNat α
+  | succ (n : myNat α) : myNat α
+
+inductive myList (α : Type) : Type where
   | nil : myList α
   | cons (head : α) (tail : myList α) : myList α
 \end{lstlisting}
+
+\todo{Typ\-klassen}
+
+\todo{()\{\}[]}
 
 % Der Taktik Modus und das Laufen beim Schreiben
 Mit \textbf{theorem} (oder wenn man die Mathlib Bibliothek verwendet, äquivalent mit \textbf{lemma}) lassen sich Beweise für Aussagen definieren.
@@ -99,12 +106,20 @@ Man kan auch mehrere Namen angeben, was den Effekt hat, als würde man intro meh
 \textbf{revert} ist die Umkehrfunktion von intro.
 Sie nimmt als Argument einen oder mehrere Namen und fügt die entsprechenden Elemente als Bedingungen dem Ziel hinzu.
 
-\textbf{by\_cases}
+Es gibt verschiedene Möglichkeiten für Fallunterscheidungen.
+Die Taktik \textbf{by\-\_cases} zusammen mit einer Aussage spaltet das Ziel in in zwei Unterziele.
+Im ersten ist die Aussage als Hypothese im Kontext und im zweiten ihre Negation.
+
 Eine \textbf{induktion} lässt sich anwenden, wenn man im Kontext ein Element mit einem induktiven Typ hat,
 häufig eine natürliche Zahl oder eine Liste, oder wenn man eine Aussage über eine rekursive Funktion trifft.
-\textbf{cases}
-\textbf{rcases}
-rcases benutze ich zum Beispiel häufiger um eine Existenzaussage in ihre Einzelteile zu zerlegen. Beispiel:
+Sie teilt das Ziel in ein Unterziel pro Fall, den das Element annehmen kann und stellt in den Nicht-Basisfällen eine entsprechende Induktionshpothese zur verfügung.
+So ähnlich funktioniert auch \textbf{cases} welche für ein Element mit einem induktiven Typ das Ziel anhand der möglichen Fälle aufspaltet, allerdings ohne eine Induktionshpothese.
+
+Die Taktik \textbf{rcases} kann eine Hypothese beliebig fein in ihre Einzelteile aufteilen.
+Sie kann aus einen $\exists$ ein spezifisches Element machen, eine $\land$-Aussage in zwei einzelne Hypothesen aufteilen
+und aus einer $\lor$-Aussage zwei Unterziele erzeugen in denen je die eine oder die andere Aussage als Hypothese existiert.
+Diese Taktik benutze ich zum Beispiel häufiger um eine Existenzaussage in ihre Einzelteile zu zerlegen.
+Das sieht dann zum Beispiel so aus:
 \begin{lstlisting}
 -- Kontext vorher
 id : Nat
@@ -121,17 +136,34 @@ h_eq : x.id = id
 --
 \end{lstlisting}
 
-\textbf{left} und \textbf{right} machen aus dem Ziel, wenn es die Form $a \lor b$ hat nurnoch $a$ bzw. $b$.
+Hat das Ziel die Form $a \lor b$ reicht es eine der beiden Aussagen zu zeigen.
+\textbf{left} und \textbf{right} machen aus dem Ziel dann nurnoch $a$ bzw. nurnoch $b$.
 
-\textbf{constructor}
-\textbf{refine}
-\textbf{exact}
+Hat das Ziel hingegen die Form $a \land b$ müssen beide Aussagen gezeigt werden.
+Die Taktik \textbf{constructor} spaltet das Ziel dann in zwei Ziele auf, die dann nacheinander gelöst werden müssen.
 
-\textbf{\_}
-\textbf{?\_}
+\textbf{refine} und \textbf{exact} sind beides Taktiken um ein Ziel zu schließen.
+Hat man es durch Umformungen von Ziel und Hypothese geschafft, dass eine Hypothese h genau das aussagt, was im Ziel steht, kann man es mit exact h schließen.
+hat man hingegen nur Teile der Aussage, kann man stattdessen refine benutzen, welche dann das Ziel schließt, aber für jede Lücke wieder ein Ziel öffnet.
+
+Keine Taktik aber auch ganz nützlich sind die Platzhalte \textbf{\_} und \textbf{?\_}.
+Überall wo ein Beweis als grgument gefordert ist, kann stattdessen auch ?\_ angegeben werden, was bedeutet, dass man den beweis nachreicht.
+Der Beweis wird also als weiteres Ziel geöffnet, um das man sich dann kümmert, wenn man das aktuelle geschlossen hat.
+Das ist auch mit Lücke bei refine gemeint.
+Hingegen kann man \_ überall da anwenden, wo das zu ersetzende aus dem Zusammenhang eindeutig impliziert wird.
+Zum Beispiel leifert die Funktion List.choose das erste Element einer Liste, das eine gegebene Bedingung erfüllt.
+Dafür fordert sie als Argumente die Bedingung p, die Liste l und einen Nachweis hp, dass es auch ein solches Element gibt.
+\begin{lstlisting}
+def List.choose (p : α → Prop) [DecidablePred p] (l : List α) (hp : ∃ a, a ∈ l ∧ p a) : α
+\end{lstlisting}
+Wenn man die Hypothese hp jetzt schon im Kontext hat ist ja automatisch klar, welche Liste l und Bedingung p gemeint sind, das sie ja schon in der Aussage stecken.
+Es reicht also beim Funktionsaufruf hp mitzugeben:
+\begin{lstlisting}
+let x : α := List.choose _ _ hp
+\end{lstlisting}
 
 
-Für mehr Informationen über Lean und seine Geschiche können auf der Lean Webseite\cite{lean_lang} oder der Lean Sprach Referenz\cite{lean_lang_doc} nachgelesen werden.
+Für mehr Informationen über Lean, seine Geschiche oder genaue Definitionen empfehle ich, auf der Lean Webseite\cite{lean_lang} oder der Lean Sprach Referenz\cite{lean_lang_doc} nachzulesen.
 
 \begin{figure}
     \missingfigure{Bild vom Lean Kontext}

@@ -36,7 +36,7 @@ theorem nodeList_of_edgeList_helper_nonempty {nodeList : List node} (edgeList : 
       · simp [h_in]
         apply ih
         · simp
-    · simp [nodeList_of_edgeList_helper, h_eq]
+    · simp [nodeList_of_edgeList_helper]
       by_cases h_in₁ : { id := e.node1 } ∈ nodeList
       · by_cases h_in₂ : { id := e.node2 } ∈ nodeList
         · simp [h_in₁, h_in₂]
@@ -60,7 +60,7 @@ theorem nodeList_of_edgeList_nonempty (edgeList : List edge) (h : edgeList ≠ [
     simp [nodeList_of_edgeList, nodeList_of_edgeList_helper]
     by_cases h_eq : e.node1 = e.node2
     · simp [h_eq, nodeList_of_edgeList_helper_nonempty]
-    · simp [h_eq, nodeList_of_edgeList_helper_nonempty]
+    · simp [nodeList_of_edgeList_helper_nonempty]
 
 def nodeList_of_edgeList_max (edgeList : List edge) (h : edgeList ≠ []) : node := (nodeList_of_edgeList edgeList).max (nodeList_of_edgeList_nonempty edgeList h)
 
