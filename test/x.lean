@@ -1,53 +1,61 @@
-def hello := "Kruskal"
-#check hello
+#check "Hello World!"
+#check 16
 def t : Fin 32 := { val := 16, isLt := by omega }
+#check t
+#check 16 < 32
+#check t.val
+#check t.isLt
+#check Nat
+#check Prop
+#check Fin
 #check Type 1
-abbrev succc (x : Nat) : Nat := x.succ.succ
-#check succc
-inductive Vacant : Type where
-#check Vacant
--- def v : Vacant := sorry
--- #check v
--- #eval! v
-
-
-
-
 
 def myType : Type := Nat × String
-abbrev myType' : Type := Nat × String
-def myFun (m : myType') : String := m.2
-def test : myType' := (3, "test")
-#check test
-#eval test
+
+def f (x : Nat) : Nat := 3*x^2 - 4*x + 5
+
+structure edge : Type where
+  node1 : Nat
+  node2 : Nat
+  nodesLt : node1 < node2
 
 class Group (α : Type) (add : α → α → α) where
-    e : α
-    add_assoc (a b c : α) : add (add a b) c = add a (add b c)
-    ex_nutral : ∀ (a : α), add a e = a
-    ex_invers : ∀ (a : α), ∃ (h : α), add a h = e
+  e : α
+  add_assoc (a b c : α) : add (add a b) c = add a (add b c)
+  ex_nutral : ∀ (a : α), add a e = a
+  ex_invers : ∀ (a : α), ∃ (h : α), add a h = e
+
+instance int_Group : Group Int Add.add where
+  e := 0
+  add_assoc := Int.add_assoc
+  ex_nutral := Int.add_zero
+  ex_invers := by
+    intro a
+    refine ⟨-a, by grind⟩
 
 inductive Tree (α : Type) : Type where
     | Leaf (a : α) : Tree α
     | Brach (a : α) (children : List (Tree α)) : Tree α
 
-universe u
-
 inductive myList (α : Type) : Type where
   | nil : myList α
   | cons (head : α) (tail : myList α) : myList α
 
-#check myList myType
-
-
-inductive myPropList (α : Prop) : Prop where
-  | nil : myPropList α
-  | cons (head : α) (tail : myPropList α) : myPropList α
-
-
-#check myPropList (3 = 2 + 1)
-
-theorem test_myPropList : myPropList (3 = 2 + 1) := .cons (by omega) .nil
-
-#check test_myPropList
--- #eval test_myPropList
+theorem length_of_filter_mem {α : Type} {l : List α} {a : α} [DecidableEq α] (h_mem : a ∈ l) : l.length ≥ 1 + (l.filter (fun b => b ≠ a)).length := by
+  induction l with
+  | nil =>
+    simp at h_mem
+  | cons b l ih =>
+    by_cases h_eq : b = a
+    · simp [h_eq]
+      rw [Nat.add_comm]
+      simp
+      exact List.length_filter_le (fun b => !decide (b = a)) l
+    · simp
+      rw [Nat.add_comm]
+      simp
+      simp [h_eq]
+      simp [ne_comm.mp h_eq] at h_mem
+      simp [h_mem] at ih
+      rw [Nat.add_comm] at ih
+      exact ih

@@ -39,8 +39,15 @@ Mit \textbf{def} oder \textbf{abbrev} lassen sich vor allem Funktionen definiere
 Der Hauptunterschied dabei ist, dass aus sicht von Lean def etwas neues kreiert über das noch nichts bekannt ist, wärend abbrev eher ein Alias mit neuem Namen erzeugt.
 Komplexere Typen lassen sich als \textbf{structure} definieren was an Klassen aus dem objektorientierten Progammieren erinnert mit beliebig vielen Atributen und Methoden.
 \begin{lstlisting}
-    
-\end{lstlisting}\todo{Bei\-spiele}
+def myType : Type := Nat × String
+
+def f (x : Nat) : Nat := 3*x^2 - 4*x + 5
+
+structure edge : Type where
+  node1 : Nat
+  node2 : Nat
+  nodesLt : node1 < node2
+\end{lstlisting}
 Mit \textbf{inductive} lassen sich induktive Typen definieren.
 Über diese lassen sich dann auch Induktionen führen.
 Die häfigsten Beispiele dafür sind die natürlichen Zahlen und Listen.
@@ -54,14 +61,57 @@ inductive myList (α : Type) : Type where
   | cons (head : α) (tail : myList α) : myList α
 \end{lstlisting}
 
-\todo{Typ\-klassen}
+Wenn Funktionen für mehrere Typen definiert sein sollen (Polymorphie), geht das entweder, indem der Typ ein ein Argument der Funktion ist, oder über Typ-Klassen (Ad-hoc Polymorphie).
+Letztere empfehlen sich vor allem dann, wenn sich die Funktion je nach Typ anders verhallten und beliebig erweiterbar sein soll.
+Klassen werden mit \textbf{class} oder \textbf{class inductive} definiert werden, was dann so aussieht, wie bei structure oder inductive.
+Dabei sind dann die Funktionen, die für alle Typen dieser Klasse definiert sein sollen, in der Klasse deklariet aber nicht definiert.
+Wie diese Funktionen für den einzelnen Typen definiert sein sollen ist ja individuell.
 
-\todo{()\{\}[]}
+Damit ein Typ nun Teil einer Klasse werden kann, muss für ihn eine Instanz erstellt werden, in der definiert ist, wie sich jede einzelne Funktion für ihn verhält.
 
-% Der Taktik Modus und das Laufen beim Schreiben
+Häufige Beispiele für einfache Klassen mit je nur einer Funktion sind arithmetische Operatoren die ja zu Beispiel auf Nat, Int, Float, Fin und weiteren definiert sein müssen.
+
+Ein Beispiel für eine komplexere Klasse wäre zum Beispiel eine Gruppe:
+\begin{lstlisting}
+class Group (α : Type) (add : α → α → α) where
+  e : α
+  add_assoc (a b c : α) : add (add a b) c = add a (add b c)
+  ex_nutral : ∀ (a : α), add a e = a
+  ex_invers : ∀ (a : α), ∃ (h : α), add a h = e
+
+instance int_Group : Group Int Add.add where
+  e := 0
+  add_assoc := Int.add_assoc
+  ex_nutral := Int.add_zero
+  ex_invers := by
+    intro a
+    refine ⟨-a, by grind⟩
+\end{lstlisting}\todo{Fällt mir noch was besseres ein?}
+
 Mit \textbf{theorem} (oder wenn man die Mathlib Bibliothek verwendet, äquivalent mit \textbf{lemma}) lassen sich Beweise für Aussagen definieren.
 Das ähnelt vom Aufbau her der Definition mit def nur das der Typ jetzt die Aussage ist.
-Bewiesen wird die Aussage dann im Taktik Modus, einer interaktiven Beweisumgebung.
+
+Es gibt drei arten von Argumenten, die bei einer Definition angegeben werden können:
+\begin{itemize}
+  \item In runden Klammern stehen die normalen Argumente, die beim Aufruf übergeben werden müssen.
+        Sie weredn geschrieben als ein oder mehrere Namen gefolgt von einem Doppelpunkt und dem Typ.
+  \item In geschweiften Klammern stehen implezite Argumente
+        Sie haben den selben Aufbau, werden aber im Regelfall nicht mit übergeben.
+  \item In eckigen Klammern stehen Bedingungen an Klassenzugehörigkeiten.
+        Sie bekommen in der Regel keine Namen, besthehen also nur aus ihrer Aussage.
+        Sie müssen auch nicht übergeben werden.
+        Es reicht, dass eine Instanz existiert.
+\end{itemize}
+Ein Beispiel, wo alle drei vorkommen wäre diese Lemma, das besagt, dass eine Listevon beliebigem Typ kürzer wird, wenn man eines ihrer Elemente rausfiltert:
+\begin{lstlisting}
+theorem length_of_filter_mem {α : Type} {l : List α} {a : α} [DecidableEq α] (h_mem : a ∈ l) : l.length ≥ 1 + (l.filter (fun b => b ≠ a)).length := by …
+\end{lstlisting}
+In dem Nachweis h\_mem, dass das Element a in der Liste l enthalten ist, sind a, l und der Typ $\alpha$ implizit enthalten.
+Es reicht also den Beweis h\_mem zu übergeben, wenn man dieses Lemma nutzen möchte,
+sofern es für den entsprechenden Typ eine Instanz der Klasse DecidableEq gibt, also für zwei Elemente entscheidbar ist, ob sie gleich sind.
+
+% Der Taktik Modus und das Laufen beim Schreiben
+Der Beweis für eine Aussage passiert dann im Taktik Modus, einer interaktiven Beweisumgebung.
 Diese wird durch \textbf{by} nach dem := geöffnet.
 Im Kontext des Taktik Modus befinden sich die aktuellen lokalen Konstanten und Hypothesen sowie das Ziel, das durch $\vdash$ gekennzeichnet ist.
 Diese können nun mit Taktiken Stück für Stück verändert und angepasst werden, bis das das Ziel geschlossen ist.
