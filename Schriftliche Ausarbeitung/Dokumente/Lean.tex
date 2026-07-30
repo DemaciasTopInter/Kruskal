@@ -1,5 +1,5 @@
-\section{Lean}\todo{section Lean}
-\subsection{Was ist Lean}\todo{sub\-section Lean}
+\section{Lean}
+\subsection{Was ist Lean}
 Lean\cite{10.1007/978-3-030-79876-5_37} ist beides eine funktionale Progammiersprache und ein Beweis Assistent für formale Beweise.
 Das Projekt wurde 2013 von Leonardo de Moura und Sebastian Ullrich ins Leben gerufen.
 Die aktuelle Version Lean 4 ist selbst in Lean geschrieben und wurde im September 2023 released.
@@ -122,6 +122,8 @@ In Abbildung \ref{leaninvscode} kann man das in aktion sehen.
 
 Die von mir am häufigsten verwendeten Taktiken stelle ich im folgenden einmal kurz vor.
 
+Die Taktik \textbf{rfl} steht für reflexiv und schließt jedes Ziel der Form $x = x$.
+
 Die Taktik \textbf{rw} (kurz für rewrite) nimmt als Argument eine Liste von Gleichungen, also eine Aussagen der Form $x = y$ und ersetzt im Ziel dann alle Vorkommen von Term $x$ durch Term $y$.
 Alternativ ersetzt die Taktik \textbf{nth\_rewrite} nur des n-te Vorkommen.
 
@@ -147,6 +149,7 @@ Sie ist von modernen SMT Solvern inspiriert und versucht ein Ziel zu schließen,
 Die Taktiken \textbf{let} und \textbf{have} sind die lokalen Varianten von def und theorem. 
 Mit let können lokale Konstanten und Funktionen definiert werden und mit have quasi lokale Hilfslemma.
 Diese müssen natürlich auch erst einmal bewiesen werden und erzeugen ein vorrangiges Ziel, das zuerst geschlossenwerden muss, bevor es im eigentlichen Ziel weiter geht.
+Im gegensatz zu anderen Taktiken können diese beiden auch außerhalb des des Taktik Modus benutzt werden, zum Beispiel innerhalb einer Definition mit def.
 
 Mit der Taktik \textbf{intro} kann eine Bedingung aus dem dem Ziel holen und als Konstante oder Hypothese in den Kontext aufnehmen.
 Als Argument nimmt sie den Namen, den das Element dann bekommt.
@@ -212,6 +215,8 @@ Es reicht also beim Funktionsaufruf hp mitzugeben:
 let x : α := List.choose _ _ hp
 \end{lstlisting}
 
+Und dann gibt es da noch die \textbf{sorry} Taktik, die jedes Ziel sofort schließt.
+Diese ist allerdings nur zum Vorläufing verhindern von Fehlermeldungen gedacht und sollte in einem echten Beweis nicht mehr vorkommen.
 
 Für mehr Informationen über Lean, seine Geschiche oder genaue Definitionen empfehle ich, auf der Lean Webseite\cite{lean_lang} oder der Lean Sprach Referenz\cite{lean_lang_doc} nachzulesen.
 
@@ -221,29 +226,75 @@ Für mehr Informationen über Lean, seine Geschiche oder genaue Definitionen emp
     \label{leaninvscode}
 \end{figure}
 
-\subsection{Anwendung}\todo{sub\-section Anwendung}
-Microsoft nutzt Lean um nachweislich sichere Kryptographie zu Produzieren.
+\subsection{Anwendung}
+Die Häufigsten Anwendungen von Lean sind zum einen maschienenlesbare Formalisurngen von Mathematik und zum anderen die validierung von Software.
+
+Es bringt diverse Vorteile, mathematische Aussagen und Beweise zu formalisieren.
+Um ein par zu nennen wären da zum Beispiel:
+\begin{itemize}
+  \item Eine klare eindeutige Definition, die nicht falsch verstanden werden kann.
+  \item Die Sicherheit, einem Beweis vertrauen zu können, da garantiert kein Sonderfall vergessen oder unbemerkt durch Null geteilt wurde, oder Ähnliches.
+  \item Die Möglichkeit, dass auch eine KI die Aussage verstehen und eventuell beweisen kann.
+        Im Gegensatz zu Beweisen in natürlicher Sprache kann eine KI dabei keine Logikfehler oder Halluzinationen einbauen, da Lean diese nicht zulässt.
+\end{itemize}
+
+Das wohl wichtigste Projekt in Lean ist wahrscheinlich Mathlib\cite{mathlib2020}, da es die eine Grundlage für sehr viele andere Projekte bildet.
+Mathlib ist die größte Lean Bibliothek und ein Gemeinschaftsprojekt von hunderten Mitwirkenden auf der ganzen Welt.
+Sie ist 2017 als kleines Projekt gestartet aus dem Wunsch heraus formale mathematische Beweise in einem Repository zu sammeln und seither stetig gewachsen.
+Heute hat sie über 9000 Dateien mit täglich neuen Commits im zweistelligen Bereich.
+Sie enthält hauptsächlich Inhalte der Mathematik, aber auch der Informatik und der Physik.
+
+Ein anderes großes Projekt aus dem Bereich der Mathematik, das ich hier nennen möchte, ist das Repository Formal Conjectures\cite{formalcojectures},
+in dem von der Community offenen Probleme der Mathematik zusammengetragen und formalisiert werden.
+Im Gegensatz zu Mathlib und anderen Projekten, wo Beweise gesammelt werden, geht es hier um Fragen auf die es noch keine Antwort gibt,
+darunter unter anderem Probleme aus der Samlung von Paul Erdős\todo{cite Erdős}, oder der Online Encyclopedia of Integer Sequences (OEIS)\todo{cite OEIS}.
+Ziel dieser Samlung ist es, zum einen KI-Systemen ein Benchmark zu liefern, an dem sie sich ausprobieren können und mit unter neue Beweise entdecken können,
+zum anderen Klarheit zu schaffen, da nicht jede mathematische Vermutung immer sauber formuliert ist
+und zum dritten aufzuzeigen in welchen Feldern der Mathematik noch Lücken sind und wo es sich zu forschen lohnt, um damit schlussendlich wieder Mathlib weiter voran zu treiben.
+
+Software Validierung ist vorallem bei Sicherheitsrelevanter Software als Erweiterung zum Testen im kommen.
+Microsoft nutzt zum Beispiel Lean um nachweislich sichere Kryptographie zu Produzieren.
 Wie in diesem Bolg-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft Lean um die Einhaltung von Standarts zu verifizieren.
 Da in der Kryptographie der Code häufig sehr hardwarenah und architekturabhängig geschrieben wird
 und Laufzeitoptimirungen enthält sieht er selten genau so aus, wie der Algorithmus aus dem Standart.
 Um hierbei sicher zu gehen, dass die Funktionsweise immer noch die gleiche ist, reicht Testen nicht immer aus, da ein kleiner Fehler die Sicherheit des gesamten Systhems untergraben kann.
-Deshalb formalizieren sie die Standarts in Lean.
+Deshalb formalisieren sie die Standarts in Lean.
 Eine Implementation in Rust wird dann auf eine äquivalente Implementatierung in Lean abgebildet.
 Der Vorteil gegenüber dem Testen ist, dass nun bewiesen werden kann, dass für alle möglichen Inputs, die eventuelle Vorbedingungen erfüllen, auch ein korrekter Output erzeugt wird.
 Wohingegen Testen immer nur für begrenzt viele Inputs zeigen kann, dass der Output korrekt ist.
 
-\subsection{Mathlib}\todo{sub\-section Mathlib}
-\cite{mathlib2020}
-
-\subsection{Lean und KI}\todo{sub\-section KI}
-
-Sobalt das mathematische Problem formaliziert wurde, kann KI versuchen es zu lösen.
+\subsection{Lean und KI}
+Wie bereits erwähnt, ist einer der Vorteile einer Formalisierung, dass man, sobalt das Problem formalisiert wurde, eine KI darauf ansetzen kann, es zu lösen.
 Oder wenn bereits ein Beweis bekannt ist, kann KI probieren einen einfacheren oder schnelleren zuu finden.
 
-In \cite{microsoftresearchblog} wird erklärt, wie KI bereits zum Einsatz kommt und welche Aufgaben sie übernimmt.
+Aus persönlicher Erfahrung kann ich sagen, dass KIs wie ChatGPT oder Copilot, die nicht auf Lean spezialisiert sind, selten hilfreich sind.
+Sie können einem zwar Fehlermeldungen erklären und warum eine Taktik hier nicht funktioniert, was helfen kann, wenn man neu in Lean ist,
+verstehen aber nicht wirklich die Intension, die hinter dem Versuch steckt und liefern nur selten funktionierende Lösungsvorschläge.
+
+Wie Large Language Models (LLMs) trozdem zum Generieren von Beweisen genutzt werden können zeigt dieses Paper \cite{tsoukalas2026advancingmathematicsresearchaidriven},
+in dem das Framework AlphaProof Nexus für LLM-gestütze Beweis Generierung vorgestellt wird.
+Als Input bekommt das Framework ein formalisiertes Problem, das mit sorry gelöst ist.
+Dann versuche mehrere Agenten und Subagenten, mit teilweise geteiltem Speicher und teilweise nicht geteiltem Speicher, das Problem zu Lösen.
+Dabei abeiten sie in Episoden, wobei sie nach jedem mal mit Lean checken ob ihr aktueller Beweis compiliert.
+Die Ergebnisse sind dann wieder Teil des Inputs für die nächste Episode.
+Dabei wenden die Agenten verschiedene Ansätze an, wie sie weiter machen.
+Die ohne geteilten Speicher überdenken ihren Ansatz selbst und die mit sammeln ihre Ergebnisse, welche dann von einem Bewertungsagenten bewertet werden.
+Getestst wurde das Framework an einer auswahl von Problemen aus den Samlungen von Erdős und der OEIS.
+Hierbei wurde zum Beispiel auf das Repository Formal Conjectures zurückgegriffen.
+AlphaProof Nexus hat es dabei Tatsächlich geschafft, 9 der Erdős Probleme zu lösen und 44 der OEIS Probleme.
+Die gefundenen Lösungen kann man hier\todo{cite results} einsehen.
+Das ist schon beeindruckend, wenn man bedenkt, dass die Erdős Probleme seit über 56 Jahren von Menschen nicht gelöst wurden.
+Allerdings muss man dabei auch beachten, das es sich an 353 Problemen von Erdős und 492 von OEIS versucht hat.
+
+In dem zuvor genannten Blog-Post\cite{microsoftresearchblog} wird auch erklärt, wie KI bereits beim Validieren von Software zum Einsatz kommt und welche Aufgaben sie übernimmt.
 Zum einen das Übersetzen von Standarts in Lean Spezifikationen.
 Diese müssen natürlich getestet und von Menschen geprüft werden, spraren unterm Strich aber trozdem Arbeit.
 Zum anderen beim automatischen Schreiben und Aktualisieren von Beweisen.
 Das Schöne ist, das Lean garantiert, dass ein Beweis auch funktioniert, sofer also der Fehler nicht schon in der Formulierung der zu beweisenden Aussage liegt,
 kann ein Beweis, der von einer KI geschrieben wurde, nicht fälschlich positiv Sein.
 Menschen müssen nur die Beweise per Hand schreiben, bei denen die KI scheitert.
+
+Aus dem Post klingt mit das die Erfolgsquote höher ist als 9 aus 353, was meiner Schätzung nach daran liegen könnte,
+dass die Probleme dort häfiger Ähnlichkeiten hat zu Problemen, dessen Lösung die KI bereits kennt.
+
+% \cite{heise} Wirklich verwenden?
