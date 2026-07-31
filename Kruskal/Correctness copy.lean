@@ -3,7 +3,7 @@ import Kruskal.Basic
 -- import Kruskal.Lists
 import Kruskal.Tantow
 
-set_option maxHeartbeats 10000000
+set_option maxHeartbeats 100000000
 
 -- set_option pp.all true
 
@@ -567,7 +567,7 @@ theorem connected_component_of_unionFind_of_id_of_update_unionFind_of_con
         (exist_unionFindLink_of_connected_component_of_unionFind_of_id uF a h_a)
         (exist_unionFindLink_of_connected_component_of_unionFind_of_id uF b h_b)
     ) c h_c
-    = min (connected_component_of_unionFind_of_id uF a h_a) (connected_component_of_unionFind_of_id uF b h_b) := by
+    = min (connected_component_of_unionFind_of_id uF a h_a) (connected_component_of_unionFind_of_id uF b h_b) := by -- min ist Falsch,da es sich nicht auf den Rang bezieht
   sorry
 
 theorem connected_component_of_unionFind_of_id_of_self
@@ -729,6 +729,14 @@ def parent
   (h_in : uFL ∈ uF.linkList)
   : unionFindLink nodeList
   := List.choose (fun a => a.nodeId = uFL.ccId) uF.linkList (by rcases (uF.matching_ccId uFL h_in) with ⟨x, h, _⟩; rcases (uF.matching_nodeId x h.left) with ⟨uFL', h', _⟩; simp [← h.right]; refine ⟨uFL', by simp [h']⟩)
+
+theorem parent_in
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : parent uFL h_in ∈ uF.linkList := by
+  simp [parent, List.choose_mem]
 
 def parent_path
   {nodeList : List node}
@@ -1059,6 +1067,407 @@ termination_by p.length
   decreasing_by
   simp
 
+theorem uFL_choose_self
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  (h_nodup : nodeList.Nodup)
+  : List.choose (fun x => x.nodeId = uFL.nodeId) uF.linkList (by grind) = uFL := by
+  rcases (node_of_uFL h_in h_nodup) with ⟨x, h_x_in, h_x⟩
+  rcases (uF.matching_nodeId x h_x_in) with ⟨uFL', h_uFL'_in, h_unique⟩
+  have h_eq1 := h_unique uFL (by grind)
+  have h_eq2:= h_unique (List.choose (fun x => x.nodeId = uFL.nodeId) uF.linkList (by grind)) ?_
+  · simp [h_eq2, ← h_eq1]
+  · simp [List.choose_mem, h_uFL'_in.right, ← h_eq1]
+    have h_prop := List.choose_property (fun x => x.nodeId = uFL.nodeId) uF.linkList (by grind)
+    simp [h_prop]
+
+theorem con_parent
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  (uFL : unionFindLink nodeList)
+  (h_in : uFL ∈ uF.linkList)
+  (h_nodup : nodeList.Nodup)
+  : connected_component_of_unionFind_of_id uF uFL.nodeId (node_of_uFL h_in h_nodup) = connected_component_of_unionFind_of_id uF (parent uFL h_in).nodeId (node_of_uFL (parent_in h_in) h_nodup) := by
+  have h_eq := uFL_choose_self h_in h_nodup
+  simp [connected_component_of_unionFind_of_id, h_eq]
+  nth_rewrite 1 [connected_component_of_unionFind_of_unionFindLink]
+  split_ifs with h_self_con
+  · simp [h_self_con, h_eq, connected_component_of_unionFind_of_unionFindLink, parent]
+  · have h_eq := uFL_choose_self (parent_in h_in) h_nodup
+    simp [h_eq]
+    simp [parent]
+
+theorem con_parent'
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  (uFL : unionFindLink nodeList)
+  (h_in : uFL ∈ uF.linkList)
+  (h_nodup : nodeList.Nodup)
+  : connected_component_of_unionFind_of_unionFindLink uF uFL h_in = connected_component_of_unionFind_of_unionFindLink uF (parent uFL h_in) (parent_in h_in) := by
+  nth_rewrite 1 [connected_component_of_unionFind_of_unionFindLink]
+  split_ifs with h_self_con
+  · have h := uFL_choose_self h_in h_nodup
+    simp [h_self_con, parent, h, connected_component_of_unionFind_of_unionFindLink]
+  · have h_eq := uFL_choose_self (parent_in h_in) h_nodup
+    simp [parent]
+
+theorem parent_nodeId
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : (parent uFL h_in).nodeId = uFL.ccId := by
+  have h := List.choose_property (fun a => a.nodeId = uFL.ccId) uF.linkList (by rcases (uF.matching_ccId uFL h_in) with ⟨x, h, _⟩; rcases (uF.matching_nodeId x h.left) with ⟨uFL', h', _⟩; simp [← h.right]; refine ⟨uFL', by simp [h']⟩)
+  simp [parent, h]
+
+theorem nodeId_lt_max
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  (h_nodup : nodeList.Nodup)
+  (h_nonempty : nodeList ≠ [])
+  : uFL.nodeId < (nodeList.max h_nonempty).id.succ := by
+  rcases (node_of_uFL h_in h_nodup) with ⟨x, h_x_in, h_x⟩
+  simp [← h_x]
+  exact List.le_max_of_mem h_x_in
+
+theorem connected_component_of_unionFind_of_id_lt_max
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {x : node}
+  (h_x_in : x ∈ nodeList)
+  (h_nodup : nodeList.Nodup)
+  (h_nonempty : nodeList ≠ [])
+  : connected_component_of_unionFind_of_id uF x.id ⟨x, h_x_in, rfl⟩ < (nodeList.max h_nonempty).id.succ := by
+  have h := exist_unionFindLink_of_connected_component_of_unionFind_of_id uF x.id ⟨x, h_x_in, rfl⟩
+  rcases h with ⟨uFL, h_uFL_in, h_uFL⟩
+  have h := nodeId_lt_max h_uFL_in h_nodup h_nonempty
+  simp [h_uFL] at h
+  simp [h]
+
+theorem init_unionFind_reachable_parent
+  {nodeList : List node}
+  {edgesSoFar : List edge}
+  {uF : unionFind nodeList}
+  (h_nodup : nodeList.Nodup)
+  (h_uF : uF = init_unionFind nodeList h_nodup)
+  (uFL : unionFindLink nodeList)
+  (h_in : uFL ∈ uF.linkList)
+  (h_empty : edgesSoFar = [])
+  (h_nonempty : nodeList ≠ [])
+  : (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => G.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩) { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [h_empty, Symmetric]), loopless := (by simp [h_empty, irrefl_def]) } := by
+  have h_eq := uFL_choose_self h_in h_nodup
+  simp [h_uF, init_unionFind, h_nonempty, init_unionFind.linkList] at h_in
+  have h_self_con := init_unionFind.linkList.helper_all_self_connected nodeList nodeList (by simp [h_nonempty]) uFL h_in
+  simp [parent, ← h_self_con, h_eq]
+
+theorem connected_component_of_unionFind_of_unionFindLink_of_parent_path
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFLa : unionFindLink nodeList}
+  (h_uFLa_in : uFLa ∈ uF.linkList)
+  (h_nodup : nodeList.Nodup)
+  : ∀ uFLb, (h_uFLb_in : uFLb ∈ get_parent_path h_uFLa_in) → connected_component_of_unionFind_of_unionFindLink uF uFLa h_uFLa_in = connected_component_of_unionFind_of_unionFindLink uF uFLb (get_parent_path_in h_uFLa_in uFLb h_uFLb_in) := by
+  intro uFLb h_uFLb_in
+  fun_induction get_parent_path with
+  | case1 uFLa h_uFLa_in h =>
+    simp [get_parent_path, h] at h_uFLb_in
+    simp [h_uFLb_in]
+  | case2 uFLa h_uFLa_in h ih =>
+    rw [get_parent_path] at h_uFLb_in
+    simp [h] at h_uFLb_in
+    rcases h_uFLb_in with h_eq | h_uFLb_in
+    · simp [h_eq]
+    · have h := con_parent' uFLa h_uFLa_in h_nodup
+      simp [h]
+      exact ih h_uFLb_in
+
+theorem get_parent_path_nonempty
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : get_parent_path h_in ≠ [] := by
+  rw [get_parent_path]
+  split_ifs
+  · simp
+  · simp
+
+theorem get_parent_path_end_eq_last
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : ∀ a ∈ (get_parent_path h_in), a.nodeId = a.ccId → a = (get_parent_path h_in).getLast (get_parent_path_nonempty h_in) := by
+  intro a h_a_in h_self_con
+  fun_induction get_parent_path with
+  | case1 uFL h_in h =>
+    simp [get_parent_path, h] at h_a_in ⊢
+    exact h_a_in
+  | case2 uFL h_in h ih =>
+    rw [get_parent_path] at h_a_in
+    simp [h] at h_a_in
+    rcases h_a_in with h_eq | h_a_in
+    · simp [← h_eq, h_self_con] at h
+    · unfold get_parent_path
+      simp [h, get_parent_path_nonempty, ih h_a_in]
+
+theorem parent_walk
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_uFL_in : uFL ∈ uF.linkList)
+  (h_nodup : nodeList.Nodup)
+  (h_nonempty : nodeList ≠ [])
+  {G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)}
+  (h_reachable_parent : ∀ uFL, (h_in : uFL ∈ uF.linkList) → G.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩)
+  : Nonempty (G.Walk ⟨uFL.nodeId, nodeId_lt_max h_uFL_in h_nodup h_nonempty⟩ ⟨((get_parent_path h_uFL_in).getLast (get_parent_path_nonempty h_uFL_in)).nodeId, nodeId_lt_max (get_parent_path_in h_uFL_in ((get_parent_path h_uFL_in).getLast (get_parent_path_nonempty h_uFL_in)) (by simp [List.getLast_mem])) h_nodup h_nonempty⟩) := by
+  fun_induction get_parent_path with
+  | case1 uFL h_in h =>
+    simp [get_parent_path, h]
+    exact ⟨.nil⟩
+  | case2 uFL h_in h ih =>
+    simp
+    rcases ih with ⟨w⟩
+    set p := get_parent_path h_in with ← h_p
+    rw [get_parent_path] at h_p
+    simp [h] at h_p
+    set uFLl := p.getLast (by simp [← h_p]) with ← h_uFLl
+    have h_uFLl_in : uFLl ∈ uF.linkList := get_parent_path_in h_in uFLl (by simp [← h_uFLl, p])
+    simp [← h_p, get_parent_path_nonempty] at h_uFLl
+    simp [h_uFLl] at w
+    have h_v := h_reachable_parent uFL h_in
+    simp [SimpleGraph.Reachable] at h_v
+    rcases h_v with ⟨v⟩
+    let u : G.Walk ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨uFLl.nodeId, nodeId_lt_max h_uFLl_in h_nodup h_nonempty⟩ := SimpleGraph.Walk.append v w
+    exact ⟨u⟩
+
+theorem get_parent_path_last_eq_connected_component_of_unionFind_of_unionFindLink
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_uFL_in : uFL ∈ uF.linkList)
+  (h_nodup : nodeList.Nodup)
+  : ((get_parent_path h_uFL_in).getLast (get_parent_path_nonempty h_uFL_in)).nodeId = connected_component_of_unionFind_of_unionFindLink uF uFL h_uFL_in := by
+  rcases (get_parent_path_end h_uFL_in) with ⟨uFLe, h_uFLe_in, h_uFLe⟩
+  have h := get_parent_path_end_eq_last h_uFL_in uFLe h_uFLe_in h_uFLe
+  have h' := connected_component_of_unionFind_of_unionFindLink_of_parent_path h_uFL_in h_nodup uFLe h_uFLe_in
+  simp [← h, h', connected_component_of_unionFind_of_unionFindLink, h_uFLe]
+
+theorem update_unionFind_reachable_parent
+  {nodeList : List node}
+  {e : edge}
+  {edgesSoFar : List edge}
+  {uF : unionFind nodeList}
+  (h_nodup : nodeList.Nodup)
+  (h_nonempty : nodeList ≠ [])
+  (h_ex1 : ∃ x ∈ nodeList, x.id = e.node1)
+  (h_ex2 : ∃ x ∈ nodeList, x.id = e.node2)
+  (h_e1_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node1 h_ex1 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node1 h_ex1)
+  (h_e2_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node2 h_ex2 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node2 h_ex2)
+  (h_invariant : ∀ uFL, (h_in : uFL ∈ uF.linkList) → (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => G.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩) { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) })
+  : ∀ uFL, (h_in : uFL ∈ (update_unionFind uF (connected_component_of_unionFind_of_id uF e.node1 h_ex1) (connected_component_of_unionFind_of_id uF e.node2 h_ex2) h_e1_self_con h_e2_self_con).linkList) → (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => G.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩) { Adj := fun a b => ∃ f ∈ update_edgesSoFar edgesSoFar e (connected_component_of_unionFind_of_id uF e.node1 h_ex1) (connected_component_of_unionFind_of_id uF e.node2 h_ex2), f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) } := by
+  simp
+  set cce1 := connected_component_of_unionFind_of_id uF e.node1 h_ex1 with ← h_cce1
+  set cce2 := connected_component_of_unionFind_of_id uF e.node2 h_ex2 with ← h_cce2
+  simp [h_cce1, h_cce2]
+  by_cases h_cc_eq : cce1 = cce2
+  · simp [h_cc_eq, update_edgesSoFar, update_unionFind]
+    exact h_invariant
+  · simp [h_cc_eq, update_edgesSoFar, update_unionFind]
+    split_ifs with h_rank_lt
+    · intro uFL h_uFL_in
+      set uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con with ← h_uFLx
+      set uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con with ← h_uFLy
+      have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con
+      have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con
+      have h_uFLx_prop : uFLx.nodeId = cce2 ∧ uFLx.ccId = cce2 := List.choose_property (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con
+      have h_uFLy_prop : uFLy.nodeId = cce1 ∧ uFLy.ccId = cce1 := List.choose_property (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con
+      have h_idx_uFLx_lt : List.idxOf uFLx uF.linkList < uF.linkList.length := by
+        exact List.idxOf_lt_length_of_mem h_uFLx_in
+      have h_idx_uFLy_lt : List.idxOf uFLy uF.linkList < uF.linkList.length := by
+        exact List.idxOf_lt_length_of_mem h_uFLy_in
+      simp [h_uFLx, h_uFLy, h_rank_lt] at h_uFL_in
+      set uFLx' : unionFindLink nodeList := { nodeId := uFLx.nodeId, ccId := uFLy.ccId, rank := uFLx.rank } with ← h_uFLx'
+      have h_ne : uFLy ≠ uFLx' := by
+        grind
+      have h_ne_idx : List.idxOf uFLy uF.linkList ≠ List.idxOf uFLx uF.linkList := by
+        have : uFLx = uF.linkList[List.idxOf uFLx uF.linkList]'h_idx_uFLx_lt := by
+          simp
+        grind
+      have h_eq_idx := idxOf_eq_idxOf_set h_ne h_ne_idx
+      simp [← h_eq_idx, set_eq_self] at h_uFL_in
+      rcases (mem_or_eq_of_mem_set h_uFL_in) with h_uFL_in | h_uFL_eq
+      · have h_invariant := h_invariant uFL h_uFL_in
+        set G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) }
+        set H : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => ∃ f ∈ update_edgesSoFar edgesSoFar e (connected_component_of_unionFind_of_id uF e.node1 h_ex1) (connected_component_of_unionFind_of_id uF e.node2 h_ex2), f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) } with ← h_H
+        simp [update_edgesSoFar, h_cce1, h_cce2, h_cc_eq] at h_H
+        simp [h_H]
+        have h_subgraph : G ≤ H := by
+          simp [LE.le, G, ← h_H]
+          intro u v e h_e_in h_e_con
+          right
+          refine ⟨e, h_e_in, h_e_con⟩
+        simp [parent_nodeId]
+        simp [parent_nodeId] at h_invariant
+        exact SimpleGraph.Reachable.mono h_subgraph h_invariant
+      · simp [parent_nodeId, h_uFL_eq, ← h_uFLx', SimpleGraph.Reachable]
+        set G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) }
+        set H : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => ∃ f ∈ update_edgesSoFar edgesSoFar e (connected_component_of_unionFind_of_id uF e.node1 h_ex1) (connected_component_of_unionFind_of_id uF e.node2 h_ex2), f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) } with ← h_H
+        simp [update_edgesSoFar, h_cce1, h_cce2, h_cc_eq] at h_H
+        simp [h_H]
+        have h_subgraph : G ≤ H := by
+          simp [LE.le, G, ← h_H]
+          intro u v e h_e_in h_e_con
+          right
+          refine ⟨e, h_e_in, h_e_con⟩
+        rcases h_ex1 with ⟨e1, h_e1_in, h_e1⟩
+        rcases h_ex2 with ⟨e2, h_e2_in, h_e2⟩
+        rcases uF.matching_nodeId e1 h_e1_in with ⟨uFLe1, h_uFLe1_in, h_uFLe1⟩
+        rcases uF.matching_nodeId e2 h_e2_in with ⟨uFLe2, h_uFLe2_in, h_uFLe2⟩
+        have h_eq_cce1 : connected_component_of_unionFind_of_unionFindLink uF uFLe1 h_uFLe1_in.left = cce1 := by
+          simp [cce1, connected_component_of_unionFind_of_id]
+          have h : uFLe1 = (List.choose (fun x => x.nodeId = e.node1) uF.linkList ⟨uFLe1, h_uFLe1_in.left, by simp [← h_uFLe1_in.right, h_e1]⟩) := by
+            have h_uFLe1 := h_uFLe1 (List.choose (fun x => x.nodeId = e.node1) uF.linkList ⟨uFLe1, h_uFLe1_in.left, by simp [← h_uFLe1_in.right, h_e1]⟩)
+            have h := List.choose_property (fun x => x.nodeId = e.node1) uF.linkList ⟨uFLe1, h_uFLe1_in.left, by simp [← h_uFLe1_in.right, h_e1]⟩
+            simp [List.choose_mem, h, h_e1] at h_uFLe1
+            simp [h_uFLe1]
+          simp [h]
+        have h_eq_cce2 : connected_component_of_unionFind_of_unionFindLink uF uFLe2 h_uFLe2_in.left = cce2 := by
+          simp [cce2, connected_component_of_unionFind_of_id]
+          have h : uFLe2 = (List.choose (fun x => x.nodeId = e.node2) uF.linkList ⟨uFLe2, h_uFLe2_in.left, by simp [← h_uFLe2_in.right, h_e2]⟩) := by
+            have h_uFLe2 := h_uFLe2 (List.choose (fun x => x.nodeId = e.node2) uF.linkList ⟨uFLe2, h_uFLe2_in.left, by simp [← h_uFLe2_in.right, h_e2]⟩)
+            have h := List.choose_property (fun x => x.nodeId = e.node2) uF.linkList ⟨uFLe2, h_uFLe2_in.left, by simp [← h_uFLe2_in.right, h_e2]⟩
+            simp [List.choose_mem, h, h_e2] at h_uFLe2
+            simp [h_uFLe2]
+          simp [h]
+        have h_w1 := parent_walk h_uFLe1_in.left h_nodup h_nonempty h_invariant
+        have h_w2 := parent_walk h_uFLe2_in.left h_nodup h_nonempty h_invariant
+        simp [get_parent_path_last_eq_connected_component_of_unionFind_of_unionFindLink h_uFLe1_in.left h_nodup, h_eq_cce1, ← h_uFLe1_in.right, h_e1] at h_w1
+        simp [get_parent_path_last_eq_connected_component_of_unionFind_of_unionFindLink h_uFLe2_in.left h_nodup, h_eq_cce2, ← h_uFLe2_in.right, h_e2] at h_w2
+        have h_w1 := SimpleGraph.Reachable.mono h_subgraph (by unfold SimpleGraph.Reachable; exact h_w1)
+        have h_w2 := SimpleGraph.Reachable.mono h_subgraph (by unfold SimpleGraph.Reachable; exact h_w2)
+        rcases h_w1 with ⟨w1⟩
+        rcases h_w2 with ⟨w2⟩
+        let w2 := SimpleGraph.Walk.reverse w2
+        simp [h_uFLx_prop, h_uFLy_prop]
+        refine ⟨SimpleGraph.Walk.append w2 (.cons ?_ w1)⟩
+        simp [H, update_edgesSoFar, h_cc_eq, h_cce1, h_cce2]
+
+    · intro uFL h_uFL_in
+      set uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con with ← h_uFLx
+      set uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con with ← h_uFLy
+      have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con
+      have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con
+      have h_uFLx_prop : uFLx.nodeId = cce1 ∧ uFLx.ccId = cce1 := List.choose_property (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con
+      have h_uFLy_prop : uFLy.nodeId = cce2 ∧ uFLy.ccId = cce2 := List.choose_property (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con
+      have h_idx_uFLx_lt : List.idxOf uFLx uF.linkList < uF.linkList.length := by
+        exact List.idxOf_lt_length_of_mem h_uFLx_in
+      have h_idx_uFLy_lt : List.idxOf uFLy uF.linkList < uF.linkList.length := by
+        exact List.idxOf_lt_length_of_mem h_uFLy_in
+      simp [h_uFLx, h_uFLy, ] at h_uFL_in
+      set uFLx' : unionFindLink nodeList := { nodeId := uFLx.nodeId, ccId := uFLy.ccId, rank := uFLx.rank } with ← h_uFLx'
+      have h_ne : uFLy ≠ uFLx' := by
+        grind
+      have h_ne_idx : List.idxOf uFLy uF.linkList ≠ List.idxOf uFLx uF.linkList := by
+        have : uFLx = uF.linkList[List.idxOf uFLx uF.linkList]'h_idx_uFLx_lt := by
+          simp
+        grind
+      have h_eq_idx := idxOf_eq_idxOf_set h_ne h_ne_idx
+      rcases (mem_or_eq_of_mem_set h_uFL_in) with h_uFL_in | h_uFL_eq
+      · rcases (mem_or_eq_of_mem_set h_uFL_in) with h_uFL_in | h_uFL_eq
+        · have h_invariant := h_invariant uFL h_uFL_in
+          set G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) }
+          set H : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => ∃ f ∈ update_edgesSoFar edgesSoFar e (connected_component_of_unionFind_of_id uF e.node1 h_ex1) (connected_component_of_unionFind_of_id uF e.node2 h_ex2), f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) } with ← h_H
+          simp [update_edgesSoFar, h_cce1, h_cce2, h_cc_eq] at h_H
+          simp [h_H]
+          have h_subgraph : G ≤ H := by
+            simp [LE.le, G, ← h_H]
+            intro u v e h_e_in h_e_con
+            right
+            refine ⟨e, h_e_in, h_e_con⟩
+          simp [parent_nodeId]
+          simp [parent_nodeId] at h_invariant
+          exact SimpleGraph.Reachable.mono h_subgraph h_invariant
+        · simp [parent_nodeId, h_uFL_eq, ← h_uFLx', SimpleGraph.Reachable]
+          set G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) }
+          set H : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ) := { Adj := fun a b => ∃ f ∈ update_edgesSoFar edgesSoFar e (connected_component_of_unionFind_of_id uF e.node1 h_ex1) (connected_component_of_unionFind_of_id uF e.node2 h_ex2), f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) } with ← h_H
+          simp [update_edgesSoFar, h_cce1, h_cce2, h_cc_eq] at h_H
+          simp [h_H]
+          have h_subgraph : G ≤ H := by
+            simp [LE.le, G, ← h_H]
+            intro u v e h_e_in h_e_con
+            right
+            refine ⟨e, h_e_in, h_e_con⟩
+          rcases h_ex1 with ⟨e1, h_e1_in, h_e1⟩
+          rcases h_ex2 with ⟨e2, h_e2_in, h_e2⟩
+          rcases uF.matching_nodeId e1 h_e1_in with ⟨uFLe1, h_uFLe1_in, h_uFLe1⟩
+          rcases uF.matching_nodeId e2 h_e2_in with ⟨uFLe2, h_uFLe2_in, h_uFLe2⟩
+          have h_eq_cce1 : connected_component_of_unionFind_of_unionFindLink uF uFLe1 h_uFLe1_in.left = cce1 := by
+            simp [cce1, connected_component_of_unionFind_of_id]
+            have h : uFLe1 = (List.choose (fun x => x.nodeId = e.node1) uF.linkList ⟨uFLe1, h_uFLe1_in.left, by simp [← h_uFLe1_in.right, h_e1]⟩) := by
+              have h_uFLe1 := h_uFLe1 (List.choose (fun x => x.nodeId = e.node1) uF.linkList ⟨uFLe1, h_uFLe1_in.left, by simp [← h_uFLe1_in.right, h_e1]⟩)
+              have h := List.choose_property (fun x => x.nodeId = e.node1) uF.linkList ⟨uFLe1, h_uFLe1_in.left, by simp [← h_uFLe1_in.right, h_e1]⟩
+              simp [List.choose_mem, h, h_e1] at h_uFLe1
+              simp [h_uFLe1]
+            simp [h]
+          have h_eq_cce2 : connected_component_of_unionFind_of_unionFindLink uF uFLe2 h_uFLe2_in.left = cce2 := by
+            simp [cce2, connected_component_of_unionFind_of_id]
+            have h : uFLe2 = (List.choose (fun x => x.nodeId = e.node2) uF.linkList ⟨uFLe2, h_uFLe2_in.left, by simp [← h_uFLe2_in.right, h_e2]⟩) := by
+              have h_uFLe2 := h_uFLe2 (List.choose (fun x => x.nodeId = e.node2) uF.linkList ⟨uFLe2, h_uFLe2_in.left, by simp [← h_uFLe2_in.right, h_e2]⟩)
+              have h := List.choose_property (fun x => x.nodeId = e.node2) uF.linkList ⟨uFLe2, h_uFLe2_in.left, by simp [← h_uFLe2_in.right, h_e2]⟩
+              simp [List.choose_mem, h, h_e2] at h_uFLe2
+              simp [h_uFLe2]
+            simp [h]
+          have h_w1 := parent_walk h_uFLe1_in.left h_nodup h_nonempty h_invariant
+          have h_w2 := parent_walk h_uFLe2_in.left h_nodup h_nonempty h_invariant
+          simp [get_parent_path_last_eq_connected_component_of_unionFind_of_unionFindLink h_uFLe1_in.left h_nodup, h_eq_cce1, ← h_uFLe1_in.right, h_e1] at h_w1
+          simp [get_parent_path_last_eq_connected_component_of_unionFind_of_unionFindLink h_uFLe2_in.left h_nodup, h_eq_cce2, ← h_uFLe2_in.right, h_e2] at h_w2
+          have h_w1 := SimpleGraph.Reachable.mono h_subgraph (by unfold SimpleGraph.Reachable; exact h_w1)
+          have h_w2 := SimpleGraph.Reachable.mono h_subgraph (by unfold SimpleGraph.Reachable; exact h_w2)
+          rcases h_w1 with ⟨w1⟩
+          rcases h_w2 with ⟨w2⟩
+          let w1 := SimpleGraph.Walk.reverse w1
+          simp [h_uFLx_prop, h_uFLy_prop]
+          refine ⟨SimpleGraph.Walk.append w1 (.cons ?_ w2)⟩
+          simp [H, update_edgesSoFar, h_cc_eq, h_cce1, h_cce2]
+      · simp [parent_nodeId, h_uFL_eq, SimpleGraph.Reachable]
+        simp [h_uFLy_prop]
+        exact ⟨.nil⟩
+
+-- theorem kruskal_helper_reachable_parent
+
+theorem update_con_of_con
+  {a b c d : Nat}
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {h_a : ∃ x ∈ nodeList, x.id = a}
+  {h_b : ∃ x ∈ nodeList, x.id = b}
+  {h_c : ∃ uFL ∈ uF.linkList, (fun uFL' => uFL'.nodeId = c ∧ uFL'.ccId = c) uFL}
+  {h_d : ∃ uFL ∈ uF.linkList, (fun uFL' => uFL'.nodeId = d ∧ uFL'.ccId = d) uFL}
+  (h_con : connected_component_of_unionFind_of_id uF a h_a = connected_component_of_unionFind_of_id uF b h_b)
+  : connected_component_of_unionFind_of_id (update_unionFind uF c d h_c h_d) a h_a = connected_component_of_unionFind_of_id (update_unionFind uF c d h_c h_d) b h_b := by
+
+  sorry
+
+theorem new_edge_con
+  {edgeList : List edge}
+  {e : edge}
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {edgesSoFar : List edge}
+  {h_matching_edge : matching_edge edgeList nodeList}
+  {h_nodup : nodeList.Nodup}
+  (h_nonempty : nodeList ≠ [])
+  (h_ex1 : ∃ x ∈ nodeList, x.id = e.node1)
+  (h_ex2 : ∃ x ∈ nodeList, x.id = e.node2)
+  (h_e1_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node1 h_ex1 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node1 h_ex1)
+  (h_e2_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node2 h_ex2 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node2 h_ex2)
+  : connected_component_of_unionFind_of_id (update_unionFind uF (connected_component_of_unionFind_of_id uF e.node1 h_ex1) (connected_component_of_unionFind_of_id uF e.node2 h_ex2) h_e1_self_con h_e2_self_con)
+
 theorem kruskal_helper_Reachable_iff_con
   {edgeList : List edge}
   {e : edge}
@@ -1072,9 +1481,7 @@ theorem kruskal_helper_Reachable_iff_con
   (h_ex2 : ∃ x ∈ nodeList, x.id = e.node2)
   (h_e1_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node1 h_ex1 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node1 h_ex1)
   (h_e2_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node2 h_ex2 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node2 h_ex2)
-  -- {h_symm : Symmetric fun (a b : Fin (nodeList.max h_nonempty).id.succ) => ∃ e ∈ kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a}
-  -- {h_loopless : Std.Irrefl fun (a b : Fin (nodeList.max h_nonempty).id.succ) => ∃ e ∈ kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup, e.node1 = ↑a ∧ e.node2 = ↑b ∨ e.node1 = ↑b ∧ e.node2 = ↑a}
-  (h_invariant : (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => ∀ (a b : Fin _), (h_ex_x : ∃ x ∈ nodeList, x.id = ↑a) → (h_ex_y : ∃ x ∈ nodeList, x.id = ↑b) → (G.Reachable a b ↔ connected_component_of_unionFind_of_id uF a.val h_ex_x = connected_component_of_unionFind_of_id uF b.val h_ex_y)) { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt)})
+  (h_invariant : (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => ∀ (a b : Fin _), (h_ex_x : ∃ x ∈ nodeList, x.id = ↑a) → (h_ex_y : ∃ x ∈ nodeList, x.id = ↑b) → (G.Reachable a b ↔ connected_component_of_unionFind_of_id uF a.val h_ex_x = connected_component_of_unionFind_of_id uF b.val h_ex_y)) { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) })
   : (fun
       (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => ∀ (a b : Fin _), (h_ex_x : ∃ x ∈ nodeList, x.id = ↑a) →
       (h_ex_y : ∃ x ∈ nodeList, x.id = ↑b) →
@@ -1101,6 +1508,94 @@ theorem kruskal_helper_Reachable_iff_con
       intro u v e h_e_in h_e_con
       right
       refine ⟨e, h_e_in, h_e_con⟩
+
+    by_cases h_a_eq_b : a = b
+    · simp [h_a_eq_b]
+    · constructor
+      · intro h_reachable_H
+        by_cases h_reachable_G : G.Reachable a b
+        · have h_invariant := (h_invariant a b ⟨x, h_x_in, h_x⟩ ⟨y, h_y_in, h_y⟩).mp h_reachable_G
+          exact update_con_of_con h_invariant
+        · set e1 : Fin _ := ⟨e.node1, sorry⟩
+          set e2 : Fin _ := ⟨e.node2, sorry⟩
+          set f1 : Fin _ := ⟨cce1, sorry⟩
+          set f2 : Fin _ := ⟨cce2, sorry⟩
+          have h_con_e1 : connected_component_of_unionFind_of_id uF e.node1 h_ex1 = connected_component_of_unionFind_of_id uF cce1 sorry := by sorry
+          have h_con_e2 : connected_component_of_unionFind_of_id uF e.node2 h_ex2 = connected_component_of_unionFind_of_id uF cce2 sorry := by sorry
+          have h_con_e1 := update_con_of_con (h_con_e1) (h_c := h_e1_self_con) (h_d := h_e2_self_con)
+          have h_con_e2 := update_con_of_con (h_con_e2) (h_c := h_e1_self_con) (h_d := h_e2_self_con)
+          by_cases h_a12b : G.Reachable a e1 ∧ G.Reachable b e2
+          · have h_con_a := update_con_of_con ((h_invariant a e1 sorry sorry).mp h_a12b.left) (h_c := h_e1_self_con) (h_d := h_e2_self_con)
+            have h_con_b := update_con_of_con ((h_invariant b e2 sorry sorry).mp h_a12b.right) (h_c := h_e1_self_con) (h_d := h_e2_self_con)
+            simp [h_con_a, h_con_b, e1, e2, h_con_e1, h_con_e2]
+            simp [connected_component_of_unionFind_of_id]
+            rw [connected_component_of_unionFind_of_unionFindLink]
+            simp [update_unionFind]
+            split_ifs with h1
+            · sorry
+            · sorry
+          · by_cases h_a21b : G.Reachable a e2 ∧ G.Reachable b e1
+            · sorry
+            · sorry
+
+      · intro h_con
+        simp [SimpleGraph.Reachable]
+        have h_reachable_parent_G : ∀ uFL, (h_in : uFL ∈ uF.linkList) → G.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩ := by
+          intro uFL h_uFL_in
+          have h_ex_x : ∃ x ∈ nodeList, x.id = (⟨uFL.nodeId, nodeId_lt_max h_uFL_in h_nodup h_nonempty⟩ : Fin _).val := by
+            simp [node_of_uFL h_uFL_in h_nodup]
+          have h_ex_y : ∃ x ∈ nodeList, x.id = (⟨(parent uFL h_uFL_in).nodeId, nodeId_lt_max (parent_in h_uFL_in) h_nodup h_nonempty⟩ : Fin _).val := by
+            simp [node_of_uFL (parent_in h_uFL_in) h_nodup]
+          have h_invariant := h_invariant ⟨uFL.nodeId, nodeId_lt_max h_uFL_in h_nodup h_nonempty⟩ ⟨(parent uFL h_uFL_in).nodeId, nodeId_lt_max (parent_in h_uFL_in) h_nodup h_nonempty⟩ h_ex_x h_ex_y
+          simp [h_invariant, connected_component_of_unionFind_of_id, uFL_choose_self h_uFL_in h_nodup, uFL_choose_self (parent_in h_uFL_in) h_nodup]
+          nth_rewrite 1 [connected_component_of_unionFind_of_unionFindLink]
+          split_ifs with h
+          · simp [parent, h, uFL_choose_self h_uFL_in h_nodup, connected_component_of_unionFind_of_unionFindLink]
+          · simp [parent]
+        have h_reachable_parent_H : ∀ uFL, (h_in : uFL ∈ (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con).linkList) → H.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩ := by
+          have h := update_unionFind_reachable_parent h_nodup h_nonempty h_ex1 h_ex2 h_e1_self_con h_e2_self_con h_reachable_parent_G
+          intro uFL h_uFL_in
+          have h := h uFL h_uFL_in
+          simp [update_edgesSoFar, h_cc_eq, h_cce1, h_cce2] at h
+          exact h
+        rcases ((update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con).matching_nodeId x h_x_in) with ⟨uFLa, h_uFLa, h_unique_a⟩
+        rcases ((update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con).matching_nodeId y h_y_in) with ⟨uFLb, h_uFLb, h_unique_b⟩
+        have h_wa := parent_walk h_uFLa.left h_nodup h_nonempty h_reachable_parent_H
+        have h_wb := parent_walk h_uFLb.left h_nodup h_nonempty h_reachable_parent_H
+        simp [← h_uFLa.right, h_x, get_parent_path_last_eq_connected_component_of_unionFind_of_unionFindLink h_uFLa.left h_nodup] at h_wa
+        simp [← h_uFLb.right, h_y, get_parent_path_last_eq_connected_component_of_unionFind_of_unionFindLink h_uFLb.left h_nodup] at h_wb
+        have h_eq_a : connected_component_of_unionFind_of_id (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con) ↑a ⟨x, h_x_in, h_x⟩ = connected_component_of_unionFind_of_unionFindLink (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con) uFLa h_uFLa.left := by
+          simp [connected_component_of_unionFind_of_id]
+          have h : List.choose (fun x => x.nodeId = ↑a) (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con).linkList ⟨uFLa, h_uFLa.left, by simp [h_uFLa.right.symm, h_x]⟩ = uFLa := by
+            have h_unique_a := h_unique_a (List.choose (fun x => x.nodeId = ↑a) (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con).linkList ⟨uFLa, h_uFLa.left, by simp [h_uFLa.right.symm, h_x]⟩)
+            have h := List.choose_property (fun x => x.nodeId = ↑a) (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con).linkList ⟨uFLa, h_uFLa.left, by simp [h_uFLa.right.symm, h_x]⟩
+            simp [List.choose_mem, h, h_x] at h_unique_a
+            exact h_unique_a
+          simp [h]
+        have h_eq_b : connected_component_of_unionFind_of_id (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con) ↑b ⟨y, h_y_in, h_y⟩ = connected_component_of_unionFind_of_unionFindLink (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con) uFLb h_uFLb.left := by
+          simp [connected_component_of_unionFind_of_id]
+          have h : List.choose (fun x => x.nodeId = ↑b) (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con).linkList ⟨uFLb, h_uFLb.left, by simp [h_uFLb.right.symm, h_y]⟩ = uFLb := by
+            have h_unique_b := h_unique_b (List.choose (fun x => x.nodeId = ↑b) (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con).linkList ⟨uFLb, h_uFLb.left, by simp [h_uFLb.right.symm, h_y]⟩)
+            have h := List.choose_property (fun x => x.nodeId = ↑b) (update_unionFind uF cce1 cce2 h_e1_self_con h_e2_self_con).linkList ⟨uFLb, h_uFLb.left, by simp [h_uFLb.right.symm, h_y]⟩
+            simp [List.choose_mem, h, h_y] at h_unique_b
+            exact h_unique_b
+          simp [h]
+        simp [h_eq_a, h_eq_b] at h_con
+        simp [h_con] at h_wa
+        rcases h_wa with ⟨wa⟩
+        rcases h_wb with ⟨wb⟩
+        let wb := SimpleGraph.Walk.reverse wb
+        exact ⟨SimpleGraph.Walk.append wa wb⟩
+
+
+
+
+
+
+
+
+
+
     rcases h_ex1 with ⟨e1, h_e1_in, h_e1⟩
     cases e1
     simp at h_e1
