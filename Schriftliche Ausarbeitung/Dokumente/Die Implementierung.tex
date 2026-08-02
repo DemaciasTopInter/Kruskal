@@ -627,6 +627,13 @@ Und \KruskalupdateunionFindrankInvariantofrankeq für den Fall, dass die Ränge 
 
 
 \subsection{Kruskal}
+Da in Mathlib bei allen Aussagen über Graphen die Rede von Mengen von Knoten und Mengen von Kanten ist, war ich zunächst versucht, den In- und Output auch als Mengen zu definieren.
+Dabei ist eine Menge in Lean eine Abbildung von einem Typ zu einer Aussage, also eine Bedingung an die Elemente des Typs und alle, die die Bedingung erfüllen sind Teil der Menge.
+Ich musste dann recht schnell erkennen, dass Mengen zwar gut geeignet sind um darüber Aussagen zu treffen und Beweise zu führen,
+aber nicht dafür gedacht sind, teil von ausführbaren Programmen zu sein.
+Elemente einer Menge haben zum Beispiel keine festgelegte Reihenfolge, weshalb sie sich auch nicht sortieren lassen und man auch nicht über sie itterieren kann.
+Deswegen habe ich mich dann für Listen entschieden.
+
 Bevor ich nun zum eigentlichen Kruskal-Algorithmus komme definiere ich noch eine Eigenschaft, die den input validiert.
 Der Algorithmus wird auf graphen angewendet und als input übergebe ich die Knoten-Liste und die Kanten-Liste.
 % \Kruskalmatchingedge sagt nun aus, dass diese Listen auch tatsächlich zu einander passen, also dass alle Knoten, die von den Kanten verbunden werden, auch tatsächlich in der Knoten-Liste vorkommen.

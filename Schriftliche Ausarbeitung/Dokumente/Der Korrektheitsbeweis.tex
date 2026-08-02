@@ -1,2 +1,502 @@
 \section{Der Korrektheitsbeweis}\todo{section Korrektheitsbeweis}
+Eine der Tücken von Lean ist, das es sehr pedantisch ist und es sehr daher schwer abzuschätzen ist, wie groß ein Beweis tatsächlich ist.
+Da jedes Detail beschrieben und jeder mögliche Fall unterschieden werden muss, ist es möglich, dass ein Beweis,
+der in natürlicher Sprache in einem Satz erklärt ist in Lean 5 Zeilen oder 500 Zeilen lang sein kann.
+Das hängt von verschiedenen Faktoren ab, zum einen, wie komplex der Beweis tatsächlich ist, zum andern, wie viel vorarbei es dazu bereits in der Mathlib Bibliothek gibt,
+außerdem spielt die Wahl der Definitionen eine Rolle und wie gut man sich in den Lemmata auskennt und mit den Feinheiten von Lean vertaut ist.
+
+Ich muss sagen, dass ich das Ausmaß des Korrektheitsbeweises unterschätzt habe und es mir zeitlich nicht gelungen ist, den Beweis fertig zu stellen.
+Nichts desto troz stelle ich im Folgenden meine Ansätze vor, wie weit ich gekommen bin und meine Überlegungen zu den fehlenden Teilen.
+
 Der Code aus diesem Abschnitt ist in der Datei Correctness.lean zu finden.
+
+\subsection{Ziel}
+Ziel des Korrektheitsbeweises ist es zu zeigen, dass das Program bei korrektem Input tatsächlich die Kantenmenge für einen minimalen Spannbaum liefert.
+Ich muss also zunächst definieren, was ein Spannbaum ist und unter welchen Umständen er minimal ist.
+Dafür habe ich auf die SimpleGraph Struktur aus Mathlib zurückgegriffen um Graphen da zu stellen.
+Diese hat den Vorteil, dass sie einen ungerichteten Graphen implementiert und bereits eine Menge Lemma dazu in Mathlib enthalten sind.
+Der Nachteil ist, dass sie keine Kantenkosten unterstützt.
+
+\begin{definition}[\KruskalSimpleGraphIsSpanningTree]
+  Ein Graph G ist dann ein Spannbaum eines anderen Graphen H, wenn er erstens G ein Subgraph (in Lean $\le$) von H ist, also alle Kanten von G auch Kanten von H sind,
+  zweitens G azyklisch ist und drittens alle Paare von Knoten die sich in H ereichen können das auch in G können.
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalSimpleGraphIsSpanningTree.) (G : SimpleGraph α) (H : SimpleGraph α) : Prop := H ≤ G ∧ H.IsAcyclic ∧ (∀ (x y : α), G.Reachable x y ↔ H.Reachable x y)
+\end{lstlisting}
+
+Um einen einen Spannbaum minimal zu nennen, muss ich über seine Kantenkosten sprechen.
+Da die Kanten eines SimpleGraph keine Kosten haben, musste ich eine Verknüpfung zwischen ihnen und den von mir definierten Kanten schaffen.
+Und ich brauche einen Ausdruck, der die Summe der Kosten einer Kanten-Liste beschreibt.
+Dafür habe ich hier einmal den Definitionen \ref{KruskalcostofedgeList}, \ref{KruskalnodeListofedgeListmax} und \ref{KruskalSimpleGraphofnofedgeList} aus dem folgenden Abschnitt vorweggriffen.
+
+\begin{definition}[\KruskalminimalSpanninTreeofedgeList]
+  Eine Kanten-Liste (minEdgeList) bildet einen minimalen Spannbaum zu einer zweiten Kanten-Liste (edgeList),
+  wenn der aus ihr erzäugte Graph ein Spannbaum des aus der zweiten Liste erzäugten Graphen ist
+  und jede andere Kanten-Liste (otherEdgeList), deren Graph auch ein Spannbaum ist, mindestens genau so hohe kombinierte Kantenkosten hat.
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalminimalSpanninTreeofedgeList.) {minEdgeList : List edge} {edgeList : List edge} {n : Nat} (h_nonempty₁ : minEdgeList ≠ []) (h_nonempty₂ : edgeList ≠ []) (h_eq₁ : n = (nodeList_of_edgeList_max minEdgeList h_nonempty₁).id.succ) (h_eq₂ : n = (nodeList_of_edgeList_max edgeList h_nonempty₂).id.succ) : Prop := SimpleGraph.IsSpanningTree (SimpleGraph_of_n_of_edgeList n minEdgeList h_nonempty₁ h_eq₁) (SimpleGraph_of_n_of_edgeList n edgeList h_nonempty₂ h_eq₂) → ∀ (otherEdgeList : List edge), (h_nonempty₃ : otherEdgeList ≠ []) → (h_eq₃ : n = (nodeList_of_edgeList_max otherEdgeList h_nonempty₃).id.succ) → SimpleGraph.IsSpanningTree (SimpleGraph_of_n_of_edgeList n otherEdgeList h_nonempty₃ h_eq₃) (SimpleGraph_of_n_of_edgeList n edgeList h_nonempty₂ h_eq₂) → (cost_of_edgeList minEdgeList) ≤ (cost_of_edgeList otherEdgeList)
+\end{lstlisting}
+
+\subsection{Definitionen und Typenanpassung}
+
+
+
+\begin{definition}[\KruskalcostofedgeList]\label{KruskalcostofedgeList}
+  
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalcostofedgeList.) : List edge → Nat
+  | [] => 0
+  | e :: edgeList => e.cost + cost_of_edgeList edgeList
+\end{lstlisting}
+
+
+
+\begin{lemma}[\KruskalnodeListofedgeListhelpernonempty]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalnodeListofedgeListnonempty]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{definition}[\KruskalnodeListofedgeListmax]\label{KruskalnodeListofedgeListmax}
+  
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalnodeListofedgeListmax.) (edgeList : List edge) (h : edgeList ≠ []) : node := (nodeList_of_edgeList edgeList).max (nodeList_of_edgeList_nonempty edgeList h)
+\end{lstlisting}
+
+
+
+\begin{definition}[\KruskalfinofedgeList]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalfinofedgeList.) (edgeList : List edge) (h : edgeList ≠ []) : Type := Fin (nodeList_of_edgeList_max edgeList h).id.succ
+\end{lstlisting}
+
+
+
+\begin{definition}[\KruskalSimpleGraphofedgeList]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalSimpleGraphofedgeList.) (edgeList : List edge) (h : edgeList ≠ []) : SimpleGraph (fin_of_edgeList edgeList h) where
+  Adj (a b) := ∃ e ∈ edgeList, (e.node1 = a.val ∧ e.node2 = b.val) ∨ (e.node1 = b.val ∧ e.node2 = a.val)
+  symm := by
+    simp [Symmetric]
+    intro a b e h_e_in h_adj
+    refine ⟨e, h_e_in, h_adj.symm⟩
+  loopless := by
+    simp [irrefl_def]
+    intro a e h_e h_eq₁ h_eq₂
+    have h_lt := e.nodesLt
+    simp [h_eq₁, h_eq₂] at h_lt
+\end{lstlisting}
+
+
+
+\begin{definition}[\KruskalSimpleGraphofnofedgeList]\label{KruskalSimpleGraphofnofedgeList}
+  
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalSimpleGraphofnofedgeList.) (n : Nat) (edgeList : List edge) (h : edgeList ≠ []) (h_eq : n = (nodeList_of_edgeList_max edgeList h).id.succ) : SimpleGraph (Fin n) :=
+  let G := SimpleGraph_of_edgeList edgeList h
+  let Adj := fun (a b : Fin n) => G.Adj ⟨a, by rw [← h_eq]; exact a.isLt⟩ ⟨b, by rw [← h_eq]; exact b.isLt⟩
+  have symm : Symmetric Adj := by
+    simp [Symmetric, Adj]
+    intro a b
+    have h_symm := G.symm
+    simp only [Symmetric] at h_symm
+    exact h_symm (x := ⟨a, by rw [← h_eq]; exact a.isLt⟩) (y := ⟨b, by rw [← h_eq]; exact b.isLt⟩)
+  have loopless : Std.Irrefl Adj := by
+    simp [irrefl_def, Adj]
+  ⟨Adj, symm, loopless⟩
+\end{lstlisting}
+
+
+
+\begin{lemma}[\KruskalconnectedcomponentofinitunionFindofideqid]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelpernonempty]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalnonempty]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{definition}[\KruskalSimpleGraphofkruskal]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalSimpleGraphofkruskal.) (edgeList : List edge) (h : edgeList ≠ []) := SimpleGraph_of_n_of_edgeList (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) _).id.succ (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) (rfl)
+\end{lstlisting}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelpersublist]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalsublist]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalkruskalhelperedgesSoFarappend]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalconnectedcomponentofunionFindofidnotcon]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalkruskalhelpernotconinvariantappend]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalnodeListofkruskalperm]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalnodeListofedgeListmaxeq]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+\subsection{Subgraph}
+
+
+
+\begin{lemma}[\KruskalSimpleGraphofkruskalIsSubgraph]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+\subsection{Azyklisch}
+
+
+
+\begin{lemma}[\KruskalnodeofuFL]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{definition}[\Kruskalparent]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\Kruskalparent.)
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  (uFL : unionFindLink nodeList)
+  (h_in : uFL ∈ uF.linkList)
+  : unionFindLink nodeList
+  := List.choose (fun a => a.nodeId = uFL.ccId) uF.linkList (by rcases (uF.matching_ccId uFL h_in) with ⟨x, h, _⟩; rcases (uF.matching_nodeId x h.left) with ⟨uFL', h', _⟩; simp [← h.right]; refine ⟨uFL', by simp [h']⟩)
+\end{lstlisting}
+
+
+
+\begin{lemma}[\Kruskalparentin]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{definition}[\Kruskalgetparentpath]
+  
+\end{definition}
+\begin{lstlisting}
+def (.\Kruskalgetparentpath.)
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {uFL : unionFindLink nodeList}
+  (h_in : uFL ∈ uF.linkList)
+  : List (unionFindLink nodeList) :=
+  if h_self_con : uFL.nodeId = uFL.ccId
+    then
+      (uFL :: [])
+    else
+      (uFL :: (get_parent_path (uFL := parent uFL h_in) (by simp [parent, List.choose_mem]) (uF := uF)))
+termination_by nodeList.length - uFL.rank
+  decreasing_by
+  have h_lt := uFL.rank.isLt
+  have h_increase : uFL.rank.val < (parent uFL h_in).rank.val := by
+    have h := uF.matching_rank uFL h_in
+    simp [h_self_con] at h
+    simp [parent, h]
+  exact Nat.sub_lt_sub_left h_lt h_increase
+\end{lstlisting}
+
+
+
+\begin{lemma}[\Kruskalgetparentpathin]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalgetparentpathend]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskaluFLchooseself]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalconparent']
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalparentnodeId]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalnodeIdltmax]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalconnectedcomponentofunionFindofidltmax]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalinitunionFindreachableparent]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalconnectedcomponentofunionFindofunionFindLinkofparentpath]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalgetparentpathnonempty]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalgetparentpathendeqlast]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalparentwalk]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalgetparentpathlasteqconnectedcomponentofunionFindofunionFindLink]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalupdateunionFindreachableparent]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalupdateconofcon]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\Kruskalnewedgecon]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalkruskalhelperReachableiffcon]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalkruskalhelperIsAcyclic]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalcastFinfun]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+
+
+\begin{lemma}[\KruskalSimpleGraphofkruskalIsAcyclic]
+
+\end{lemma}
+\begin{proof}
+  
+\end{proof}
+
+\subsection{Ereichbar}
+
+
+
+\begin{lemma}[\KruskalSimpleGraphofkruskalIsEqReachable]
+
+\end{lemma}
+
+
+
+\begin{lemma}[\KruskalSimpleGraphofkruskalIsSpanningTree]
+
+\end{lemma}
+
+\subsection{Minimal}
+
+
+
+\begin{lemma}[\KruskalkruskalminimalSpanninTreeofedgeList]
+
+\end{lemma}
