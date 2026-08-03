@@ -6,9 +6,9 @@ Der Algorithmus findet für einen ungerichteten endliche Graphen mit Kantenkoste
 Ein \textbf{Graph} $G(V, E)$ besteht aus einer Menge an Knoten $V$ und einer Menge an Kanten $E$. Eine Kante ist die Verbindung zwischen zwei Knoten. 
 Man unterscheidet zwischen verschiedenen Arten von Graphen:
 \begin{itemize}
-    \item Man spricht von \textbf{endlichen Graphen}, wenn $V$ und $E$ endlich sind, andernfalls von \textbf{unendlichen Graphen}.
-    \item Bei einem \textbf{gerichteten Graphen} besteht ein Unterschied zwischen einer Kante $u$ nach $v$ und einer Kante von $v$ nach $u$ und es kann auch sein, dass nur eine davon in $E$ enthalten ist. Mit $u, v \in V$. Bei einem \textbf{ungerichteten Graphen} hingegen ist das die selbe Kante.
-    \item Wenn eine Funktion $c : E \rightarrow \mathbb{R}$ definiert ist, die jeder Kante einen Wert zuweist, spricht man von einem Graphen mit \textbf{Kantenkosten}.
+  \item Man spricht von \textbf{endlichen Graphen}, wenn $V$ und $E$ endlich sind, andernfalls von \textbf{unendlichen Graphen}.
+  \item Bei einem \textbf{gerichteten Graphen} besteht ein Unterschied zwischen einer Kante $u$ nach $v$ und einer Kante von $v$ nach $u$ und es kann auch sein, dass nur eine davon in $E$ enthalten ist. Mit $u, v \in V$. Bei einem \textbf{ungerichteten Graphen} hingegen ist das die selbe Kante.
+  \item Wenn eine Funktion $c : E \rightarrow \mathbb{R}$ definiert ist, die jeder Kante einen Wert zuweist, spricht man von einem Graphen mit \textbf{Kantenkosten}.
 \end{itemize}
 Ein \textbf{Kantenzug} (engl. Walk) ist eine Liste von Kanten $e_1, e_2, e_3, \dots, e_n \in E$, sodass für je zwei aufeinander folgende Kanten $e_i, e_{i+1}$ gilt, 
 dass es Konten $u, v, w \in V$ gibt und $e_i$ von $u$ nach $v$ geht und $e_{i+1}$ von $v$ nach $w$, also jede Kante fängt da an, woh ihre vorgängerin aufhört.
@@ -25,10 +25,11 @@ Ein nicht leerer Kantenzug von $u$ nach $u$, also der beim selben Knoten anfäng
 Gibt es in einem Graphen keinen einzigen Kreis, so nennt man ihn \textbf{kreisfrei} oder \textbf{azyklisch} (engl. acyclic).
 
 \subsection{Was ist ein Spannbaum}
-Gegeben ein Graph G(V, E) mit Knotenmenge V und Kantenmenge E, dann ist ein Spannbaum T(V, E') ein Subgraph von G mit E' $\subseteq$ E, sodass: 
+Gegeben ein Graph G(V, E) mit Knotenmenge V und Kantenmenge E, dann ist ein Graph T(V, E') ein Spannbaum, wenn: 
 \begin{itemize}
-    \item in T keine Kreise vorkommen.
-    \item alle Knoten aus V, die in G durch einen Kantenzug verbunden sind, auch in T verbunden sind.
+  \item T ein Subgraph von G, also E' $\subseteq$ E ist.
+  \item In T keine Kreise vorkommen.
+  \item Alle Knoten aus V, die in G durch einen Kantenzug verbunden sind, auch in T verbunden sind.
 \end{itemize}
 Wenn also G vollständig verbunden ist, dann ist es auch T und man spricht tatsächlich von einem Spannbaum. 
 Besteht G hingegen mehreren Klastern von Konten zwischen denen es keine verbindende Kante gibt, dann gibt es in T entsprechend die selben Klaster und  man  spricht von einem Spannwald.
@@ -47,26 +48,26 @@ Zum Schluss gibt er die Liste der übernommenen Kanten zurück.
 
 In Kruskals Worten: 
 \begin{quotation}
-    Perform the following step as many times as possible: Among the edges of G not yet chosen, choose the shortest edge which does not form any loops with those edges already chosen.\cite{kruskal_article}
+  Perform the following step as many times as possible: Among the edges of G not yet chosen, choose the shortest edge which does not form any loops with those edges already chosen.\cite{kruskal_article}
 \end{quotation}
 
 \subsection{Pseudocode}
 % \begin{algorithm}
-    % \caption{Kruskal}
-    % \label{alg:kruskal}
+  % \caption{Kruskal}
+  % \label{alg:kruskal}
 \begin{algorithmic}
-    \Function{Kruskal}{KnotenListe, KantenListe}
-        \State KantenListe $=$ KantenListe.sort
-        \State ErgebnisKantenListe $=$ [ ]
-        \For{Kante in KantenListe}
-            \If{ExistiertEinKreis(KnotenListe, Kante :: ErgebnisKantenListe)} 
-                \State \textbf{skip}
-            \Else
-                \State ErgebnisKantenListe $=$ Kante :: ErgebnisKantenListe
-            \EndIf
-        \EndFor
-        \State \Return ErgebnisKantenListe
-    \EndFunction
+  \Function{Kruskal}{KnotenListe, KantenListe}
+    \State KantenListe $=$ KantenListe.sort
+    \State ErgebnisKantenListe $=$ [ ]
+    \For{Kante in KantenListe}
+      \If{ExistiertEinKreis(KnotenListe, Kante :: ErgebnisKantenListe)} 
+        \State \textbf{skip}
+      \Else
+        \State ErgebnisKantenListe $=$ Kante :: ErgebnisKantenListe
+      \EndIf
+    \EndFor
+    \State \Return ErgebnisKantenListe
+  \EndFunction
 \end{algorithmic}
 % \end{algorithm}
 Für die Funktion ExistiertEinKreis gibt es verschiedene Möglichkeiten. Eine triviale wäre zum Beispiel eine Tiefensuche von jedem Knoten aus.

@@ -213,7 +213,7 @@ theorem (.\KruskalinitunionFindlinkListhelperappend.) (nodeList l₁ l₂ : List
 Dass ich diese Aussage nicht über \KruskalinitunionFindlinkList sondern deren innere Hilfsfunktion treffe, liegt daran, dass der Typ der Zeiger von der Knoten-Liste abhängt.
 Und es ist relevant, dass alle Zeiger den selben Typ haben, um die Listen vergleichen oder an einander hängen zu können.
 
-\begin{lemma}[\KruskalinitunionFindlinkListhelperallselfconnected]
+\begin{lemma}[\KruskalinitunionFindlinkListhelperallselfconnected]\label{KruskalinitunionFindlinkListhelperallselfconnected}
   Alle Zeiger der Liste zeigen auf ihren eigenen Knoten.
 \end{lemma}
 \begin{lstlisting}

@@ -4,6 +4,7 @@ Da jedes Detail beschrieben und jeder mögliche Fall unterschieden werden muss, 
 der in natürlicher Sprache in einem Satz erklärt ist in Lean 5 Zeilen oder 500 Zeilen lang sein kann.
 Das hängt von verschiedenen Faktoren ab, zum einen, wie komplex der Beweis tatsächlich ist, zum andern, wie viel vorarbei es dazu bereits in der Mathlib Bibliothek gibt,
 außerdem spielt die Wahl der Definitionen eine Rolle und wie gut man sich in den Lemmata auskennt und mit den Feinheiten von Lean vertaut ist.
+Ich weis nicht wie oft ich mir gedacht habe, ich ersetze noch ein sorry und zwei Stunden späterwaren da statt dem einen sorry zweihundert Zeilen Code mehr mit fünf weiteren enthaltenen sorrys.
 
 Ich muss sagen, dass ich das Ausmaß des Korrektheitsbeweises unterschätzt habe und es mir zeitlich nicht gelungen ist, den Beweis fertig zu stellen.
 Nichts desto troz stelle ich im Folgenden meine Ansätze vor, wie weit ich gekommen bin und meine Überlegungen zu den fehlenden Teilen.
@@ -22,7 +23,7 @@ Der Nachteil ist, dass sie keine Kantenkosten unterstützt.
   zweitens G azyklisch ist und drittens alle Paare von Knoten die sich in H ereichen können das auch in G können.
 \end{definition}
 \begin{lstlisting}
-def (.\KruskalSimpleGraphIsSpanningTree.) (G : SimpleGraph α) (H : SimpleGraph α) : Prop := H ≤ G ∧ H.IsAcyclic ∧ (∀ (x y : α), G.Reachable x y ↔ H.Reachable x y)
+def (.\KruskalSimpleGraphIsSpanningTree.) (G H : SimpleGraph α) : Prop := H ≤ G ∧ H.IsAcyclic ∧ (∀ (x y : α), G.Reachable x y ↔ H.Reachable x y)
 \end{lstlisting}
 
 Um einen einen Spannbaum minimal zu nennen, muss ich über seine Kantenkosten sprechen.
@@ -41,10 +42,10 @@ def (.\KruskalminimalSpanninTreeofedgeList.) {minEdgeList : List edge} {edgeList
 
 \subsection{Definitionen und Typenanpassung}
 
-
+Der angesprochene Ausdruck für die Summe der Kosten einer Liste erfüllt die Aufgabe, dass ich sie benennen kann und ist genau das.
 
 \begin{definition}[\KruskalcostofedgeList]\label{KruskalcostofedgeList}
-  
+  Die Funktion iteriert über die Liste und summiert die Kosten auf.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalcostofedgeList.) : List edge → Nat
@@ -52,28 +53,42 @@ def (.\KruskalcostofedgeList.) : List edge → Nat
   | e :: edgeList => e.cost + cost_of_edgeList edgeList
 \end{lstlisting}
 
+Um jetzt meine Kanten mit SimpleGraph Kanten zu verknüpfen, musste ich zunächst eine Designentscheidung Treffen.
+Ein SimpleGraph nimmt als Knotenmenge einen Typ und hat als Kantenmenge eine Relation auf seinen Knoten mit den Bedingungen,
+dass diese symmetrisch und Irreflexiv ist, also die Kanten ungerichtet sind und keine Selbstkanten enthalten.
+Ich musste mich also entscheiden, welchen Typ ich als Knotenmenge benutzen wollte.
+Die naheliegende Wahl wäre node oder Nat gewesen, allerdings wollte ich mir Option offen halten, eine Aussage der Form zu treffen,
+dass für einen zusammenhängenden Graphen auch das Ergebnis des Algorithmus zusammenhängend ist.
+Da meine Kanten-Liste aber immer endlich ist, muss die Knotenmenge, damit es überhaupt zusammenhängende Graphen geben kann auch endlich sein.
+Deshalb habe ich mich für Fin entscheiden mit der ID des höchsten Knoten, der von einer Kante verbunden wird.
 
+Eine Funktion, die mir aus einer Kanten-Liste die dazugehörigen Knoten-Liste ausgibt, habe ich bereits (\KruskalnodeListofedgeList).
+Um von dieser das Maximum zu bekommen, brauchte ich zunächst den Nachweis, dass diese nicht leer ist.
+Diesen habe ich entsprechend der Hilfsfunktion Aufgeteilt.
 
 \begin{lemma}[\KruskalnodeListofedgeListhelpernonempty]
-
+  Falls die mitgegebene Knoten-Liste bereits nicht mehr leer ist, ist auch das Ergebnis von \KruskalnodeListofedgeListhelper nicht leer.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis erfolgt per Induktion über die Kanten-Liste.
+  Falls sie leer ist, ist die mitgegebene Knoten-Liste das Ergebnis und die ist nicht leer.
+  Falls nicht, kann die mitgegebene Knoten-Liste im nächsten Aufruf nur gleich oder voller werden.
 \end{proof}
 
 
 
 \begin{lemma}[\KruskalnodeListofedgeListnonempty]
-
+  Für eine nicht leere Kanten-Liste, ist die dazugehörige Knoten-Liste auch nicht leer.
 \end{lemma}
 \begin{proof}
-  
+  Mit eine Fallunterscheidung über die Kanten-Liste, kann man zeigen, dass sie entweder leer ist und damit der Vorraussetzung widerspricht,
+  oder sie hat ein erstes Element, dessen Knoten zur Knoten-Liste hinzugefügt werden können, und dann greift das Lemma über die Hilfsfunktion.
 \end{proof}
 
-
+Damit Lässt sich dann das Maximum diser Knoten-Liste bestimmen und somit dann auch der Typ für die Knotenmenge des SimpleGraph.
 
 \begin{definition}[\KruskalnodeListofedgeListmax]\label{KruskalnodeListofedgeListmax}
-  
+  Der Kosten mit der höchsten ID von allen Knoten, die durch eine Kante der Kanten-Liste verbunden sind.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalnodeListofedgeListmax.) (edgeList : List edge) (h : edgeList ≠ []) : node := (nodeList_of_edgeList edgeList).max (nodeList_of_edgeList_nonempty edgeList h)
@@ -82,16 +97,17 @@ def (.\KruskalnodeListofedgeListmax.) (edgeList : List edge) (h : edgeList ≠ [
 
 
 \begin{definition}[\KruskalfinofedgeList]
-  
+  Die Menge der Zahlen, die höchstens so groß sind, wie die höchste ID der Knoten, die von den Kanten der Kanten-Liste verbunden werden.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalfinofedgeList.) (edgeList : List edge) (h : edgeList ≠ []) : Type := Fin (nodeList_of_edgeList_max edgeList h).id.succ
 \end{lstlisting}
 
-
+Die Verknüpfungsie nun wie folgt aus:
+Zwei Knoten sind verbunden, wenn es eine Kante in der Kanten-liste gibt, sodass ihre IDs einer der Knoten-IDs der Kante entsprechen.
 
 \begin{definition}[\KruskalSimpleGraphofedgeList]
-  
+  Der SimpleGraph mit einer Kanten-Relation entsprechend der Kanten-Liste und der Knotenmenge \KruskalfinofedgeList.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalSimpleGraphofedgeList.) (edgeList : List edge) (h : edgeList ≠ []) : SimpleGraph (fin_of_edgeList edgeList h) where
@@ -107,10 +123,17 @@ def (.\KruskalSimpleGraphofedgeList.) (edgeList : List edge) (h : edgeList ≠ [
     simp [h_eq₁, h_eq₂] at h_lt
 \end{lstlisting}
 
+Das Problem, dass sich aus dieser Definitionen heraus ergibt, ist, dass der Typ der Knoten und damit auch der Typ des SimpleGraph von der Kanten-Liste abhängen.
+Es ist also nicht ohne Weiteres möglich die Graphen von Zwei verschiedenen Kanten-Listen mit einander zu vergleichen, denn zum Beispiel = ist nur für Terme mit gleichem Typ definiert.
+Auch wenn man einen Nachweis hat, dass der höchste verknüpfte Knoten in beiden Listen der gleiche ist, ist das nur Bedingt hilfreich,
+da man damit zwar den Typ eines Graphen casten kann, sodass er den Typ des anderen matcht, was man in Lean allerdings so oft es get vermeiden möchte,
+da man so sehr leicht in Leans \glqq Typen Hölle \grqq landen kann.
 
+Meine Idee war es deshalb, die Anpassung des Typs direkt mit in die Definition auf zunehmen.
+Ich habe dafür dafür einen weiteren SimpleGraph definiert, der seine Eigenschaften von der ersten Definition ableitet.
 
 \begin{definition}[\KruskalSimpleGraphofnofedgeList]\label{KruskalSimpleGraphofnofedgeList}
-  
+  Der SimpleGraph einer Kan\-ten-Liste, angepasst an eine natürliche Zahl n.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalSimpleGraphofnofedgeList.) (n : Nat) (edgeList : List edge) (h : edgeList ≠ []) (h_eq : n = (nodeList_of_edgeList_max edgeList h).id.succ) : SimpleGraph (Fin n) :=
@@ -127,83 +150,140 @@ def (.\KruskalSimpleGraphofnofedgeList.) (n : Nat) (edgeList : List edge) (h : e
   ⟨Adj, symm, loopless⟩
 \end{lstlisting}
 
-
+Da ich in Definition für den SimpleGraph gefordert habe, dass die entsprechende Kanten-Liste nicht leer sein darf,
+muss ich jetzt auch für das Ergebnis des Kruskal Algorithmus zeige, dass es nicht leer ist, um einen SimpleGraph davon zu definieren.
+Dafür benutze ich das folgende Hilfslemma.
 
 \begin{lemma}[\KruskalconnectedcomponentofinitunionFindofideqid]
-
+  Für jede Knoten-ID ist die ID des Repräsentanten der dazugehörige Zusammenhangskomponente in einer frisch initialisierten Union-Find-Struktur sie selbst.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis Leitet sich direkt aus Lemma \ref{KruskalinitunionFindlinkListhelperallselfconnected} ab.
 \end{proof}
 
-
+Den Beweis habe ich analog zu den Lemmata, dass die Knoten-Liste nicht leer ist, geführt.\todo{Satz gefällt mir nicht}
 
 \begin{lemma}[\Kruskalkruskalhelpernonempty]
-
+  Falls die mitgegebene ErgebnisKantenListe schon nicht leer ist, dann ist auch das Ergebnis von \Kruskalkruskalhelper nicht leer.
 \end{lemma}
 \begin{proof}
-  
+  Auch hier erfolgt der Beweis per Induktion über die Kanten-Liste.
+  Falls sie leer ist die mitgegebene ErgebnisKantenListe das Ergebnis.
+  Falls nicht, kann die ErgebnisKantenListe im nächsten Aufruf nur gleich oder voller werden.
 \end{proof}
 
 
 
 \begin{lemma}[\Kruskalkruskalnonempty]
-
+  Wenn nicht schon die Kanten-Liste selbst leer ist, dann ist auch das Ergebnis des Algorithmus nicht leer.
 \end{lemma}
 \begin{proof}
-  
+  Für den Beweis mache ich zunächst eine Fallunterscheidung über die Kante-Liste.
+  Falls sie leer ist, widerspricht das der Vorraussetzung.
+  Falls nicht, gibt es eine erste Kante e und ich kann die sortiert Kante-Liste aufteilen in eine Liste l1 davor, e selbst und eine Liste l2 danach.
+  Dann kann ich eine weitere Fallunterscheidung über l1 machen, um zu zeigen, dass die sortiert Kante-Liste eine erste Kante hat.
+  Falls sie leer ist es e, falls nicht das erste Kante von l1.
+  In beiden Fällen kann ich diese erste Kante nehmen und durch das zuvor erwähnte Hilfslemma zeigen, dass sie in die ErgebnisKantenListe aufgenommen wird.
+  Und ab da greift dan \Kruskalkruskalhelpernonempty.
 \end{proof}
 
-
+Damit lässt sich dann auch folgendes difinieren.\todo{Satz gefällt mir noch weniger}
 
 \begin{definition}[\KruskalSimpleGraphofkruskal]
-  
+  Die Repräsentation des Ergebnis des Algorithmus von Kruskal als SimpleGraph.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalSimpleGraphofkruskal.) (edgeList : List edge) (h : edgeList ≠ []) := SimpleGraph_of_n_of_edgeList (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) _).id.succ (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) (rfl)
 \end{lstlisting}
 
+\subsection{Subgraph}
 
+Um zu zeigen, das meine Implementierung des Algorithmus von Kruskal tatsächlich einen minimalen Spannbaum zurückgibt, muss ich zunächst nachweisen,
+dass die Bedingungen für einen Spannbaum erfüllt sind, bevor ich mich der Minimalität widmen kann.
+Ich beginne damit, zu zeigen, dass es sich um einen Subgraph handelt.
+
+\begin{theorem}
+  \KruskalSimpleGraphofkruskal ist ein Subgraph von \KruskalSimpleGraphofnofedgeList.
+\end{theorem}
+
+Die Eigenschaft Subgraph bedeutet, das jede Kante des Subgraphen auch eine Kante des Graphen ist.
+Der erste Schritt dafür ist zu Zeigen, dass der Output Algorithmus eine SubListe vom Input ist.
+Das Muster mit dem geteilten Beweis über die Hilfsfunktion sollte mitlerweile klar sei.
 
 \begin{lemma}[\Kruskalkruskalhelpersublist]
-
+  Jede Kante im Output von \Kruskalkruskalhelper kommt auch in der Kanten-Liste oder oder in der mitgeführten ErgebnisKantenListe bereits vor.
 \end{lemma}
 \begin{proof}
-  
+  In diesem Beweis mache ich eine Induktion über die Funktion.
+  Im Basisfall ist die Kanten-Liste leer und der Output ist die ErgebnisKantenListe.
+  Im anderen Fall habe die geupdatete ErgebnisKantenListe in der Induktionshypothese und ich kann durch Fallunterscheidung ob die Kante aufgenommen wird zeigen,
+  dass die Induktionshypothese das Ziel in jedem Fall abdeckt.
 \end{proof}
 
 
 
 \begin{lemma}[\Kruskalkruskalsublist]
-
+  Jede Kante in der Output Liste von \Kruskalkruskal ist auch Teil der Input Liste.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt direkt aus dem Beweis über die Hilfsfunktion, da jedes Elemente einer sortierten Liste auch Teil der Liste selbs ist.
 \end{proof}
 
-
+Im nächsten Schritt muss ich nun zeigen, dass \KruskalSimpleGraphofkruskal und \KruskalSimpleGraphofnofedgeList den selben Typ haben, also den gleichen höchsten Knoten haben.
+Dafür benötige ich aber zuerst vier auf einander aufbauende Hilfslemma.
 
 \begin{lemma}[\KruskalkruskalhelperedgesSoFarappend]
-
+  Wenn die mitgeführten ErgebnisKantenListe aus zwei aneinander gehängten Listen edgesSoFar$_1$ und edgesSo\-Far$_2$ besteht, dann ist ist das ergebnis von \Kruskalkruskalhelper das selbe,
+  als wenn die ErgebnisKantenListe nur edgesSoFar$_1$ besteht und edgesSoFar$_2$ dafür stattdessen ans Ergebnis angehängt wird.
 \end{lemma}
-\begin{proof}
-  
+\begin{proof}\todo{Beweise zu schlampig beschrieben}
+  Auch in diesem Beweis mache ich eine Induktion über die Funktion.
+  Im Basisfall ist die Kanten-Liste leer und auf beiden Seiten der Gleichung bleiben die aneinander gehängten Listen übrig.
+  Auch hier lässt sich im zweiten Fall die Induktionshypothese so anpassen, dass sie zum Ziel passt, ob die Kante in die ErgebnisKantenListe aufgenommen wird,
+  oder nicht.
 \end{proof}
 
 
 
 \begin{lemma}[\KruskalconnectedcomponentofunionFindofidnotcon]
-
+  Falls für einen Knoten z sein eigener der einzige Zeiger ist, der auf ihn zeigt, dann hat ein Knoten x z als Repräsentanten seiner Zusammenhangskomponente genau dann, wenn er z selbst ist.
 \end{lemma}
 \begin{proof}
-  
+  Da es ein \glqq genau dann wenn\grqq-Beweis ist, muss ich ihn in beide Richtungen zeigen.
+
+  $\rightarrow:$
+  Sei x also ein Knoten mit z als Repräsentant seiner Zusammenhangskomponente und sei uFLx sein Zeiger.
+  Die Suche nach der Zusammenhangskomponente ergibt das selbe, wenn man über den Zeiger sucht.
+  Ich will also eigentlich zeigen, dass alle Zeiger die z als Repräsentant der Zusammenhangskomponente haben auch z als knoten haben.
+  Das schreibe ich mir mit have als Hilfsaussage und kann es dann auf uFLx anwenden.
+  Beweisen tue ich es per Induktion über \KruskalconnectedcomponentofunionFindofunionFindLink.
+  Im Basisfall zeigt der Zeiger auf seinen eigenen Knoten und da er in dem Fall auf z zeigt, ist z sein Knoten.
+  Im anderen Fall ist z per Induktionshypothese der Knoten seines Nachfolgers.
+  Er zeigt also auf z und nach Vorraussetzungdes Lemmas ist er damit selbst der Zeiger von z.
+
+  $\leftarrow:$
+  Die Gegenrichtung folgt direkt daraus, dass der Zeiger von z auf z selbst zeigt und der definition von \KruskalconnectedcomponentofunionFindofid
 \end{proof}
 
 
 
 \begin{lemma}[\Kruskalkruskalhelpernotconinvariantappend]
-
+  Wenn es einen Knoten z gibt, der im ersten Teil der Kanten-Liste bei keiner Kante als verbundener Knoten vorkommt und dessen Zeiger der einzige ist, der auf ihn zeigt, \todo{hier weiter}
 \end{lemma}
+\begin{lstlisting}
+theorem kruskal_helper_not_con_invariant_append
+  {edgeList₁ edgeList₂ : List edge}
+  {nodeList : List node}
+  {uF : unionFind nodeList}
+  {edgesSoFar : List edge}
+  {h_matching_edge : matching_edge (edgeList₁ ++ edgeList₂) nodeList}
+  {h_nodup : nodeList.Nodup}
+  {z : node}
+  (h_z_in : z ∈ nodeList)
+  (h_edgeList_not_con : ∀ e ∈ edgeList₁, ¬(e.node1 = z.id ∨ e.node2 = z.id))
+  (h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.ccId = z.id ↔ uFL.nodeId = z.id)
+  : ∃ uF', kruskal_helper (edgeList₁ ++ edgeList₂) nodeList uF edgesSoFar h_matching_edge h_nodup = kruskal_helper edgeList₂ nodeList uF' (kruskal_helper edgeList₁ nodeList uF [] … h_nodup ++ edgesSoFar) … h_nodup ∧ ∀ uFL ∈ uF'.linkList, uFL.ccId = z.id ↔ uFL.nodeId = z.id
+\end{lstlisting}
 \begin{proof}
   
 \end{proof}
@@ -211,7 +291,7 @@ def (.\KruskalSimpleGraphofkruskal.) (edgeList : List edge) (h : edgeList ≠ []
 
 
 \begin{lemma}[\KruskalnodeListofkruskalperm]
-
+  Die Konten-Liste, die aus der Ergebnis Liste des Algorithmus mit \KruskalnodeListofedgeList erzeugt wird ist bis auf Reihenfolge identisch zu der die aus der Kanten-Liste generiert wird.
 \end{lemma}
 \begin{proof}
   
@@ -220,13 +300,11 @@ def (.\KruskalSimpleGraphofkruskal.) (edgeList : List edge) (h : edgeList ≠ []
 
 
 \begin{lemma}[\KruskalnodeListofedgeListmaxeq]
-
+  Der höchste Knoten der Ergebnis Liste des Algorithmus ist der gleiche, wie der höchste Knoten der Kanten-Liste, beziehungsweise die Zahl, die jewils eins höher ist, ist die gleich.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt direkt aus dem vorherigen Lemma, da das Maximum einer permutierten Liste gleich bleibt.
 \end{proof}
-
-\subsection{Subgraph}
 
 
 
@@ -492,6 +570,8 @@ termination_by nodeList.length - uFL.rank
 \begin{lemma}[\KruskalSimpleGraphofkruskalIsSpanningTree]
 
 \end{lemma}
+
+Zusammenhängender Graph?
 
 \subsection{Minimal}
 
