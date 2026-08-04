@@ -1,4 +1,4 @@
-\section{Die Implementierung}
+\section{Die Implementierung}\todo{Code bei Lemmata nur falls nötig zum Verständnis}
 Der Code aus diesem Abschnitt ist in der Datei Basic.lean zu finden.
 
 
@@ -75,7 +75,7 @@ Allerdings habe ich doch eine Bedingung eingebaut, indem ich den Rang nach oben 
 Damit zeige ich, dass das suchen des Repräsentanten der Zusammenhangskomponenten auch terminiert.
 
 \begin{definition}[\KruskalunionFindLink]
-  Ein Zeiger besteht aus der ID seines Knotens, der ID des Knotens, auf den er zeit (ccId) und seinem Rang.
+  Ein Zeiger besteht aus der ID seines Knotens, der ID des Knotens, auf den er zeigt (ccId) und seinem Rang.
 \end{definition}
 \begin{lstlisting}
 structure (.\KruskalunionFindLink.) (nodeList : List node) : Type where
@@ -418,6 +418,24 @@ def (.\KruskalconnectedcomponentofunionFindofid.) {nodeList : List node} (uF : u
   connected_component_of_unionFind_of_unionFindLink uF uFL h_uFL_in
 \end{lstlisting}
 
+Um die Definition später im Algorithmus einfacher benutzen zu können, zeige ich an dieser Stelle noch,
+dass der Zeiger des Repräsentanten der Zusammenhangskomponente tatsächlich auf seinen eigenen Knoten, also den Repräsentanten, zeigt.
+
+\begin{lemma}[\KruskalexistunionFindLinkofconnectedcomponentofunionFindofunionFindLink]
+  Der Zeiger des Repräsentanten der Zusammenhangskomponente bei der Suche über den Zeiger zeigt auf sich selbst.
+\end{lemma}
+\begin{proof}
+  Für den Beweis mache ich eine Induktion über Funktion.
+  Im Basisfall zeigt der Zeiger bereits selbst auf seinen eigenen Knoten und da in diesem Fall auch seine Knoten-ID zurückgegeben wird erfüllt er die Bedingung selbst.
+  Im andern Fall wird, weil er eben nicht auf seinen eigenen Knoten zeigt, die Funktion für seinen Nachfolger (Parent) ausgeführt und genau da greift dann die Induktionshypothese.
+\end{proof}
+
+\begin{lemma}[\KruskalexistunionFindLinkofconnectedcomponentofunionFindofid]\label{KruskalexistunionFindLinkofconnectedcomponentofunionFindofid}
+  Der Zeiger des Repräsentanten der Zusammenhangskomponente bei der Suche über die ID zeigt auf sich selbst.
+\end{lemma}
+\begin{proof}
+  Der Beweis für dieses Lemma folgt direkt aus dem vorherigen.
+\end{proof}
 
 
 
@@ -699,7 +717,8 @@ def (.\Kruskalkruskalhelper.) (edgeList : List edge) (nodeList : List node) (uF 
     kruskal_helper es nodeList updated_uF updated_edgesSoFar h_matching_edge' h_nodup
 \end{lstlisting}
 
-Um \Kruskalkruskalhelper kompakter zu halten habe ich die Fallunterscheidung beim updaten der Union-Find-Struktur (Definition \ref{KruskalupdateunionFind}\todo{besseres ref}) und der ErgebnisKantenListe,
+Um \Kruskalkruskalhelper kompakter zu halten habe ich die Fallunterscheidung beim updaten der Union-Find-Struktur
+(Definition \ref{KruskalupdateunionFind}\todo{besseres ref}) und der ErgebnisKantenListe,
 je nach dem, ob die Zusammenhangskomponenten $x$ und $y$ gliech sind, ausgelagert.
 Das macht die Funktion zum einen halb so groß und zum anderen lässt sich so in späteren Lemmas besser eine induktion über die funktion führen.
 
@@ -776,7 +795,7 @@ theorem (.\KruskalnodeListofedgeListhelpereq.) (edgeList : List edge) (nodeList 
 
 Das folgende Hilfslemma beschreibt genau die Eigenschaft, die \KruskalnodeListofedgeList definiert.
 
-\begin{lemma}[\KruskalmemnodeListofedgeListhelperiffnodeinedgeList]
+\begin{lemma}[\KruskalmemnodeListofedgeListhelperiffnodeinedgeList]\label{KruskalmemnodeListofedgeListhelperiffnodeinedgeList}
   Ein Knoten ist genau dann in der aus einer Kanten-Liste erzeugten Knoten-Liste, wenn es in der entsprechenden Kanten-Liste eine Kante gibt, die ihn mit einem anderen Knoten verbindet.
 \end{lemma}
 \begin{proof}

@@ -163,10 +163,16 @@ Es gibt verschiedene Möglichkeiten für Fallunterscheidungen.
 Die Taktik \textbf{by\-\_cases} zusammen mit einer Aussage spaltet das Ziel in in zwei Unterziele.
 Im ersten ist die Aussage als Hypothese im Kontext und im zweiten ihre Negation.
 
-Eine \textbf{induktion} lässt sich anwenden, wenn man im Kontext ein Element mit einem induktiven Typ hat,\todo{fun\_induction}
-häufig eine natürliche Zahl oder eine Liste, oder wenn man eine Aussage über eine rekursive Funktion trifft.
-Sie teilt das Ziel in ein Unterziel pro Fall, den das Element annehmen kann und stellt in den Nicht-Basisfällen eine entsprechende Induktionshpothese zur verfügung.
-So ähnlich funktioniert auch \textbf{cases} welche für ein Element mit einem induktiven Typ das Ziel anhand der möglichen Fälle aufspaltet, allerdings ohne eine Induktionshpothese.
+Eine \textbf{induction} lässt sich anwenden, wenn man im Kontext ein Element mit einem induktiven Typ hat,\todo{Genera\-lisie\-rung}
+häufig eine natürliche Zahl oder eine Liste.
+Sie teilt das Ziel in ein Unterziel pro Fall, den das Element annehmen kann und stellt in den Nicht-Basisfällen eine entsprechende Induktionshypothese zur verfügung.
+So ähnlich funktioniert auch \textbf{cases} welche für ein Element mit einem induktiven Typ das Ziel anhand der möglichen Fälle aufspaltet, allerdings ohne eine Induktionshypothese.
+
+Man kann einenem Induktionsbeweis auch über rekursive Funktionen führen.
+Das geht ebenfalls mit induction oder besser noch mit \textbf{fun\_induction}.
+Dabei werden die inputs der der Funktion generalisiert und pro möglicher Fallunterscheidung ein Ziel geöffnet.
+Die Fälle, in denen die Funktion terminiert sind dann die Basisfälle.
+Und die, in denen sich die Funktion rekursiv aufruft, besgt dann die Induktionshypothese, dass der rekursive Aufruf die Bedingungen des Ziels erfüllt.
 
 Die Taktik \textbf{rcases} kann eine Hypothese beliebig fein in ihre Einzelteile aufteilen.
 Sie kann aus einen $\exists$ ein spezifisches Element machen, eine $\land$-Aussage in zwei einzelne Hypothesen aufteilen
@@ -254,7 +260,7 @@ und zum dritten aufzuzeigen in welchen Feldern der Mathematik noch Lücken sind 
 
 Software Validierung ist vorallem bei Sicherheitsrelevanter Software als Erweiterung zum Testen im kommen.
 Microsoft nutzt zum Beispiel Lean um nachweislich sichere Kryptographie zu Produzieren.
-Wie in diesem Bolg-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft Lean um die Einhaltung von Standarts zu verifizieren.
+Wie in diesem Bolg-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft Lean um die Einhaltung von Standarts zu verifizieren.\todo{anders?}
 Da in der Kryptographie der Code häufig sehr hardwarenah und architekturabhängig geschrieben wird
 und Laufzeitoptimirungen enthält sieht er selten genau so aus, wie der Algorithmus aus dem Standart.
 Um hierbei sicher zu gehen, dass die Funktionsweise immer noch die gleiche ist, reicht Testen nicht immer aus, da ein kleiner Fehler die Sicherheit des gesamten Systhems untergraben kann.
