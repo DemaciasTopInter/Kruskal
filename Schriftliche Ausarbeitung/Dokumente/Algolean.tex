@@ -28,13 +28,22 @@ Die Für meine Arbeit am Relevantesten Elemente von Algolean erkläre ich im Fol
 Die Grundligenden Funktionen, die man zählen möchte, werden in einer \textbf{Query} deklariert.
 Eine Query ist eine induktive funktion von Type nach Type.
 Jede Grundliegende Funktion, bekommt dabei einen eigenen Konstruktur und hat als Typ die Query angewendet auf den Rückgabetyp der Funktion.
-Im Beispiel hat die Query ListSearch $\alpha$ nur einen Konstruktur, nämlich den für das vergleichen von einem Element a und einer Liste l.
+Im Beispiel hat die Query ListSearch $\alpha$ nur einen Konstruktur, nämlich den, für das vergleichen von einem Element a und einer Liste l und da der Rückgabetyp eines Vergleich Bool ist, ist der Typ des Konstrukturs ListSearch $\alpha$ von Bool.
 \begin{lstlisting}
 inductive ListSearch (α : Type*) : Type → Type _ where
   | compare (a : List α) (val : α) : ListSearch α Bool
 \end{lstlisting}
 
 Was sind Modelle?
+Ein \textbf{Model} einer Query definiert dann, wie sich die Funktionen verhalten und was die jeweiligen Kosten sind.
+Dabei ist es möglich mehrere verschiedene Modelle für die selbe Query zu definieren.
+Im Beispiel 
+\begin{lstlisting}
+def ListSearch.natCost [BEq α] : Model (ListSearch α) ℕ where
+  evalQuery
+    | .compare l x => some x == l.head?
+  cost _ := 1
+\end{lstlisting}
 
 Wie sieht dann ein Algorithmus aus?
 
