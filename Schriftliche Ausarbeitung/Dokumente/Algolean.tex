@@ -1,3 +1,109 @@
 \section{Algolean}\todo{section Algolean}
-\cite{algolean}
-\todo{Free Monad}\todo{Beispiel Listsearch}
+Algolean\cite{algolean} ist ein Framework für Algorithmen und Komplexitätstheorie
+und sein Kern ist die Freien Monade Prog.
+
+Die Grundidee des Frameworks ist es,
+den nutzer bei der Formalisierung seiner Algorithmen zu zwingen, seine Grundoperationen und deren Kosten im Vorhinein zu bestimmen.
+Die Komplexität beziehungsweise Laufzeit der Algorithmen werden dann als direkte strukturelle Konsequenz der Grundkosten abgeleitet.
+
+
+
+Was sind Monaden?
+Monaden sind in funktionalen Programmiersprachen der Weg um Computerberechnungen mit Seiteneffekten zu Modelieren.
+\cite{monad_wiki}
+
+Was ist die Freie Monade?
+\cite{the_free_monad}\todo{Free Monad}
+
+Was ist die do-Notation?
+Die do-Notation kann das sequenzielle abarbeiten und das zuweisen von Werten zu Variablen einer imperativen Programiersprache ein Stück weit Simulieren.
+Dabei ist unter der Haube alles Funktionale Programierung.
+
+
+
+
+
+Die Für meine Arbeit am Relevantesten Elemente von Algolean erkläre ich im Folgenden anhand des Beispiels listLinearSearch aus dem Algolean Repository:
+
+Die Grundligenden Funktionen, die man zählen möchte, werden in einer \textbf{Query} deklariert.
+Eine Query ist eine induktive funktion von Type nach Type.
+Jede Grundliegende Funktion, bekommt dabei einen eigenen Konstruktur und hat als Typ die Query angewendet auf den Rückgabetyp der Funktion.
+Im Beispiel hat die Query ListSearch $\alpha$ nur einen Konstruktur, nämlich den für das vergleichen von einem Element a und einer Liste l.
+\begin{lstlisting}
+inductive ListSearch (α : Type*) : Type → Type _ where
+  | compare (a : List α) (val : α) : ListSearch α Bool
+\end{lstlisting}
+
+Was sind Modelle?
+
+Wie sieht dann ein Algorithmus aus?
+
+Was ist eine Reduktion?
+
+
+
+\todo{Beispiel Listsearch}
+Hier ein Beispiel aus dem Algolean Repository:
+Definition der Query:
+\begin{lstlisting}
+inductive ListSearch (α : Type*) : Type → Type _ where
+  | compare (a : List α) (val : α) : ListSearch α Bool
+\end{lstlisting}
+
+Definition des Models:
+\begin{lstlisting}
+def ListSearch.natCost [BEq α] : Model (ListSearch α) ℕ where
+  evalQuery
+    | .compare l x => some x == l.head?
+  cost _ := 1
+\end{lstlisting}
+
+Definition des Programms:
+\begin{lstlisting}
+def listLinearSearch (l : List α) (x : α) : Prog (ListSearch α) Bool := do
+  match l with
+  | [] => return false
+  | l :: ls =>
+    let cmp : Bool ← compare (l :: ls) x
+    if cmp then
+      return true
+    else
+      listLinearSearch ls x
+\end{lstlisting}
+
+Lemma, die zeigen, dass sich (listLinearSearch l x).eval ListSearch.natCost genau so verhällt, wie l.contains x.
+\begin{lstlisting}
+lemma listLinearSearch_eval [BEq α] (l : List α) (x : α) :
+    (listLinearSearch l x).eval ListSearch.natCost = l.contains x := by
+  fun_induction l.elem x with simp_all [listLinearSearch]
+
+lemma listLinearSearchM_correct_true [BEq α] [LawfulBEq α] (l : List α)
+    {x : α} (x_mem_l : x ∈ l) : (listLinearSearch l x).eval ListSearch.natCost = true := by
+  simp [x_mem_l]
+
+lemma listLinearSearchM_correct_false [BEq α] [LawfulBEq α] (l : List α)
+    {x : α} (x_mem_l : x ∉ l) : (listLinearSearch l x).eval ListSearch.natCost = false := by
+  simp [x_mem_l]
+\end{lstlisting}
+
+Lemma, das besagt, dass die Laufzei (listLinearSearch l x).time ListSearch.natCost höchstens l.length also linear ist.
+\begin{lstlisting}
+lemma listLinearSearchM_time_complexity_upper_bound [BEq α] (l : List α) (x : α) :
+    (listLinearSearch l x).time ListSearch.natCost ≤ l.length := by
+  fun_induction l.elem x with
+  | case1 => simp [listLinearSearch]
+  | case2 => simp_all [listLinearSearch]
+  | case3 =>
+    simp [listLinearSearch]
+    lia
+\end{lstlisting}
+
+
+
+
+
+
+
+
+Genaueres nachgucken hier.
+\cite{algolean_doc}

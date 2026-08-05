@@ -1,12 +1,13 @@
-\section{Lean}\todo{Tail Recursion}
+\section{Lean}\todo{Tail Recursion}\todo{omega}
 \subsection{Was ist Lean}
-Lean\cite{10.1007/978-3-030-79876-5_37} ist beides eine funktionale Progammiersprache und ein Beweis Assistent für formale Beweise.
+Lean\cite{10.1007/978-3-030-79876-5_37} ist beides, eine funktionale Progammiersprache und ein Beweisassistent für formale Beweise.
 Das Projekt wurde 2013 von Leonardo de Moura und Sebastian Ullrich ins Leben gerufen.
-Die aktuelle Version Lean 4 ist selbst in Lean geschrieben und wurde im September 2023 released.
+Die aktuelle Version Lean 4 ist selbst fast vollständg in Lean geschrieben und wurde im September 2023 released.
 
-Lean basiert stark auf seinem Typen-System
+Lean basiert stark auf seinem Typen-System.
 Dieses ordnet jedem Term in Lean einen Typ zu, welcher wiederum selbst ein Term ist.
-Hier ein par Beispiele:
+Tatsächlich ist in Lean fast alles ein Typ.
+Hier ein paar Beispiele von Termen mit ihren jeweiligen Typen:
 \begin{lstlisting}
 "Hello World!" : String
 16 : Nat
@@ -22,35 +23,52 @@ Type 1 : Type 2
 Ein String ist eine Zeichenkette und Nat oder auch $\mathbb{N}$ eine natürliche Zahl.
 Fin n mit einer natürlichen Zahl n ist die Menge der natürlichen Zahlen, die kleiner als n sind.
 Ein Element von Fin n besteht zum einen aus einer Zahl val und zum anderen aus einem Nachweis isLt, dass val kleiner als n ist.
-Thesen (engl. Propositions) sind vom Typ Prop.
-Dabei ist jede These selbst wider ein Typ und die Elemente dieses Typs sind die Beweise, die sie belegen.
-Was Thesen von anderen Typen unterseidet, ist, dass alle ihre Elemente gleich sind.
-Es macht für Lean keinen Unterschied, wie eine These bewiesen wurde, solange es mindestens einen Beweis gibt.
+Aussagen (engl. Propositions) sind vom Typ Prop.
+Dabei ist jede Aussage selbst wieder ein Typ und die Elemente dieses Typs sind die Beweise, die sie belegen.
+Dem entsprechend sind falsche Aussagen leere Typen.
+Was Aussagen von anderen Typen unterseidet, ist, dass alle ihre Elemente gleich sind.
+Es macht für Lean keinen Unterschied, wie eine Aussage bewiesen wurde, solange es mindestens einen Beweis gibt.
 Alle Typen wie String, Nat, Fin 32 oder Prop haben den Typ Type.
 Auch Funktionen haben Typen, nämlich den von wo nach wo sie abbilden.
 Fin ist zum Beispiel vom Typ der Funktionen, die von Nat auf Type abbilden.
 Da in Lean alles einen Typ hat, gilt das auch Type.
 Type, was das gleiche ist wie Type 0, ist vom Typ Type 1.
 Type 1 ist wiederum vom Typ Type 2 und so weiter.
-Es gibt in Lean auf die weise unendlich viele Typ-Universen.
+Es gibt in Lean auf diese Weise unendlich viele Typ-Universen.
 
 Um eigene Typen und Funktionen definieren, gibt es in Lean verschiedene Möglichkeiten:
 Mit \textbf{def} oder \textbf{abbrev} lassen sich vor allem Funktionen definieren, aber auch konstante Elemente eines Typs oder einfache zusammen gesetzte Typen, wie zum Beispiel Tupel.
-Der Hauptunterschied dabei ist, dass aus sicht von Lean def etwas neues kreiert über das noch nichts bekannt ist, wärend abbrev eher ein Alias mit neuem Namen erzeugt.
-Komplexere Typen lassen sich als \textbf{structure} definieren was an Klassen aus dem objektorientierten Progammieren erinnert mit beliebig vielen Atributen und Methoden.
+Der Hauptunterschied dabei ist, dass aus Sicht von Lean def etwas neues kreiert über das noch nichts bekannt ist, wärend abbrev eher ein Alias mit neuem Namen erzeugt.
+Komplexere Typen lassen sich als \textbf{structure} definieren was an Klassen aus dem objektorientierten Progammieren erinnert mit beliebig vielen Atributen.
 \begin{lstlisting}
 def myType : Type := Nat × String
 
 def f (x : Nat) : Nat := 3*x^2 - 4*x + 5
 
 structure edge : Type where
+  mk ::
   node1 : Nat
   node2 : Nat
   nodesLt : node1 < node2
 \end{lstlisting}
+
+Wenn man möchte, kann man vor den Atributen noch den Namen des Konstruktors angeben, gefolgt von zwei Doppelpunkten.
+Tut man das nicht, dann ist der standardmäßige Name mk.
+Um nun ein Element des Typs zu erzeugen, hat man nun verschiedene Möglichkeiten.
+Man kann den Konstruktor mit seinem Namen aufrufen, man kann den Konstruktor anonym aufrufen, indem man spitze Klammern verwendet,
+oder man kann mit geschweiften Klammern den einzelnen Feldern über ihren Namen Werte zuweisen, anstatt über ihre Position.
+
+\begin{lstlisting}
+edge.mk 1 3 (by omega) : edge
+⟨1, 3, (by omega)⟩ : edge
+{ node1 := 1, node2 := 3, nodesLt := (by omega)} : edge
+\end{lstlisting}
 Mit \textbf{inductive} lassen sich induktive Typen definieren.
 Über diese lassen sich dann auch Induktionen führen.
-Die häfigsten Beispiele dafür sind die natürlichen Zahlen und Listen.
+Die häufigsten Beispiele dafür sind die natürlichen Zahlen und Listen.
+
+Eine natürliche Zahl ist in Lean zum Beispiel so definiert, dass sie entweder die Null ist, oder der Nachfolger einer anderen natürlichen Zahl.
+Und ein Liste ist entweder die leere Liste, oder sie besteht aus einem ersten Element und einer Restliste.
 \begin{lstlisting}
 inductive myNat : Type where
   | zero : myNat α
@@ -61,11 +79,11 @@ inductive myList (α : Type) : Type where
   | cons (head : α) (tail : myList α) : myList α
 \end{lstlisting}
 
-Wenn Funktionen für mehrere Typen definiert sein sollen (Polymorphie), geht das entweder, indem der Typ ein ein Argument der Funktion ist, oder über Typ-Klassen (Ad-hoc Polymorphie).
+Wenn Funktionen für mehrere Typen definiert sein sollen (Polymorphie), geht das entweder, indem der Typ ein Argument der Funktion ist, oder über Typ-Klassen (Ad-hoc Polymorphie).
 Letztere empfehlen sich vor allem dann, wenn sich die Funktion je nach Typ anders verhallten und beliebig erweiterbar sein soll.
 Klassen werden mit \textbf{class} oder \textbf{class inductive} definiert werden, was dann so aussieht, wie bei structure oder inductive.
-Dabei sind dann die Funktionen, die für alle Typen dieser Klasse definiert sein sollen, in der Klasse deklariet aber nicht definiert.
-Wie diese Funktionen für den einzelnen Typen definiert sein sollen ist ja individuell.
+Dabei sind dann die Funktionen, die für alle Typen dieser Klasse definiert sein sollen, in der Klasse deklariert aber nicht definiert.
+Wie diese Funktionen für den einzelnen Typen definiert sein sollen ist individuell.
 
 Damit ein Typ nun Teil einer Klasse werden kann, muss für ihn eine Instanz erstellt werden, in der definiert ist, wie sich jede einzelne Funktion für ihn verhält.
 
@@ -76,13 +94,13 @@ Ein Beispiel für eine komplexere Klasse wäre zum Beispiel eine Gruppe:
 class Group (α : Type) (add : α → α → α) where
   e : α
   add_assoc (a b c : α) : add (add a b) c = add a (add b c)
-  ex_nutral : ∀ (a : α), add a e = a
+  ex_neutral : ∀ (a : α), add a e = a
   ex_invers : ∀ (a : α), ∃ (h : α), add a h = e
 
 instance int_Group : Group Int Add.add where
   e := 0
   add_assoc := Int.add_assoc
-  ex_nutral := Int.add_zero
+  ex_neutral := Int.add_zero
   ex_invers := by
     intro a
     refine ⟨-a, by grind⟩
@@ -91,51 +109,52 @@ instance int_Group : Group Int Add.add where
 Mit \textbf{theorem} (oder wenn man die Mathlib Bibliothek verwendet, äquivalent mit \textbf{lemma}) lassen sich Beweise für Aussagen definieren.
 Das ähnelt vom Aufbau her der Definition mit def nur das der Typ jetzt die Aussage ist.
 
-Es gibt drei arten von Argumenten, die bei einer Definition angegeben werden können:
+Es gibt drei Arten von Argumenten, die bei einer Definition angegeben werden können:
 \begin{itemize}
   \item In runden Klammern stehen die normalen Argumente, die beim Aufruf übergeben werden müssen.
-        Sie weredn geschrieben als ein oder mehrere Namen gefolgt von einem Doppelpunkt und dem Typ.
-  \item In geschweiften Klammern stehen implezite Argumente
-        Sie haben den selben Aufbau, werden aber im Regelfall nicht mit übergeben.
+        Sie werden geschrieben als ein oder mehrere Namen gefolgt von einem Doppelpunkt und dem Typ.
+  \item In geschweiften Klammern stehen implizite Argumente.
+        Sie haben den selben Aufbau, werden aber im Regelfall nicht mit übergeben, sondern können von den normalen Argumenten erschlossen werden.
   \item In eckigen Klammern stehen Bedingungen an Klassenzugehörigkeiten.
-        Sie bekommen in der Regel keine Namen, besthehen also nur aus ihrer Aussage.
+        Sie bekommen in der Regel keine Namen, bestehen also nur aus ihrer Aussage.
         Sie müssen auch nicht übergeben werden.
-        Es reicht, dass eine Instanz existiert.
+        Es reicht, dass eine Instanz existiert, da Lean selbstständig nach der definition von Instanzen sucht.
 \end{itemize}
 Ein Beispiel, wo alle drei vorkommen wäre diese Lemma, das besagt, dass eine Listevon beliebigem Typ kürzer wird, wenn man eines ihrer Elemente rausfiltert:
 \begin{lstlisting}
 theorem length_of_filter_mem {α : Type} {l : List α} {a : α} [DecidableEq α] (h_mem : a ∈ l) : l.length ≥ 1 + (l.filter (fun b => b ≠ a)).length := by …
 \end{lstlisting}
 In dem Nachweis h\_mem, dass das Element a in der Liste l enthalten ist, sind a, l und der Typ $\alpha$ implizit enthalten.
-Es reicht also den Beweis h\_mem zu übergeben, wenn man dieses Lemma nutzen möchte,
-sofern es für den entsprechenden Typ eine Instanz der Klasse DecidableEq gibt, also für zwei Elemente entscheidbar ist, ob sie gleich sind.
+Es reicht also den Beweis h\_mem zu übergeben, wenn man dieses Lemma nutzen möchte.
+Allerdings muss es für den entsprechenden Typ eine Instanz der Klasse DecidableEq gebe, das heißt, es muss für zwei Elemente entscheidbar sein, ob sie gleich sind.
+Ohne DecidableEq kann filter hier nicht ausgeführt werden.
 
-% Der Taktik Modus und das Laufen beim Schreiben
-Der Beweis für eine Aussage passiert dann im Taktik Modus, einer interaktiven Beweisumgebung.
+% Der Taktikmodus und das Laufen beim Schreiben
+Der Beweis für eine Aussage passiert dann in der Regel im Taktikmodus, einer interaktiven Beweisumgebung.
 Diese wird durch \textbf{by} nach dem := geöffnet.
-Im Kontext des Taktik Modus befinden sich die aktuellen lokalen Konstanten und Hypothesen sowie das Ziel, das durch $\vdash$ gekennzeichnet ist.
+Im Kontext des Taktikmodus befinden sich die aktuellen lokalen Konstanten und Hypothesen sowie das Ziel, das durch $\vdash$ gekennzeichnet ist.
 Diese können nun mit Taktiken Stück für Stück verändert und angepasst werden, bis das das Ziel geschlossen ist.
 Dabei kann es auch vorkommen, dass zwischenzeitlich weitere Ziele geöffnet werden, diese müssen in dem Fall alle der Reihe nach geschlossen werden, damit die Aussage bewiesen ist.
 
-Lean hat die Besonderheit, das es den Code bereits beim schreiben auswertet und mitlaufen lässt und einem so immer den aktuelln Zustand des Kontextes im Editor anzeigt.
-In Abbildung \ref{leaninvscode} kann man das in aktion sehen.
+Lean hat die Besonderheit, das es den Code bereits beim schreiben auswertet und mitlaufen lässt und einem so immer den aktuellen Zustand des Kontextes im Editor anzeigt.
+In Abbildung \ref{leaninvscode} kann man das in Aktion sehen.
 
 Die von mir am häufigsten verwendeten Taktiken stelle ich im folgenden einmal kurz vor.
 
-Die Taktik \textbf{rfl} steht für reflexiv und schließt jedes Ziel der Form $x = x$.
+Die Taktik \textbf{rfl} steht für reflexiv und schließt jedes Ziel der Form x = x.
 
-Die Taktik \textbf{rw} (kurz für rewrite) nimmt als Argument eine Liste von Gleichungen, also eine Aussagen der Form $x = y$ und ersetzt im Ziel dann alle Vorkommen von Term $x$ durch Term $y$.
+Die Taktik \textbf{rw} (kurz für rewrite) nimmt als Argument eine Liste von Gleichungen, also eine Aussagen der Form x = y und ersetzt im Ziel dann alle Vorkommen von Term x durch Term y.
 Alternativ ersetzt die Taktik \textbf{nth\_rewrite} nur des n-te Vorkommen.
 
-Die Taktik \textbf{apply} funktioniert so ähnlich und nimmt als Argument eine Aussage der Form $a \rightarrow b$.
-War das Ziel ein Beweis für Aussage $b$, ist nun das neue Ziel ein Beweis für Aussage $a$.
+Die Taktik \textbf{apply} nimmt als Argument eine Aussage der Form a $\rightarrow$ b.
+War das Ziel ein Beweis für Aussage b, ist nun das neue Ziel ein Beweis für Aussage a.
 
 Die nächsten zwei Taktiken sind Automatisationen, die einem Beweisarbeit abnehmen.
 \textbf{simp} versucht das Ziel so weit es geht zu vereinfachen und tut dies quasi durch wiederholtes Verwenden von rw.
 Dafür nimmt sie wie rw als Argument eine Liste von Gleichungen, allerdings probiert sie auch alle bereits existierenden Beweise, die mit dem Tag simp markiert wurden.
 Davon gibt es in Lean schon von Haus aus viele, aber durch Bibliotheken, wie zum Beispiel Mathlib, oder auch eigene Theoreme kommen noch mehr hinzu.
 Mit dem optionalen Argument only kann man dafür sorgen, dass nur die übergebenen Gleichungen verwendet werden.
-Es gibt auch die option nur einzelne Gleichungen auszuschließen, indem man sie in der Liste mit aufführt und je ein Minus davor schreibt.
+Es gibt auch die Option nur einzelne Gleichungen auszuschließen, indem man sie in der Liste mit aufführt und je ein Minus davor schreibt.
 rw und simp lassen sich ausßerdem mit dem Zusatz \textbf{at} auch auf eine oder mehrere Hypothesen anwenden.
 
 Ein Beispiel, wie man mit den Gleichungen h1 und h2 die Aussagen h3, h4 und h5 vereinfachen würde:
@@ -144,17 +163,18 @@ simp [h1, h2] at h3 h4 h5
 \end{lstlisting}
 
 Die andere Automatisierung ist \textbf{grind}.
-Sie ist von modernen SMT Solvern inspiriert und versucht ein Ziel zu schließen, indem sie aus allen bekanten Fakten immer weitere Fakten ableitet und dabei hofft auf einen Widerspruch zu stoßen.
+Sie ist von modernen SMT Solvern\todo{SMT Solver kurz erklären} inspiriert und versucht ein Ziel zu schließen, indem sie aus allen bekanten Fakten immer weitere Fakten ableitet und dabei hofft auf einen Widerspruch zu stoßen.
 
 Die Taktiken \textbf{let} und \textbf{have} sind die lokalen Varianten von def und theorem. 
 Mit let können lokale Konstanten und Funktionen definiert werden und mit have quasi lokale Hilfslemma.
-Diese müssen natürlich auch erst einmal bewiesen werden und erzeugen ein vorrangiges Ziel, das zuerst geschlossenwerden muss, bevor es im eigentlichen Ziel weiter geht.
-Im gegensatz zu anderen Taktiken können diese beiden auch außerhalb des des Taktik Modus benutzt werden, zum Beispiel innerhalb einer Definition mit def.
+Diese müssen natürlich auch erst einmal bewiesen werden und erzeugen ein vorrangiges Ziel, das zuerst geschlossen werden muss, bevor es im eigentlichen Ziel weiter geht.
+Im Gegensatz zu anderen Taktiken können diese beiden auch außerhalb des Taktikmodus benutzt werden, zum Beispiel innerhalb einer Definition mit def.
 
 Mit der Taktik \textbf{intro} kann eine Bedingung aus dem dem Ziel holen und als Konstante oder Hypothese in den Kontext aufnehmen.
 Als Argument nimmt sie den Namen, den das Element dann bekommt.
-Aus dem Ziel $a \rightarrow b$ wird dann durch intro h die neue Hypothese $h : a$ angelegt und das Ziel ist dann nurnoch $b$.
-Man kan auch mehrere Namen angeben, was den Effekt hat, als würde man intro mehrmals hinter einander aufrufen.
+Aus dem Ziel a $\rightarrow$ b wird dann durch intro h die neue Hypothese h : a angelegt und das Ziel ist dann nur noch b.
+Genauso kann intro aus einem Ziel mit einer Aussage über alle Elemente x ein generisches x als Konstante in den Kontext holen, sodass das Ziel nur noch eine Aussage über dieses x ist.
+Man kann auch mehrere Namen angeben, was den Effekt hat, als würde man intro mehrmals hinter einander aufrufen.
 
 \textbf{revert} ist die Umkehrfunktion von intro.
 Sie nimmt als Argument einen oder mehrere Namen und fügt die entsprechenden Elemente als Bedingungen dem Ziel hinzu.
@@ -170,7 +190,7 @@ So ähnlich funktioniert auch \textbf{cases} welche für ein Element mit einem i
 
 Man kann einenem Induktionsbeweis auch über rekursive Funktionen führen.
 Das geht ebenfalls mit induction oder besser noch mit \textbf{fun\_induction}.
-Dabei werden die inputs der der Funktion generalisiert und pro möglicher Fallunterscheidung ein Ziel geöffnet.
+Dabei werden die Inputs der der Funktion generalisiert und pro möglicher Fallunterscheidung ein Ziel geöffnet.
 Die Fälle, in denen die Funktion terminiert sind dann die Basisfälle.
 Und die, in denen sich die Funktion rekursiv aufruft, besgt dann die Induktionshypothese, dass der rekursive Aufruf die Bedingungen des Ziels erfüllt.
 
@@ -195,22 +215,22 @@ h_eq : x.id = id
 --
 \end{lstlisting}
 
-Hat das Ziel die Form $a \lor b$ reicht es eine der beiden Aussagen zu zeigen.
-\textbf{left} und \textbf{right} machen aus dem Ziel dann nurnoch $a$ bzw. nurnoch $b$.
+Hat das Ziel die Form a $\lor$ b reicht es eine der beiden Aussagen zu zeigen.
+\textbf{left} und \textbf{right} machen aus dem Ziel dann nur noch a bzw. nur noch b.
 
-Hat das Ziel hingegen die Form $a \land b$ müssen beide Aussagen gezeigt werden.
+Hat das Ziel hingegen die Form a $\land$ b müssen beide Aussagen gezeigt werden.
 Die Taktik \textbf{constructor} spaltet das Ziel dann in zwei Ziele auf, die dann nacheinander gelöst werden müssen.
 
 \textbf{refine} und \textbf{exact} sind beides Taktiken um ein Ziel zu schließen.
 Hat man es durch Umformungen von Ziel und Hypothese geschafft, dass eine Hypothese h genau das aussagt, was im Ziel steht, kann man es mit exact h schließen.
-hat man hingegen nur Teile der Aussage, kann man stattdessen refine benutzen, welche dann das Ziel schließt, aber für jede Lücke wieder ein Ziel öffnet.
+Hat man hingegen nur Teile der Aussage, kann man stattdessen refine benutzen, welche dann das Ziel schließt, aber für jede Lücke wieder ein Ziel öffnet.
 
 Keine Taktik aber auch ganz nützlich sind die Platzhalte \textbf{\_} und \textbf{?\_}.
-Überall wo ein Beweis als grgument gefordert ist, kann stattdessen auch ?\_ angegeben werden, was bedeutet, dass man den beweis nachreicht.
+Überall wo ein Beweis als Argument gefordert ist, kann stattdessen auch ?\_ angegeben werden, was bedeutet, dass man den Beweis nachreicht.
 Der Beweis wird also als weiteres Ziel geöffnet, um das man sich dann kümmert, wenn man das aktuelle geschlossen hat.
 Das ist auch mit Lücke bei refine gemeint.
 Hingegen kann man \_ überall da anwenden, wo das zu ersetzende aus dem Zusammenhang eindeutig impliziert wird.
-Zum Beispiel leifert die Funktion List.choose das erste Element einer Liste, das eine gegebene Bedingung erfüllt.
+Zum Beispiel liefert die Funktion List.choose das erste Element einer Liste, das eine gegebene Bedingung erfüllt.
 Dafür fordert sie als Argumente die Bedingung p, die Liste l und einen Nachweis hp, dass es auch ein solches Element gibt.
 \begin{lstlisting}
 def List.choose (p : α → Prop) [DecidablePred p] (l : List α) (hp : ∃ a, a ∈ l ∧ p a) : α
@@ -222,27 +242,34 @@ let x : α := List.choose _ _ hp
 \end{lstlisting}
 
 Und dann gibt es da noch die \textbf{sorry} Taktik, die jedes Ziel sofort schließt.
-Diese ist allerdings nur zum Vorläufing verhindern von Fehlermeldungen gedacht und sollte in einem echten Beweis nicht mehr vorkommen.
+Diese ist allerdings nur zum Vorläufing verhindern von Fehlermeldungen gedacht.
+Man kann sie zum Beispiel verwenden, wenn man ein für einen Beweis ein Lemma benötigt und dieses kurz definiert,
+aber noch nicht Bewisen möchte, da man erst den ursprünglichen Beweis beenden möchte,
+oder wenn man ein Lemma benutzen möchte das einen Existenznachweis verlangt, den man gerade nicht zur Hand hat.
+Generell werden sorrys dann benutzt, wenn man sich nicht von einem Nebenbeweis aus dem Takt bringen lassen möchte.
+In einem feritgen Beweis sollte aber kein sorry mehr vorkommen.
 
 Für mehr Informationen über Lean, seine Geschiche oder genaue Definitionen empfehle ich, auf der Lean Webseite\cite{lean_lang} oder der Lean Sprach Referenz\cite{lean_lang_doc} nachzulesen.
 
-\begin{figure}
+\begin{figure}[H]
     \missingfigure{Bild vom Lean Kontext}
     \caption{Lean Beweisführung in VS Code: Links der Quellcode und Rechts der Kontext}
     \label{leaninvscode}
 \end{figure}
 
 \subsection{Anwendung}
-Die Häufigsten Anwendungen von Lean sind zum einen maschienenlesbare Formalisurngen von Mathematik und zum anderen die validierung von Software.
+\todo{Beispiele}% Anmerkung Tantow: Ein paar Beispiele wären hilfreich. Such dir bei DBLP z.B. aus ITP 2025/2024 etwas aus
+Die häufigsten Anwendungen von Lean sind zum einen maschinenlesbare Formalisirungen von Mathematik und zum anderen die Validierung von Software.
 
 Es bringt diverse Vorteile, mathematische Aussagen und Beweise zu formalisieren.
-Um ein par zu nennen wären da zum Beispiel:
+Um ein paar zu nennen wären da zum Beispiel:
 \begin{itemize}
   \item Eine klare eindeutige Definition, die nicht falsch verstanden werden kann.
   \item Die Sicherheit, einem Beweis vertrauen zu können, da garantiert kein Sonderfall vergessen oder unbemerkt durch Null geteilt wurde, oder Ähnliches.
   \item Die Möglichkeit, dass auch eine KI die Aussage verstehen und eventuell beweisen kann.
         Im Gegensatz zu Beweisen in natürlicher Sprache kann eine KI dabei keine Logikfehler oder Halluzinationen einbauen, da Lean diese nicht zulässt.
 \end{itemize}
+\todo{mögliche Quelle} % Anmerkung Tantow: Mehr darüber in Patrick Massot, Why formalize mathematics?
 
 Das wohl wichtigste Projekt in Lean ist wahrscheinlich Mathlib\cite{mathlib2020}, da es die eine Grundlage für sehr viele andere Projekte bildet.
 Mathlib ist die größte Lean Bibliothek und ein Gemeinschaftsprojekt von hunderten Mitwirkenden auf der ganzen Welt.
@@ -256,36 +283,36 @@ Im Gegensatz zu Mathlib und anderen Projekten, wo Beweise gesammelt werden, geht
 darunter unter anderem Probleme aus der Samlung von Paul Erdős\todo{cite Erdős}, oder der Online Encyclopedia of Integer Sequences (OEIS)\todo{cite OEIS}.
 Ziel dieser Samlung ist es, zum einen KI-Systemen ein Benchmark zu liefern, an dem sie sich ausprobieren können und mit unter neue Beweise entdecken können,
 zum anderen Klarheit zu schaffen, da nicht jede mathematische Vermutung immer sauber formuliert ist
-und zum dritten aufzuzeigen in welchen Feldern der Mathematik noch Lücken sind und wo es sich zu forschen lohnt, um damit schlussendlich wieder Mathlib weiter voran zu treiben.
+und zum dritten aufzuzeigen, in welchen Feldern der Mathematik noch Lücken sind und wo es sich zu forschen lohnt, um damit schlussendlich wieder Mathlib weiter voran zu treiben.
 
 Software Validierung ist vorallem bei Sicherheitsrelevanter Software als Erweiterung zum Testen im kommen.
 Microsoft nutzt zum Beispiel Lean um nachweislich sichere Kryptographie zu Produzieren.
-Wie in diesem Bolg-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft Lean um die Einhaltung von Standarts zu verifizieren.\todo{anders?}
+Wie in diesem Blog-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft Lean um die Einhaltung von Standards zu verifizieren.\todo{anders?}
 Da in der Kryptographie der Code häufig sehr hardwarenah und architekturabhängig geschrieben wird
-und Laufzeitoptimirungen enthält sieht er selten genau so aus, wie der Algorithmus aus dem Standart.
-Um hierbei sicher zu gehen, dass die Funktionsweise immer noch die gleiche ist, reicht Testen nicht immer aus, da ein kleiner Fehler die Sicherheit des gesamten Systhems untergraben kann.
-Deshalb formalisieren sie die Standarts in Lean.
+und Laufzeitoptimirungen enthält, sieht er selten genau so aus, wie der Algorithmus aus dem Standard.
+Um hierbei sicher zu gehen, dass die Funktionsweise immer noch die gleiche ist, reicht Testen nicht immer aus, da ein kleiner Fehler die Sicherheit des gesamten Systems untergraben kann.
+Deshalb formalisieren sie die Standards in Lean.
 Eine Implementation in Rust wird dann auf eine äquivalente Implementatierung in Lean abgebildet.
 Der Vorteil gegenüber dem Testen ist, dass nun bewiesen werden kann, dass für alle möglichen Inputs, die eventuelle Vorbedingungen erfüllen, auch ein korrekter Output erzeugt wird.
 Wohingegen Testen immer nur für begrenzt viele Inputs zeigen kann, dass der Output korrekt ist.
 
 \subsection{Lean und KI}
-Wie bereits erwähnt, ist einer der Vorteile einer Formalisierung, dass man, sobalt das Problem formalisiert wurde, eine KI darauf ansetzen kann, es zu lösen.
-Oder wenn bereits ein Beweis bekannt ist, kann KI probieren einen einfacheren oder schnelleren zuu finden.
+Wie bereits erwähnt, ist einer der Vorteile einer Formalisierung, dass man, sobald das Problem formalisiert wurde, eine KI darauf ansetzen kann, es zu lösen.
+Alternativ wenn bereits ein Beweis bekannt ist, kann KI probieren einen einfacheren oder schnelleren zu finden.
 
 Aus persönlicher Erfahrung kann ich sagen, dass KIs wie ChatGPT oder Copilot, die nicht auf Lean spezialisiert sind, selten hilfreich sind.
 Sie können einem zwar Fehlermeldungen erklären und warum eine Taktik hier nicht funktioniert, was helfen kann, wenn man neu in Lean ist,
-verstehen aber nicht wirklich die Intension, die hinter dem Versuch steckt und liefern nur selten funktionierende Lösungsvorschläge.
+verstehen aber nicht wirklich die Intention, die hinter dem Versuch steckt und liefern nur selten funktionierende Lösungsvorschläge.
 
 Wie Large Language Models (LLMs) trozdem zum Generieren von Beweisen genutzt werden können zeigt dieses Paper \cite{tsoukalas2026advancingmathematicsresearchaidriven},
-in dem das Framework AlphaProof Nexus für LLM-gestütze Beweis Generierung vorgestellt wird.
+in dem das Framework AlphaProof Nexus für LLM-gestütze Beweisgenerierung vorgestellt wird.
 Als Input bekommt das Framework ein formalisiertes Problem, das mit sorry gelöst ist.
 Dann versuche mehrere Agenten und Subagenten, mit teilweise geteiltem Speicher und teilweise nicht geteiltem Speicher, das Problem zu Lösen.
-Dabei abeiten sie in Episoden, wobei sie nach jedem mal mit Lean checken ob ihr aktueller Beweis compiliert.
+Dabei arbeiten sie in Episoden, wobei sie nach jedem mal mit Lean checken ob ihr aktueller Beweis compiliert.
 Die Ergebnisse sind dann wieder Teil des Inputs für die nächste Episode.
 Dabei wenden die Agenten verschiedene Ansätze an, wie sie weiter machen.
 Die ohne geteilten Speicher überdenken ihren Ansatz selbst und die mit sammeln ihre Ergebnisse, welche dann von einem Bewertungsagenten bewertet werden.
-Getestst wurde das Framework an einer auswahl von Problemen aus den Samlungen von Erdős und der OEIS.
+Getestet wurde das Framework an einer Auswahl von Problemen aus den Samlungen von Erdős und der OEIS.
 Hierbei wurde zum Beispiel auf das Repository Formal Conjectures zurückgegriffen.
 AlphaProof Nexus hat es dabei Tatsächlich geschafft, 9 der Erdős Probleme zu lösen und 44 der OEIS Probleme.
 Die gefundenen Lösungen kann man hier\todo{cite results} einsehen.
@@ -293,14 +320,15 @@ Das ist schon beeindruckend, wenn man bedenkt, dass die Erdős Probleme seit üb
 Allerdings muss man dabei auch beachten, das es sich an 353 Problemen von Erdős und 492 von OEIS versucht hat.
 
 In dem zuvor genannten Blog-Post\cite{microsoftresearchblog} wird auch erklärt, wie KI bereits beim Validieren von Software zum Einsatz kommt und welche Aufgaben sie übernimmt.
-Zum einen das Übersetzen von Standarts in Lean Spezifikationen.
-Diese müssen natürlich getestet und von Menschen geprüft werden, spraren unterm Strich aber trozdem Arbeit.
+Zum einen das Übersetzen von Standards in Lean Spezifikationen.
+Diese müssen natürlich getestet und von Menschen geprüft werden, sparen unterm Strich aber trotzdem Arbeit.
 Zum anderen beim automatischen Schreiben und Aktualisieren von Beweisen.
-Das Schöne ist, das Lean garantiert, dass ein Beweis auch funktioniert, sofer also der Fehler nicht schon in der Formulierung der zu beweisenden Aussage liegt,
-kann ein Beweis, der von einer KI geschrieben wurde, nicht fälschlich positiv Sein.
+% Zum anderen kommt sie beim automatischen Schreiben und Aktualisieren von Beweisen zum Einsatz.
+Das Schöne ist, dass Lean garantiert, dass ein Beweis auch funktioniert, sofern also der Fehler nicht schon in der Formulierung der zu beweisenden Aussage liegt,
+kann ein Beweis, der von einer KI geschrieben wurde, nicht fälschlich positiv sein.
 Menschen müssen nur die Beweise per Hand schreiben, bei denen die KI scheitert.
 
 Aus dem Post klingt mit das die Erfolgsquote höher ist als 9 aus 353, was meiner Schätzung nach daran liegen könnte,
-dass die Probleme dort häfiger Ähnlichkeiten hat zu Problemen, dessen Lösung die KI bereits kennt.
+dass die Probleme dort häufiger Ähnlichkeiten hat zu Problemen, dessen Lösung die KI bereits kennt.
 
 % \cite{heise} Wirklich verwenden?

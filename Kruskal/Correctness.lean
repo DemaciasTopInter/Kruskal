@@ -1084,9 +1084,8 @@ theorem init_unionFind_reachable_parent
   (h_uF : uF = init_unionFind nodeList h_nodup)
   (uFL : unionFindLink nodeList)
   (h_in : uFL ∈ uF.linkList)
-  (h_empty : edgesSoFar = [])
   (h_nonempty : nodeList ≠ [])
-  : (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => G.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩) { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [h_empty, Symmetric]), loopless := (by simp [h_empty, irrefl_def]) } := by
+  : (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => G.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩) { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) } := by
   have h_eq := uFL_choose_self h_in h_nodup
   simp [h_uF, init_unionFind, h_nonempty, init_unionFind.linkList] at h_in
   have h_self_con := init_unionFind.linkList.helper_all_self_connected nodeList nodeList (by simp [h_nonempty]) uFL h_in

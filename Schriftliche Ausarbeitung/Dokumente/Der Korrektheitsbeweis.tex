@@ -15,12 +15,13 @@ Der Code aus diesem Abschnitt ist in der Datei Correctness.lean zu finden.
 Ziel des Korrektheitsbeweises ist es zu zeigen, dass das Program bei korrektem Input tatsächlich die Kantenmenge für einen minimalen Spannbaum liefert.
 Ich muss also zunächst definieren, was ein Spannbaum ist und unter welchen Umständen er minimal ist.
 Dafür habe ich auf die SimpleGraph Struktur aus Mathlib zurückgegriffen um Graphen da zu stellen.
-Diese hat den Vorteil, dass sie einen ungerichteten Graphen implementiert und bereits eine Menge Lemma dazu in Mathlib enthalten sind.
+Diese hat den Vorteil, dass sie einen ungerichteten Graphen implementiert und bereits eine Menge Lemma dazu in Mathlib enthalten sind,
+sowie auch Definitionen, was ein Kantenzug ist und wann zwei Knoten verbunden sind.
 Der Nachteil ist, dass sie keine Kantenkosten unterstützt.
 
 \begin{definition}[\KruskalSimpleGraphIsSpanningTree]
   Ein Graph G ist dann ein Spannbaum eines anderen Graphen H, wenn er erstens G ein Subgraph (in Lean $\le$) von H ist, also alle Kanten von G auch Kanten von H sind,
-  zweitens G azyklisch ist und drittens alle Paare von Knoten die sich in H ereichen können das auch in G können.
+  zweitens G azyklisch ist und drittens alle Paare von Knoten die sich in H erreichen können das auch in G können.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalSimpleGraphIsSpanningTree.) (G H : SimpleGraph α) : Prop := H ≤ G ∧ H.IsAcyclic ∧ (∀ (x y : α), G.Reachable x y ↔ H.Reachable x y)
@@ -307,7 +308,7 @@ theorem kruskal_helper_not_con_invariant_append
 
 
 \begin{lemma}[\KruskalnodeListofkruskalperm]
-  Die Konten-Liste, die aus der Ergebnisliste des Algorithmus mit \KruskalnodeListofedgeList erzeugt wird ist bis auf Reihenfolge identisch zu der die aus der Kanten-Liste generiert wird.
+  Die Knoten-Liste, die aus der Ergebnisliste des Algorithmus mit \KruskalnodeListofedgeList erzeugt wird ist bis auf Reihenfolge identisch zu der die aus der Kanten-Liste generiert wird.
   Also ein Knoten ist genau dann in der einen Liste, wenn er auch in der anderen ist.
 \end{lemma}
 \begin{proof}
@@ -356,6 +357,17 @@ Die nächste Bedingung für einen Spannbaum ist, dass der Graph keine Kreise hat
 \begin{theorem}
   \KruskalSimpleGraphofkruskal ist Azyklisch.
 \end{theorem}
+
+Mein Gedanke war, dass ich die Kreisfreiheit zeigen kann, wenn ich nachweisen kann, dass folgende Eigenschaft über \Kruskalkruskalhelper invariant ist:
+\begin{itemize}
+  \item[1.] Der Graph der aktuellen ErgebnisKantenListe ist azyklisch.
+\end{itemize}
+Die Eigenschaft lässt sich dann mit der nächsten Invariante zeigen und diese dann wieder mit der nächsten.
+\begin{itemize}
+  \item[2.] Zwei Knoten haben genau dann die gleiche Zusammenhangskomponente in der aktuellen Union-Find-Struktur,
+  wenn sie sich im Graph der aktuellen ErgebnisKantenListe über einen Kantenzug erreichen können.
+  \item[3.] Der Knoten eines Zeigers und der seines Nachfolgers sind in dem Graph der aktuellen ErgebnisKantenListe über einen Kantenzug erreichbar.
+\end{itemize}
 
 Hier habe ich den größten Teil noch geschafft aber die letzten Lücken konnte ich nicht meher schließen.
 \todo{Reihen\-folge festlegen und Text zwischen den Lemmata}
@@ -526,7 +538,7 @@ termination_by nodeList.length - uFL.rank
 
 
 
-\begin{lemma}[\KruskalgetparentpathlasteqconnectedcomponentofunionFindofunionFindLink]
+\begin{lemma}[\KruskalgetparentpathlasteqconnectedcomponentofunionFindofunionFindLink]\label{KruskalgetparentpathlasteqconnectedcomponentofunionFindofunionFindLink}
   Die Knoten-ID des letzten Zeigers einens Parentpath ist die ID des Repräsentanten der Zusammenhangskomponente des Zeigers, dessen Parentpath es ist.
 \end{lemma}
 \begin{proof}
@@ -534,31 +546,59 @@ termination_by nodeList.length - uFL.rank
   Und weil alle Zeiger des Parentpaths die selbe Zusammenhangskomponente habe, gilt das auch für den aufrufenden Zeiger.
 \end{proof}
 
-Bis hier Quality of live
+Bis hier Quality of live\todo{hier}
 
-\begin{lemma}[\KruskalinitunionFindreachableparent]\todo{hier}
-  
+Um jetzt die dritte Invariante zu zeigen, beginne ich damit, zu zeigen, dass sie am Anfang gilt.
+
+\begin{lemma}[\KruskalinitunionFindreachableparent]
+  Wenn die Union-Find-Struktur frisch initialisiert wurde, dann ist für jeden Zeiger der eigene Knoten und der Knoten des Parents im Graph der ErgebnisKantenListe durch einen Kantenzug erreichbar.
 \end{lemma}
 \begin{proof}
-  
+  In einer frisch initialisierten Union-Find-Struktur zeigt jeder Zeiger auf seinen eigenen Knoten, ist also sein eingener Parent.
+  Sein Knoten ist durch den leeren Kantenzug mit sich selbst verbunden.
 \end{proof}
 
 
 
 \begin{lemma}[\Kruskalparentwalk]
-
+  Wenn für jeden Zeiger der eigene Knoten und der Knoten des Parents im Graph der ErgebnisKantenListe durch einen Kantenzug erreichbar ist,
+  dann auch der Knoten des letzten Zeigers seines Parentpaths.
 \end{lemma}
 \begin{proof}
-  
+  Das ist wieder ein Beweis mit einer Induktion über \Kruskalgetparentpath.
+  Im Basisfall zeigt der aufrufenden Zeiger selbst der letzte und es reicht der leere Kantenzug.
+  Im anderen Fall gibt es nach Vorraussetzung einen Kantenzug vom aufrufenden Zeiger zu seinem Parent.
+  Und nach der Induktionshypothese gibt es vom Parent auch einen Kantenzug zum letzten Zeiger.
+  Hängt man diese beiden Kantenzüge an ein ander, erhält man einen vom aufrufenden Zeiger bis zum letzten.
 \end{proof}
 
 
 
 \begin{lemma}[\KruskalupdateunionFindreachableparent]
-
+  Wenn für die aktuelle Union-Find-Struktur und die aktuelle ErgebnisKantenListe gilt,
+  dass für jeden Zeiger sich der eigene Knoten und der Knoten des Parents im Graph der ErgebnisKantenListe durch einen Kantenzug erreichen können,
+  dann gilt das auch für die geupdatete Union-Find-Struktur und die geupdatete ErgebnisKantenListe.
 \end{lemma}
 \begin{proof}
-  
+  Seien e1 und e2 die Knoten der neuen Kante und seien x und y die Repräsentanten ihrer Zusammenhangskomponenten.
+  Ich unterscheide, ob x und y gleiche sind.
+  Falls ja, wird die Kante nicht aufgenommen und die Union-Find-Struktur und die ErgebnisKantenListe verändern sich nicht.
+  Falls nein, mache ich direkt die nächste Fallunterscheidung, je nach dem ob der Zeiger von x oder der Zeiger von y den höheren Rang hat, um zu wissen, wie deren neue Zeiger aussehen.
+  In beiden Fällen mache ich aber fast das Gleiche.
+  Sei nun beispielsweise x der Knoten mit dem kleineren Rang.
+
+  Und sei also uFL ein beliebiger Zeiger der geupdateten Union-Find-Struktur, dann ist er entweder der neue Zeiger von x oder y oder er ist einer der alten Zeiger.
+
+  Falls es einer der alten Zeiger ist, dann gab es bereits im alten Graph einen entsprechenden Kantenzug und da der alte Graph ein Subgraph des neuen ist, gibt es den dort immernoch.
+  Falls uFl der neue Zeiger von x ist, dann ist der neue Zeiger y sein Parent.
+  Entsprechend dem vorrangegangenen Lemma gibt es einen Kantenzug von e1 zum Knoten des letzten Zeigers des Parentpaths seines Zeigers
+  und Nach Lemma \ref{KruskalgetparentpathlasteqconnectedcomponentofunionFindofunionFindLink} ist das x.
+  Nach der gleichen Logik gibt es auch einen Kantenzug von e2 nach y.
+  Und wieder gilt, da der alte Graph ein Subgraph des neuen ist, gibt es diese Kantenzüge auch im neuen Graph.
+  Wenn ich den ersten davon umdrehe, dann habe ich einen Kantenzug von x nach e1, die neue Kante bildet einen von e1 nach e2 und dann habe ich noch den von e2 y.
+  wenn ich die aneinander hänge bilden sie zusammen einen Kantenzug von x nach y.
+
+  Und falls uFL der neue Zeiger von y ist, dann ist er sein eigener Parent und der leere Kantenzug erfüllt die Bedingung bereits.
 \end{proof}
 
 
@@ -615,7 +655,7 @@ Bis hier Quality of live
   
 \end{proof}
 
-\subsection{Ereichbar}
+\subsection{Erreichbar}
 
 
 

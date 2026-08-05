@@ -15,20 +15,23 @@ def myType : Type := Nat × String
 def f (x : Nat) : Nat := 3*x^2 - 4*x + 5
 
 structure edge : Type where
+  mk ::
   node1 : Nat
   node2 : Nat
   nodesLt : node1 < node2
 
+#check edge.mk
+
 class Group (α : Type) (add : α → α → α) where
   e : α
   add_assoc (a b c : α) : add (add a b) c = add a (add b c)
-  ex_nutral : ∀ (a : α), add a e = a
+  ex_neutral : ∀ (a : α), add a e = a
   ex_invers : ∀ (a : α), ∃ (h : α), add a h = e
 
 instance int_Group : Group Int Add.add where
   e := 0
   add_assoc := Int.add_assoc
-  ex_nutral := Int.add_zero
+  ex_neutral := Int.add_zero
   ex_invers := by
     intro a
     refine ⟨-a, by grind⟩
