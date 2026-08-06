@@ -1,43 +1,53 @@
 \section{Algolean}\todo{section Algolean}
 Algolean\cite{algolean} ist ein Framework für Algorithmen und Komplexitätstheorie
-und sein Kern ist die Freien Monade Prog.
+und sein Kern ist die Freie< Monade Prog.
+Der Name Algolean ist ein Wortspiel und kann auf zwei Arten gelesen werde.
+Entweder als \glqq Algo\grqq ~+ \glqq lean\grqq, also im Sinn einer Algorithmus Bibliothek in Lean, oder \glqq Algol\grqq ~+ \glqq ean\grqq, als Homage an Algol, wobei dann \glqq ean\grqq ~so ausgesprochen wird, dass sich der Name als Algolsch übersetzen lässt.
 
 Die Grundidee des Frameworks ist es,
-den nutzer bei der Formalisierung seiner Algorithmen zu zwingen, seine Grundoperationen und deren Kosten im Vorhinein zu bestimmen.
+den Nutzer bei der Formalisierung seiner Algorithmen zu zwingen, seine Grundoperationen und deren Kosten im Vorhinein zu bestimmen.
 Die Komplexität beziehungsweise Laufzeit der Algorithmen werden dann als direkte strukturelle Konsequenz der Grundkosten abgeleitet.
 
+Der Grund, warum dieses Framework überhaupt benötigt wird und man nicht einfach eine Funktion definieren kann,
+die eine Funktion und einen Input übergeben bekommt, und dann einfach zählt, wie oft bestimmte Funktion beim Ausführen aufgerufen werden,
+ist, dass Lean zwischen intentional verschiedenen Funktionen, die beim Ausführen komplett unterschiedliche Dinge tun, keinen Unterschied sieht,
+solange sie extentional gleich sind, also für den selben Input den selben Output liefern.
+Es wären also nicht erkennbar, welche Funktion genau übergeben wurde.
 
+Aus diesem Grund arbeitet Algolean mit der Freien Monade.
+Monaden sind in funktionalen Programmiersprachen der Weg um Computerberechnungen mit Seiteneffekten zu modelieren.
+Das prominenteste Beispiel für eine Monade ist IO, über die zum Beispiel alle Interaktionen mit dem Standard Input und Output laufen.
+% \cite{monad_wiki}
 
-Was sind Monaden?
-Monaden sind in funktionalen Programmiersprachen der Weg um Computerberechnungen mit Seiteneffekten zu Modelieren.
-\cite{monad_wiki}
-
-Was ist die Freie Monade?
+Einer der Seiteneffekte der Freien Monade ist, dass sie beim Aufrufen von Funktionen speichert, dass sie diesen Aufruf getätigt hat.
 \cite{the_free_monad}\todo{Free Monad}
 
-Was ist die do-Notation?
-Die do-Notation kann das sequenzielle abarbeiten und das zuweisen von Werten zu Variablen einer imperativen Programiersprache ein Stück weit Simulieren.
-Dabei ist unter der Haube alles Funktionale Programierung.
+Innerhalb von Monaden wird die do-Notation benutzt.
+Ähnlich dem Taktikmodus, der mit by geöffnet wird, beginnt diese mit \textbf{do}.
+Die do-Notation kann das sequenzielle Abarbeiten sowie For- und Whileschleifen einer imperativen Programiersprache simulieren.
+Für die do-Notation und für Monaden typisch ist außerdem, das Zuweisen mit $\leftarrow$, was mit den Typen zusammenhängt und auf das ich später noch einmal zu sprechen komme.
+Dabei ist unter der Haube alles funktionale Programierung.
+
+Mehr Informationen zu Monaden finden sich in dem Buch Functional Programming in Lean
+\todo{cite} % https://leanprover.github.io/functional_programming_in_lean/title.html
+.
 
 
+Die für meine Arbeit am relevantesten Elemente von Algolean erkläre ich im Folgenden anhand des Beispiels listLinearSearch aus dem Algolean Repository von Shreyas Srinivas und Eric Wieser:
 
-
-
-Die Für meine Arbeit am Relevantesten Elemente von Algolean erkläre ich im Folgenden anhand des Beispiels listLinearSearch aus dem Algolean Repository:
-
-Die Grundligenden Funktionen, die man zählen möchte, werden in einer \textbf{Query} deklariert.
-Eine Query ist eine induktive funktion von Type nach Type.
-Jede Grundliegende Funktion, bekommt dabei einen eigenen Konstruktur und hat als Typ die Query angewendet auf den Rückgabetyp der Funktion.
-Im Beispiel hat die Query ListSearch $\alpha$ nur einen Konstruktur, nämlich den, für das vergleichen von einem Element a und einer Liste l und da der Rückgabetyp eines Vergleich Bool ist, ist der Typ des Konstrukturs ListSearch $\alpha$ von Bool.
+Die grundlegenden Funktionen, die man zählen möchte, werden in einer \textbf{Query} deklariert.
+Eine Query ist eine induktive Funktion von Type nach Type.
+Jede grundliegende Funktion, bekommt dabei einen eigenen Konstruktur und hat als Typ die Query angewendet auf den Rückgabetyp der Funktion.
+Im Beispiel hat die Query, ListSearch $\alpha$ nur einen Konstruktur, nämlich den, für das Vergleichen von einem Element a und einer Liste l und da der Rückgabetyp eines Vergleich Bool ist, ist der Typ des Konstruktors ListSearch $\alpha$ von Bool.
 \begin{lstlisting}
 inductive ListSearch (α : Type*) : Type → Type _ where
   | compare (a : List α) (val : α) : ListSearch α Bool
 \end{lstlisting}
 
-Was sind Modelle?
-Ein \textbf{Model} einer Query definiert dann, wie sich die Funktionen verhalten und was die jeweiligen Kosten sind.
+Ein Modell (engl. \textbf{Model}) einer Query definiert dann, wie sich die Funktionen verhalten und was die jeweiligen Kosten sind.
 Dabei ist es möglich mehrere verschiedene Modelle für die selbe Query zu definieren.
-Im Beispiel 
+Der Typ eines Modells für eine Query Q und einen Kostentyp c ist dann Model Q c.
+Im Beispiel vergleicht die Funktion, ob es sich um das erste Element der Liste handelt und die Kosten für einen solchen Vergleich sind konstant 1.
 \begin{lstlisting}
 def ListSearch.natCost [BEq α] : Model (ListSearch α) ℕ where
   evalQuery
@@ -45,29 +55,18 @@ def ListSearch.natCost [BEq α] : Model (ListSearch α) ℕ where
   cost _ := 1
 \end{lstlisting}
 
-Wie sieht dann ein Algorithmus aus?
-
-Was ist eine Reduktion?
-
-
-
-\todo{Beispiel Listsearch}
-Hier ein Beispiel aus dem Algolean Repository:
-Definition der Query:
-\begin{lstlisting}
-inductive ListSearch (α : Type*) : Type → Type _ where
-  | compare (a : List α) (val : α) : ListSearch α Bool
-\end{lstlisting}
-
-Definition des Models:
-\begin{lstlisting}
-def ListSearch.natCost [BEq α] : Model (ListSearch α) ℕ where
-  evalQuery
-    | .compare l x => some x == l.head?
-  cost _ := 1
-\end{lstlisting}
-
-Definition des Programms:
+Ein Algorithmus / Programm für eine bestimmte Query Q mit einem Rückgabetyp $\alpha$ wird jetzt als Monade vom Typ \textbf{Prog} Q $\alpha$ in der do-Notation definiert.
+Dabei können dann die in der Query definierten Funktionen verwendet werden, wobei man darauf achten muss, dass man $\leftarrow$ benutzt um einer Variablen den Rückgabewert der Funktion zuzuweisen.
+Tut man das nicht und verwender stattdessen :=, dann hat das Ergebnis den falschen Typ, nämlich den, den man beim Definieren der Query angegeben hat.
+Im Beispiel wäre das dann ListSearch $\alpha$ Bool anstelle von Bool.
+Was auch zu beachten ist, ist dass man den Algorithmus für eine Query und nicht für ein Modell schreibt.
+Das bedeutet, dass die Funktionen deklariert aber nicht definiert sind.
+Dementsprechend muss man, wenn man genauere Informationen haben möchte, wie das Ergebnis zu Stande kommt, einen komplexeren Rückgabetyp definieren, in dem die Informationen mitgegeben werden können.
+Worauf es beim Schreiben des Algorithmuses dann ankommt, ist, dass man auch die entsprechenden Queryaufrufe verwendet und keine äquivalenten normalen Funktionen,
+denn nur die Queryaufrufe werden am Ende gezählt.
+Wenn man also keine Queryaufrufe verwendet, wird man als Ergebnis bekommen, dass der Algorithmus eine Laufzeit von 0 hat.
+Im Beispiel ist der Algorithmus die lineare Suche.
+Er iteriert also über die Liste und prüft in jedem Schritt mit der Vergleichsfunktion der Query, ob das aktuelle Element dem gesuchten entspricht.
 \begin{lstlisting}
 def listLinearSearch (l : List α) (x : α) : Prog (ListSearch α) Bool := do
   match l with
@@ -80,8 +79,21 @@ def listLinearSearch (l : List α) (x : α) : Prog (ListSearch α) Bool := do
       listLinearSearch ls x
 \end{lstlisting}
 
-Lemma, die zeigen, dass sich (listLinearSearch l x).eval ListSearch.natCost genau so verhällt, wie l.contains x.
+Wenn man einen Algorithmus jetzt ausführen will, oder seine Laufzeit berechnen, dann kann man sich nun ein zur Query passendes Modell wählen und den Algorithmus für dieses Modell auswerten.
+Dafür gibt es die Funktion \textbf{Prog.eval} und \textbf{Prog.time}.
+Da der ganze Aufbau mit Query, Modell und Monade einen großen Overhead bedeuten, ist die Intention bei Algolean,
+dass man zu dem Algorithmus als Prog den Algorithmus noch ein weiteres mal als normale Lean Funktion implementiert,
+und anschließend zeigt, dass für das entsprechende Modell die beiden äquivalent sind.
+Dadurch ist es möglich, die ganzen Beweise zur Korrektheit ohne diesen Overhead zu führen.
+Im Beispiel wird als erstes gezeigt, dass die als Prog geschriebene lineare Suche äquivalent zur bereits existierenden Funktion List.contains ist.
+Da List.contains als abbrev von List.elem definiert ist, wird die Aussage hier per Induktion über die Funktion List.elem gezeigt.
+Sie ist allerdings so kompakt geschrieben, dass sich Basisfall, Induktionsschritt und Induktionshypothese nicht erkennen lassen,
+was fuktioniert, da List.elem dem Algorithmus im Aufbau sehr stark ähnelt.
+Das Lemma wird dabei mit simp markiert, sodass in den folgenden Lemmata bei der Benutzung von simp eine automatische Ersetzung vorgenommen wird.
+Anschließend wird gezeigt, dass der Algorithmus korrekt funktioniert, also true zurückgibt, falls das Element in der Liste enthalten ist, und false, falls nicht.
+Da beides für List.contains bereits bekannt ist, werden diese Lemma direkt von simp gelöst.
 \begin{lstlisting}
+@[simp, grind =]
 lemma listLinearSearch_eval [BEq α] (l : List α) (x : α) :
     (listLinearSearch l x).eval ListSearch.natCost = l.contains x := by
   fun_induction l.elem x with simp_all [listLinearSearch]
@@ -95,7 +107,13 @@ lemma listLinearSearchM_correct_false [BEq α] [LawfulBEq α] (l : List α)
   simp [x_mem_l]
 \end{lstlisting}
 
-Lemma, das besagt, dass die Laufzei (listLinearSearch l x).time ListSearch.natCost höchstens l.length also linear ist.
+Im Beweis, dass die Laufzeit maximal der Länge der Liste entspricht, ist der Aufbau der Induktion schon besser zu erkennen.
+Im ersten Fall ist die Liste leer und die Laufzeit 0, im zweiten Fall wird das Element gefunden.
+Es wird also ein Vergleich angestellt, aber die Liste enthält auch mindestens ein Element
+und im dritten und rekursiven Fall wird das Element nicht gefunden.
+Nach dem Vergleich wird also weiter gesucht.
+In dem Fall ist die Laufzeit dann 1 + die Zeit für die Suche über die Restliste, aber die Länge der Liste ist auch 1 + die Länge der Restliste.
+Wenn man also auf beiden Seiten 1 abzieht, entspricht das der Induktionshypothese.
 \begin{lstlisting}
 lemma listLinearSearchM_time_complexity_upper_bound [BEq α] (l : List α) (x : α) :
     (listLinearSearch l x).time ListSearch.natCost ≤ l.length := by
@@ -107,12 +125,9 @@ lemma listLinearSearchM_time_complexity_upper_bound [BEq α] (l : List α) (x : 
     lia
 \end{lstlisting}
 
+Ein weiteres Konzept ist die Reduktion (\textbf{Reduction}).
+Diese bietet die Möglichkeit, für zwei Querys Q$_1$ und Q$_2$ Programme, die für Query Q$_1$ geschrieben wurden, als Programme für Q$_2$ zu betrachten,
+indem sie jede Funktion aus Q$_1$ als ein für Q$_2$ geschriebenes Programm definiert.
+Hierfür gibt es allerdings noch kein Beispiel, da Reduktionen im Framework zwar schon definiert sind, aber nach meinem Kenntnisstand, ich der erste bin, der sie in einem Projekt verwendet.
 
-
-
-
-
-
-
-Genaueres nachgucken hier.
-\cite{algolean_doc}
+Mehr Informationen zu den verschiedenen Aspekten von Algolean gibt es in der dazugehörigen Dokumentation\cite{algolean_doc}.

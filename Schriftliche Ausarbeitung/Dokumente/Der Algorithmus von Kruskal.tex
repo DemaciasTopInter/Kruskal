@@ -1,5 +1,5 @@
 \section{Der Algorithmus von Kruskal}
-Der Algorithmus von Kruskal vom Mathematiker Joseph Bernard Kruskal im Artikel \cite{kruskal_article}.\todo{Satz fixen}
+Der Algorithmus von Kruskal wurde vom Mathematiker Joseph Bernard Kruskal entwickelt und 1956 publiziert\cite{kruskal_article}.
 Der Algorithmus findet für einen ungerichteten endliche Graphen mit Kantenkosten einen minimalen Spannbaum.
 
 \subsection{Was ist ein Graph}
@@ -34,7 +34,7 @@ Gegeben ein Graph G = (V, E) mit Knotenmenge V und Kantenmenge E, dann ist ein G
   \item Alle Knoten aus V, die in G durch einen Kantenzug verbunden sind, auch in T verbunden sind.
 \end{itemize}
 Wenn also G vollständig verbunden ist, dann ist es auch T und man spricht tatsächlich von einem Spannbaum. 
-Besteht G hingegen mehreren Klastern von Knoten zwischen denen es keine verbindende Kante gibt, dann gibt es in T entsprechend die selben Klaster und  man  spricht von einem Spannwald.
+Besteht G hingegen aus mehreren Klustern von Knoten zwischen denen es keine verbindende Kante gibt, dann gibt es in T entsprechend die selben Klaster und  man  spricht von einem Spannwald.
 
 Ein minimaler Spannbaum ist ein Spannbaum, der die Summe der Kantenkosten minimiert. Das heißt, wenn M = (V, E$^\ast$) ein minimaler Spannbaum von G ist, 
 dann muss für jeden anderen Spannbaum T = (V, E') von G die Summe der Kantenkosten mindestens so groß sein, wie die von M.
