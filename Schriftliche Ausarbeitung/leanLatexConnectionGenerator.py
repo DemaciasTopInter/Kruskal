@@ -5,7 +5,7 @@ import re
 # Example usage:
 root_folder = "/Users/jasper/Desktop/Uni/Bachelorarbeit/kruskal/Kruskal"
 relativ_root_folder = "Kruskal"
-repo_url = "https://gitlab.hrz.tu-chemnitz.de/jovon-at-tu-chemnitz.de/Kruskal/-/blob/main"
+repo_url = "https://github.com/DemaciasTopInter/Kruskal/blob/main"
 target_extensions = [".py", ".lean"]
 excluded_folders = [".lake", "lake-packages", 'transitiveClosureBenchmarkExponentialExtension', 'transitiveClosureBenchmarkAllFacts', 'transitiveClosureBenchmarkSingleFact', 'transitiveClosureToyExample', 'elReasoning', 'OUTDATED-transitiveClosureBenchmarkExtreme']
 
