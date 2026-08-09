@@ -1,11 +1,14 @@
 \section{Der Beweis über die Laufzeit}\todo{section Laufzeit}
+Um jetzt den Aussagen über die Laufzeit zu treffen muss ich, wie in Kapitel \ref{Algolean} beschrieben, den Algorithmus ein weiteres Mal definieren und dieses Mal als Prog.
+
 Der Code aus diesem Abschnitt ist in der Datei Algolean.lean zu finden.
 
 \subsection{Model 1 und 2}\todo{sub\-section 1 und 2}
-
+Wie erklärt musste ich zunächst festgelegt, was die Grundlegenden Funktionen sind, die ich zählen möchte und eine eintsprechende Query definieren.
+Ich habe dabei vorerst für die Union und die Find Funktion, also \KruskalupdateunionFind und \KruskalconnectedcomponentofunionFindofid, entschieden.
 
 \begin{definition}[\Kruskalkruskalquery]
-  
+  Eine Query mit den Funktionen Find und Union.
 \end{definition}
 \begin{lstlisting}
 inductive (.\Kruskalkruskalquery.) (nodeList : List node) : Type → Type _ where
@@ -13,10 +16,12 @@ inductive (.\Kruskalkruskalquery.) (nodeList : List node) : Type → Type _ wher
   | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : kruskal_query nodeList (unionFind nodeList)
 \end{lstlisting}
 
-
+Da diese Funktionen nur deklariert aber nicht definiert sind, konnte ich als Rückgabetyp für Find nicht Nat benutzen, da ich \Kruskalkruskal werwende,
+dass es für das Ergebnis einen Zeiger gibt, der zum entsprechenden Knoten gehört und auf diesen zeigt.
+Deshalb brauchte ich einen Typ, der diese Bedingung beinhaltet.
 
 \begin{definition}[\Kruskalfound]
-  
+  Ein Typ, bestehend aus einer ID und dem Nachweis, dass es einen Zeiger gibt, der diese als nodeId und als ccId hat.
 \end{definition}
 \begin{lstlisting}
 structure (.\Kruskalfound.) (nodeList : List node) (uF : unionFind nodeList) : Type where
@@ -25,10 +30,11 @@ structure (.\Kruskalfound.) (nodeList : List node) (uF : unionFind nodeList) : T
   ex : ∃ (uFL : unionFindLink nodeList), uFL ∈ uF.linkList ∧ uFL.nodeId = id ∧ uFL.ccId = id
 \end{lstlisting}
 
-
+Da die Query nun definiert ist, kann ich nun den Kruskal Algorithmus als Programm dieser Query definierten.
+Dabei war es mein Ziel den Aufbau so ähnlich wie möglich zu halten.
 
 \begin{definition}[\Kruskalkruskalhelperprog]
-  
+  Die Porg Version von \Kruskalkruskalhelper für die Query \Kruskalkruskalquery.
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalkruskalhelperprog.) (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : Prog (kruskal_query nodeList) (List edge) := do
@@ -53,16 +59,30 @@ def (.\Kruskalkruskalhelperprog.) (edgeList : List edge) (nodeList : List node) 
     return ← kruskal_helper_prog es nodeList updated_uF updated_edgesSoFar h_matching_edge' h_nodup
 \end{lstlisting}
 
-
-
 \begin{definition}[\Kruskalkruskalprog]
-  
+  Die Porg Version von \Kruskalkruskal für die Query \Kruskalkruskalquery.
 \end{definition}
+\begin{lstlisting}
+def kruskal_prog (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : Prog (kruskal_query nodeList) (List edge) := do
+    let edgeListSorted : List edge := edgeList.mergeSort
+    let uF : unionFind nodeList := init_unionFind nodeList h_nodup
+    have h_matching_edge : matching_edge edgeListSorted nodeList := by
+      intro e h_e_in
+      simp [edgeListSorted] at h_e_in
+      simp [matching_edge] at h_matching_edge
+      exact h_matching_edge e h_e_in
+    return ← kruskal_helper_prog edgeListSorted nodeList uF [] h_matching_edge h_nodup
+\end{lstlisting}
 
-
+Der nächste Schritt war es dann, ein Modell für die Query zu definieren, das die entsprechenden Funktionen definiert.
+Ich habe mich dabei langsam an die Laufzeit rangetastet und beiden Funktionen zunächst konstante Kosten von 1 gegeben,
+allerdings als zwei verschiedene Einträge eines Tuppels.
+Dadurch lässt sich zum die Grund für die Laufzeit genauer analysieren,
+zu anderen, kann ich den Laufzeitbeweis über jede Funktionen einzeln führen.
 
 \begin{definition}[\Kruskalkruskalmodelone]
-  
+  Das Modell definiert Find als \KruskalconnectedcomponentofunionFindofid mit Kosten (1, 0)
+  und Union als \KruskalupdateunionFind mit Kosten (0, 1).
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalkruskalmodelone.) (nodeList : List node) : Model (kruskal_query nodeList) (Nat × Nat) where
@@ -77,52 +97,61 @@ def (.\Kruskalkruskalmodelone.) (nodeList : List node) : Model (kruskal_query no
     | .union _ _ _ _ _ => (0, 1)
 \end{lstlisting}
 
-
+Mein Ziel ist es jetzt, zu zeigen, dass das Programm in diesem Moldell noch das selbe mach und wie oft es dabei jede Funktion aufruft.
 
 \begin{theorem}
-    \Kruskalkruskalprog macht im Model \Kruskalkruskalmodelone das Gleiche wie \Kruskalkruskal und ruft dabei höchstens $2 |E|$ mal find auf und höchstens $|E|$ mal union.
+    \Kruskalkruskalprog macht im Model \Kruskalkruskalmodelone das Gleiche wie \Kruskalkruskal und ruft dabei höchstens $2 |E|$ mal Find auf und höchstens $|E|$ mal Union.
 \end{theorem}
 
+Zunächst zeige ich, dass für den gleichen Input der gleich Output rauskommt.
 
-
-\begin{lemma}[\Kruskalkruskalhelperevalone]
-  
+\begin{lemma}[\Kruskalkruskalhelperevalone]\label{Kruskalkruskalhelperevalone}
+  \Kruskalkruskalhelperprog macht im Model \Kruskalkruskalmodelone das Gleiche wie \Kruskalkruskalhelper.
 \end{lemma}
 \begin{proof}
-  
+  Da die Funktionen fasst gleich definiert sind, ist der Beweis nicht viel mehr als eine Induktion über die Kanten-Liste.
 \end{proof}
 
 
 
-\begin{lemma}[\Kruskalkruskalevalone]
-  
+\begin{lemma}[\Kruskalkruskalevalone]\label{Kruskalkruskalevalone}
+  \Kruskalkruskalprog macht im Model \Kruskalkruskalmodelone das Gleiche wie \Kruskalkruskal.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt direkt aus dem vorherigen Lemma.
 \end{proof}
 
-
+Danach kommt die eigentliche Aussage über die Laufzeit.
 
 \begin{lemma}[\Kruskalkruskalhelpertimeone]
-  
+  \Kruskalkruskalhelperprog ruft im Model \Kruskalkruskalmodelone beim ausführen Find höchstens zwei mal so oft und Union höchstens einmal so oft auf, wie die Kanten-Liste lang ist.
 \end{lemma}
 \begin{proof}
-  
+  Den Beweis führe ich per Induktion über die Kanten-Liste.
+  Im Basisfall wird keine der Funktionen aufgerufen.
+  Im Induktionsschritt wird Find zwei mal aufgerufen und Union einmal.
+  Ich kann also auf beiden Seiten der Gleichung (2, 1) abziehen.
+  Danach greift dann schon die Induktionshypothese.
 \end{proof}
 
 
 
 \begin{lemma}[\Kruskalkruskaltimeone]
-  
+  \Kruskalkruskalprog ruft im Model \Kruskalkruskalmodelone beim ausführen Find höchstens zwei mal so oft und Union höchstens einmal so oft auf, wie die Kanten-Liste lang ist.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt direkt aus dem vorherigen Lemma.
 \end{proof}
 
+Damit ist das THeorem gezeigt.
 
+Wie gesagt, habe ich mich ich mich an die Laufzeit herangetastet.
+Bei meinem zweiten Modell war mein Gedanke, dass ich das Updaten nur zählen möchte, wenn sich dadurch die Zeiger-Liste auch tatsächlich verändert.
+Abgesehen davon ist es gleich.
 
 \begin{definition}[\Kruskalkruskalmodeltwo]
-  
+  Das Modell definiert Find als \KruskalconnectedcomponentofunionFindofid mit Kosten (1, 0)
+  und Union als \KruskalupdateunionFind mit Kosten (0, 1), falls dadurch Union-Find-Struktur verändert wird, sonst (0, 0).
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalkruskalmodeltwo.) (nodeList : List node) : Model (kruskal_query nodeList) (Nat × Nat) where
@@ -137,36 +166,47 @@ def (.\Kruskalkruskalmodeltwo.) (nodeList : List node) : Model (kruskal_query no
     | .union _ x y _ _ => if x = y then (0, 0) else (0, 1)
 \end{lstlisting}
 
-
+Wie zuvor ist es nun mein Ziel, zu zeigen, dass das Programm auch in diesem Moldell noch das selbe mach und wie oft es dabei jede Funktion aufruft.
 
 \begin{theorem}
-    \Kruskalkruskalprog macht im Model \Kruskalkruskalmodeltwo das Gleiche wie \Kruskalkruskal und ruft dabei höchstens $2 |E|$ mal find auf und höchstens $|V|$ mal union.
+    \Kruskalkruskalprog macht im Model \Kruskalkruskalmodeltwo das Gleiche wie \Kruskalkruskal und ruft dabei höchstens $2 |E|$ mal Find auf und höchstens $|V|$ mal Union.
 \end{theorem}
 
-
+Zuerst zeige ich, dass beide Modelle gleich auswerten.
 
 \begin{lemma}[\Kruskalevalkruskalmodeltwoeqevalkruskalmodelone]
-  
+  Für jedes für \Kruskalkruskalquery geschribene Programm, macht es kein Unterschied, ob es mit \Kruskalkruskalmodelone oder \Kruskalkruskalmodeltwo ausgewertet wird.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt direkt aus den Definitionen.
 \end{proof}
 
-Dadurch werden \Kruskalkruskalhelperevaltwo und \Kruskalkruskalevaltwo direkt erledigt, da sie das gleiche sind wie \Kruskalkruskalhelperevalone und \Kruskalkruskalevalone.
+Dadurch werden die folgenden beiden Lemmata direkt durch Lemma \ref{Kruskalkruskalhelperevalone} und \ref{Kruskalkruskalevalone} gelöst.
+\begin{lemma}[\Kruskalkruskalhelperevaltwo]
+  \Kruskalkruskalhelperprog macht im Model \Kruskalkruskalmodeltwo das Gleiche wie \Kruskalkruskalhelper.
+\end{lemma} 
+\begin{lemma}[\Kruskalkruskalevaltwo]
+  \Kruskalkruskalprog macht im Model \Kruskalkruskalmodeltwo das Gleiche wie \Kruskalkruskal.
+\end{lemma}
 
-
+Für den Laufzeitbeweis brauche ich zunächst das folgende Hilfslemma.
 
 \begin{lemma}[\KruskalkruskalhelpertimetwoindependentedgesSoFar]
-  
+  Die Laufzeit hängt nicht von der mitgeführten ErgebnisKantenListe ab.
+  Für zwei verschiedene ErgebnisKantenListen kommt bei Laufzeitberechnung von \Kruskalkruskalhelperprog im Model \Kruskalkruskalmodeltwo also das selbe raus.
 \end{lemma}
 \begin{proof}
-  
+  Den Beweis führe ich per Induktion über die Kanten-Liste.
+  Im Basisfall wird keine der Funktionen aufgerufen.
+  Im Induktionsschritt werden beide Funktionen auf beiden Seiten der Gleichung gleich oft aufgerufen, können also gestrichen werden.
+  Danach greift dann schon die Induktionshypothese.
 \end{proof}
 
-
+Jetzt nutze ich aus, dass ich Union und Find seperat zähle, und zeige die Laufzeit zunächst für Union.
 
 \begin{lemma}[\Kruskalkruskalhelpertimetworight]
-  
+  Wenn für eine natürliche Zahl n die die Ergebnis-Liste von \Kruskalkruskalhelper kleiner ist als n,
+  dann wird bei gleichem Input in \Kruskalkruskalhelperprog im Model \Kruskalkruskalmodeltwo Union höchstens n mal gezählt.
 \end{lemma}
 \begin{proof}
   

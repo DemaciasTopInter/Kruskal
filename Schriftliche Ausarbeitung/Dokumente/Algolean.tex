@@ -1,6 +1,6 @@
-\section{Algolean}\todo{section Algolean}
+\section{Algolean}\label{Algolean}\todo{section Algolean}
 Algolean\cite{algolean} ist ein Framework für Algorithmen und Komplexitätstheorie
-und sein Kern ist die Freie< Monade Prog.
+und sein Kern ist die Freie Monade\cite{the_free_monad} Prog.
 Der Name Algolean ist ein Wortspiel und kann auf zwei Arten gelesen werde.
 Entweder als \glqq Algo\grqq ~+ \glqq lean\grqq, also im Sinn einer Algorithmus Bibliothek in Lean, oder \glqq Algol\grqq ~+ \glqq ean\grqq, als Homage an Algol, wobei dann \glqq ean\grqq ~so ausgesprochen wird, dass sich der Name als Algolsch übersetzen lässt.
 
@@ -8,9 +8,9 @@ Die Grundidee des Frameworks ist es,
 den Nutzer bei der Formalisierung seiner Algorithmen zu zwingen, seine Grundoperationen und deren Kosten im Vorhinein zu bestimmen.
 Die Komplexität beziehungsweise Laufzeit der Algorithmen werden dann als direkte strukturelle Konsequenz der Grundkosten abgeleitet.
 
-Der Grund, warum dieses Framework überhaupt benötigt wird und man nicht einfach eine Funktion definieren kann,
+Der Grund, warum dieses Framework überhaupt benötigt wird und man nicht einfach eine Funktion definieren kann,\todo{satz aufteilen}
 die eine Funktion und einen Input übergeben bekommt, und dann einfach zählt, wie oft bestimmte Funktion beim Ausführen aufgerufen werden,
-ist, dass Lean zwischen intentional verschiedenen Funktionen, die beim Ausführen komplett unterschiedliche Dinge tun, keinen Unterschied sieht,
+ist, dass Lean zwischen intentional\todo{kurz erklären} verschiedenen Funktionen, die beim Ausführen komplett unterschiedliche Dinge tun, keinen Unterschied sieht,
 solange sie extentional gleich sind, also für den selben Input den selben Output liefern.
 Es wären also nicht erkennbar, welche Funktion genau übergeben wurde.
 
@@ -20,7 +20,6 @@ Das prominenteste Beispiel für eine Monade ist IO, über die zum Beispiel alle 
 % \cite{monad_wiki}
 
 Einer der Seiteneffekte der Freien Monade ist, dass sie beim Aufrufen von Funktionen speichert, dass sie diesen Aufruf getätigt hat.
-\cite{the_free_monad}\todo{Free Monad}
 
 Innerhalb von Monaden wird die do-Notation benutzt.
 Ähnlich dem Taktikmodus, der mit by geöffnet wird, beginnt diese mit \textbf{do}.
@@ -37,8 +36,8 @@ Die für meine Arbeit am relevantesten Elemente von Algolean erkläre ich im Fol
 
 Die grundlegenden Funktionen, die man zählen möchte, werden in einer \textbf{Query} deklariert.
 Eine Query ist eine induktive Funktion von Type nach Type.
-Jede grundliegende Funktion, bekommt dabei einen eigenen Konstruktur und hat als Typ die Query angewendet auf den Rückgabetyp der Funktion.
-Im Beispiel hat die Query, ListSearch $\alpha$ nur einen Konstruktur, nämlich den, für das Vergleichen von einem Element a und einer Liste l und da der Rückgabetyp eines Vergleich Bool ist, ist der Typ des Konstruktors ListSearch $\alpha$ von Bool.
+Jede grundliegende Funktion, bekommt dabei einen eigenen Konstruktor und hat als Typ die Query angewendet auf den Rückgabetyp der Funktion.
+Im Beispiel hat die Query, ListSearch $\alpha$ nur einen Konstruktor, nämlich den, für das Vergleichen von einem Element a und einer Liste l und da der Rückgabetyp eines Vergleich Bool ist, ist der Typ des Konstruktors ListSearch $\alpha$ von Bool.
 \begin{lstlisting}
 inductive ListSearch (α : Type*) : Type → Type _ where
   | compare (a : List α) (val : α) : ListSearch α Bool

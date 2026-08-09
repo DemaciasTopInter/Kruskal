@@ -1,4 +1,4 @@
-\section{Lean}\todo{Tail Recursion}\todo{omega}\todo{open-source}
+\section{Lean}\todo{Tail Recursion}\todo{omega und lia}\todo{open-source}
 \subsection{Was ist Lean}
 Lean\cite{10.1007/978-3-030-79876-5_37} ist beides, eine funktionale Progammiersprache und ein Beweisassistent für formale Beweise.
 Das Projekt wurde 2013 von Leonardo de Moura und Sebastian Ullrich ins Leben gerufen.
@@ -105,7 +105,7 @@ instance int_Group : Group Int Add.add where
   ex_invers := by
     intro a
     refine ⟨-a, by grind⟩
-\end{lstlisting}\todo{Fällt mir noch was besseres ein?}
+\end{lstlisting}
 
 Mit \textbf{theorem} (oder wenn man die Mathlib Bibliothek verwendet, äquivalent mit \textbf{lemma}) lassen sich Beweise für Aussagen definieren.
 Das ähnelt vom Aufbau her der Definition mit def nur das der Typ jetzt die Aussage ist.
@@ -271,7 +271,7 @@ Um ein paar zu nennen wären da zum Beispiel:
   \item Die Möglichkeit, dass auch eine KI die Aussage verstehen und eventuell beweisen kann.
         Im Gegensatz zu Beweisen in natürlicher Sprache kann eine KI dabei keine Logikfehler oder Halluzinationen einbauen, da Lean diese nicht zulässt.
 \end{itemize}
-\todo{mögliche Quelle} % Anmerkung Tantow: Mehr darüber in Patrick Massot, Why formalize mathematics?
+Mehr darüber in Patrick Massot, Why formalize mathematics?\cite{why_formalize}
 
 Das wohl wichtigste Projekt in Lean ist wahrscheinlich Mathlib\cite{mathlib2020}, da es die eine Grundlage für sehr viele andere Projekte bildet.
 Mathlib ist die größte Lean Bibliothek und ein Gemeinschaftsprojekt von hunderten Mitwirkenden auf der ganzen Welt.
@@ -282,14 +282,14 @@ Sie enthält hauptsächlich Inhalte der Mathematik, aber auch der Informatik und
 Ein anderes großes Projekt aus dem Bereich der Mathematik, das ich hier nennen möchte, ist das Repository Formal Conjectures\cite{formalcojectures},
 in dem von der Community offenen Probleme der Mathematik zusammengetragen und formalisiert werden.
 Im Gegensatz zu Mathlib und anderen Projekten, wo Beweise gesammelt werden, geht es hier um Fragen auf die es noch keine Antwort gibt,
-darunter unter anderem Probleme aus der Samlung von Paul Erdős\todo{cite Erdős}, oder der Online Encyclopedia of Integer Sequences (OEIS)\todo{cite OEIS}.
+darunter unter anderem Probleme aus der Samlung von Paul Erdős\cite{erdos_wiki}, oder der Online Encyclopedia of Integer Sequences (OEIS)\cite{oeis}.
 Ziel dieser Samlung ist es, zum einen KI-Systemen ein Benchmark zu liefern, an dem sie sich ausprobieren und neue Beweise entdecken können,
 zum anderen Klarheit zu schaffen, da nicht jede mathematische Vermutung immer sauber formuliert ist
 und zum dritten aufzuzeigen, in welchen Feldern der Mathematik noch Lücken sind und wo es sich zu forschen lohnt, um damit schlussendlich wieder Mathlib weiter voran zu treiben.
 
 Software Validierung ist vorallem bei sicherheitsrelevanter Software als Erweiterung zum Testen im kommen.
 Microsoft nutzt zum Beispiel Lean um nachweislich sichere Kryptographie zu produzieren.
-Wie in diesem Blog-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft Lean um die Einhaltung von Standards zu verifizieren.\todo{anders?}
+Wie in diesem Blog-Post\cite{microsoftresearchblog} eines Microsoft-Research-Teams zu lesen, nutzt Microsoft Lean um die Einhaltung von Standards zu verifizieren.
 Da in der Kryptographie der Code häufig sehr hardwarenah und architekturabhängig geschrieben wird
 und Laufzeitoptimirungen enthält, sieht er selten genau so aus, wie der Algorithmus aus dem Standard.
 Um hierbei sicher zu gehen, dass die Funktionsweise immer noch die gleiche ist, reicht Testen nicht immer aus, da ein kleiner Fehler die Sicherheit des gesamten Systems untergraben kann.

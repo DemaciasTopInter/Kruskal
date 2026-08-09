@@ -77,7 +77,7 @@ theorem kruskal_helper_eval1 (edgeList : List edge) (nodeList : List node) (uF :
     simp [matching_edge] at h_matching_edge ih
     have ih := ih updated_uF updated_edgesSoFar h_matching_edge.right
     simp [ih, kruskal_model1, Prog.eval]
-    grind
+    simp only [updated_uF, updated_edgesSoFar]
 
 theorem kruskal_eval1 (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup)
   : kruskal edgeList nodeList h_matching_edge h_nodup = (kruskal_prog edgeList nodeList h_matching_edge h_nodup).eval (kruskal_model1 nodeList) := by
@@ -96,11 +96,11 @@ theorem kruskal_helper_time1 (edgeList : List edge) (nodeList : List node) (uF :
     have h : (2 * edgeList.length + 2, edgeList.length + 1) = (2, 1) + (2 * edgeList.length, edgeList.length) := by
       simp [add_comm]
     simp only [h]
+    apply tupel_add_le_add_iff_left.mpr
     set updated_uF := update_unionFind uF (connected_component_of_unionFind_of_id uF e.node1 (kruskal_helper._proof_1 nodeList e edgeList h_matching_edge)) (connected_component_of_unionFind_of_id uF e.node2 (kruskal_helper._proof_2 nodeList e edgeList h_matching_edge)) (kruskal_helper._proof_4 nodeList uF e (kruskal_helper._proof_1 nodeList e edgeList h_matching_edge)) (kruskal_helper._proof_5 nodeList uF e (kruskal_helper._proof_2 nodeList e edgeList h_matching_edge))
     set updated_edgesSoFar := update_edgesSoFar edgesSoFar e (connected_component_of_unionFind_of_id uF e.node1 (kruskal_helper._proof_1 nodeList e edgeList h_matching_edge)) (connected_component_of_unionFind_of_id uF e.node2 (kruskal_helper._proof_2 nodeList e edgeList h_matching_edge))
     simp [matching_edge] at h_matching_edge ih
     have ih := ih updated_uF updated_edgesSoFar h_matching_edge.right
-    apply tupel_add_le_add_iff_left.mpr
     apply le_of_eq_of_le ?_ ih
     simp [kruskal_model1]
 
