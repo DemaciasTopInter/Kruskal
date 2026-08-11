@@ -45,8 +45,11 @@
 
 \usepackage{amsthm} % proof
 \newtheorem{theorem}{Theorem}
-\newtheorem{lemma}{Lemma}
+% \newtheorem{lemma}{Lemma}
 \newtheorem{definition}{Definition}
+
+\newcounter{lemma}
+\newenvironment{lemma}[1][]{\noindent\refstepcounter{lemma}\textbf{Lemma \thelemma} (#1)\itshape}{\par}
 
 \usepackage{float} % für Option H bei Figuren
 

@@ -294,7 +294,7 @@ theorem (.\KruskalinitunionFindlinkListhelperappendreverse.) (nodeList : List no
 \end{lstlisting}
 
 \begin{lemma}[\KruskalinitunionFindlinkListmatchingccId]
-  Die Liste erfüllt matching\_ccId, also gibt es für jeden Zeiger aus \KruskalinitunionFindlinkList genau einen Knoten aus der Knoten-Liste, auf den er zeigt.
+  Die Liste erfüllt mat\-ching\_ccId, also gibt es für jeden Zeiger aus \KruskalinitunionFindlinkList genau einen Knoten aus der Knoten-Liste, auf den er zeigt.
 \end{lemma}
 \begin{proof}
   Sei nodeList eine Knoten-Liste, uFL ein Zeiger in init\_unionFind.linkList.\-helper nodeList und sei x sein Knoten, dann ist x der gesuchte Knoten.
@@ -314,7 +314,7 @@ theorem (.\KruskalinitunionFindlinkListmatchingccId.) {nodeList : List node} (h_
 Der Beweis für matching\_length lässt sich durch eine einfache Listen-Induktion zeigen, diese hat aber einen Haken.
 Wie schon bei den Teilungs-Lemmata ist das Problem, dass der Typ Zeiger von der Knoten-Liste abhängt.
 Deshalb hätten bei einer Induktion über die Knoten-Liste die Zeiger-Listen in der Induktionshypothese und im Ziel einen verschiedenen Typ und die Induktionshypothese ließe sich nicht anwenden.
-Entsprechend führe ich auch hier den Beweis nicht über init\_unionFind.linkList und die Knoten-Liste, sonder über die innere Hilfsfunktion und eine beliebige Knoten-Liste.
+Entsprechend führe ich auch hier den Beweis nicht über init\_unionFind.link\-List und die Knoten-Liste, sonder über die innere Hilfsfunktion und eine beliebige Knoten-Liste.
 Gleiches gilt für den Beweis von nodup.
 
 \begin{lemma}[\KruskalinitunionFindlinkListhelpermatchinglength]
@@ -727,7 +727,7 @@ def (.\Kruskalkruskalhelper.) (edgeList : List edge) (nodeList : List node) (uF 
 \end{lstlisting}
 
 Um \Kruskalkruskalhelper kompakter zu halten habe ich die Fallunterscheidung beim Updaten der Union-Find-Struktur
-(Definition \ref{KruskalupdateunionFind}\todo{besseres ref}) und der ErgebnisKantenListe,
+(Definition \ref{KruskalupdateunionFind}) und der ErgebnisKantenListe,
 je nach dem, ob die Zusammenhangskomponenten x und y gleich sind, ausgelagert.
 Das macht die Funktion zum einen halb so groß und zum anderen lässt sich so in späteren Lemmata besser eine Induktion über die Funktion führen.
 
@@ -784,7 +784,7 @@ def (.\KruskalnodeListofedgeListhelper.) (edgeList : List edge) (nodeList : List
 Um \Kruskalkruskal mit dieser Knoten-Liste aufrufen zu können, muss ich noch zeigen, dass das ein valider Input ist.
 
 \begin{theorem}
-  Ein Kanten-Liste passt mit der aus ihr erzeugten Knoten-Liste im Sinne von Definition \ref{Kruskalmatchingedge}\todo{besseres ref} zusammen
+  Ein Kanten-Liste passt mit der aus ihr erzeugten Knoten-Liste im Sinne von Definition \ref{Kruskalmatchingedge} zusammen
   und die aus ihr erzeugte Knoten-Liste hat keine Dopplungen.
 \end{theorem}
 

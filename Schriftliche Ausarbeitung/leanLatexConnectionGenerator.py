@@ -83,7 +83,7 @@ def process_file(root, file):
 def traverse_folders():
     commands = [
         f"\\newcommand{{\\repoUrl}}{{{repo_url}}}", 
-        "\\newcommand{\\repoLinkBase}[2]{\href{\\repoUrl/#1}{\\textcolor{symbolcolor}{\\path{#2}}}\\xspace}",
+        "\\newcommand{\\repoLinkBase}[2]{\href{\\repoUrl/#1}{\\textnormal{\\textcolor{symbolcolor}{\\path{#2}}}}\\xspace}",
         f"\\newcommand{{\\repoLinkCode}}[2]{{\\repoLinkBase{{{relativ_root_folder}/#1}}{{#2}}}}"
     ]
     for root, dirs, files in os.walk(root_folder):

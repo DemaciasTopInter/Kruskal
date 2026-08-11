@@ -1,4 +1,4 @@
-\section{Algolean}\label{Algolean}\todo{section Algolean}
+\section{Algolean}\label{Algolean}
 Algolean\cite{algolean} ist ein Framework für Algorithmen und Komplexitätstheorie
 und sein Kern ist die Freie Monade\cite{the_free_monad} Prog.
 Der Name Algolean ist ein Wortspiel und kann auf zwei Arten gelesen werde.
@@ -8,10 +8,10 @@ Die Grundidee des Frameworks ist es,
 den Nutzer bei der Formalisierung seiner Algorithmen zu zwingen, seine Grundoperationen und deren Kosten im Vorhinein zu bestimmen.
 Die Komplexität beziehungsweise Laufzeit der Algorithmen werden dann als direkte strukturelle Konsequenz der Grundkosten abgeleitet.
 
-Der Grund, warum dieses Framework überhaupt benötigt wird und man nicht einfach eine Funktion definieren kann,\todo{satz aufteilen}
-die eine Funktion und einen Input übergeben bekommt, und dann einfach zählt, wie oft bestimmte Funktion beim Ausführen aufgerufen werden,
-ist, dass Lean zwischen intentional\todo{kurz erklären} verschiedenen Funktionen, die beim Ausführen komplett unterschiedliche Dinge tun, keinen Unterschied sieht,
-solange sie extentional gleich sind, also für den selben Input den selben Output liefern.
+Der Grund, warum dieses Framework überhaupt benötigt wird ist, dass man nicht einfach eine Funktion definieren kann,
+die eine Funktion und einen Input übergeben bekommt, und dann einfach zählt, wie oft bestimmte Funktion beim Ausführen aufgerufen werden.
+Denn Lean sieht zwischen intentional verschiedenen Funktionen, die also für verschiedene Zwecke gedacht sind und beim Ausführen komplett unterschiedliche Dinge tun,
+keinen Unterschied, solange sie extentional gleich sind, also für den selben Input den selben Output liefern.
 Es wären also nicht erkennbar, welche Funktion genau übergeben wurde.
 
 Aus diesem Grund arbeitet Algolean mit der Freien Monade.
@@ -27,9 +27,8 @@ Die do-Notation kann das sequenzielle Abarbeiten sowie For- und Whileschleifen e
 Für die do-Notation und für Monaden typisch ist außerdem, das Zuweisen mit $\leftarrow$, was mit den Typen zusammenhängt und auf das ich später noch einmal zu sprechen komme.
 Dabei ist unter der Haube alles funktionale Programierung.
 
-Mehr Informationen zu Monaden finden sich in dem Buch Functional Programming in Lean
-\todo{cite} % https://leanprover.github.io/functional_programming_in_lean/title.html
-.
+Mehr Informationen zu Monaden im algemeinen finden sich in dem Buch Functional Programming in Lean\cite{functional_programming_in_lean} von David Thrane Christiansen
+und zur Freien Monade im speziellen im Blogbeitrag The Free Monad\cite{the_free_monad} von Tanner Duve.
 
 
 Die für meine Arbeit am relevantesten Elemente von Algolean erkläre ich im Folgenden anhand des Beispiels listLinearSearch aus dem Algolean Repository von Shreyas Srinivas und Eric Wieser:

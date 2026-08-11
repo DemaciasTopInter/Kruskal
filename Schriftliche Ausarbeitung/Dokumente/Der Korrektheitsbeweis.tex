@@ -38,8 +38,14 @@ Dafür habe ich hier einmal den Definitionen \ref{KruskalcostofedgeList}, \ref{K
   und jede andere Kanten-Liste (otherEdgeList), deren Graph auch ein Spannbaum ist, mindestens genau so hohe kombinierte Kantenkosten hat.
 \end{definition}
 \begin{lstlisting}
-def (.\KruskalminimalSpanninTreeofedgeList.) {minEdgeList : List edge} {edgeList : List edge} {n : Nat} (h_nonempty₁ : minEdgeList ≠ []) (h_nonempty₂ : edgeList ≠ []) (h_eq₁ : n = (nodeList_of_edgeList_max minEdgeList h_nonempty₁).id.succ) (h_eq₂ : n = (nodeList_of_edgeList_max edgeList h_nonempty₂).id.succ) : Prop := SimpleGraph.IsSpanningTree (SimpleGraph_of_n_of_edgeList n minEdgeList h_nonempty₁ h_eq₁) (SimpleGraph_of_n_of_edgeList n edgeList h_nonempty₂ h_eq₂) → ∀ (otherEdgeList : List edge), (h_nonempty₃ : otherEdgeList ≠ []) → (h_eq₃ : n = (nodeList_of_edgeList_max otherEdgeList h_nonempty₃).id.succ) → SimpleGraph.IsSpanningTree (SimpleGraph_of_n_of_edgeList n otherEdgeList h_nonempty₃ h_eq₃) (SimpleGraph_of_n_of_edgeList n edgeList h_nonempty₂ h_eq₂) → (cost_of_edgeList minEdgeList) ≤ (cost_of_edgeList otherEdgeList)
-\end{lstlisting}\todo{lesbar\-keit}
+def (.\KruskalminimalSpanninTreeofedgeList.) {minEdgeList : List edge} {edgeList : List edge} {n : Nat} (h_nonempty₁ : minEdgeList ≠ []) (h_nonempty₂ : edgeList ≠ []) (h_eq₁ : n = (nodeList_of_edgeList_max minEdgeList h_nonempty₁).id.succ) (h_eq₂ : n = (nodeList_of_edgeList_max edgeList h_nonempty₂).id.succ)
+    : Prop :=
+    SimpleGraph.IsSpanningTree (SimpleGraph_of_n_of_edgeList n minEdgeList h_nonempty₁ h_eq₁) (SimpleGraph_of_n_of_edgeList n edgeList h_nonempty₂ h_eq₂)
+    → ∀ (otherEdgeList : List edge), (h_nonempty₃ : otherEdgeList ≠ [])
+    → (h_eq₃ : n = (nodeList_of_edgeList_max otherEdgeList h_nonempty₃).id.succ)
+    → SimpleGraph.IsSpanningTree (SimpleGraph_of_n_of_edgeList n otherEdgeList h_nonempty₃ h_eq₃) (SimpleGraph_of_n_of_edgeList n edgeList h_nonempty₂ h_eq₂)
+    → (cost_of_edgeList minEdgeList) ≤ (cost_of_edgeList otherEdgeList)
+\end{lstlisting}
 
 \subsection{Definitionen und Typenanpassung}
 
@@ -287,7 +293,7 @@ theorem kruskal_helper.edgesSoFar_append
   Das beschreibt die Situation, nachdem der Algorithmus durch den ersten Teil der Kanten-Liste durchiteriert ist.
 \end{lemma}
 \begin{lstlisting}
-theorem kruskal_helper_not_con_invariant_append
+theorem (.\Kruskalkruskalhelpernotconinvariantappend.)
   {edgeList₁ edgeList₂ : List edge}
   {nodeList : List node}
   {uF : unionFind nodeList}
@@ -518,7 +524,7 @@ termination_by nodeList.length - uFL.rank
 
 
 \begin{lemma}[\KruskalconnectedcomponentofunionFindofunionFindLinkofgetparentpath]
-  Alle Zeiger eines Parentpaths haben die selbe Zusammenhangskomponente, also die des aufrufenden Zeigers.\todo{fix}
+  Alle Zeiger eines Parentpaths haben die selbe Zusammenhangskomponente, also die des aufrufenden Zeigers.
 \end{lemma}
 \begin{proof}
   Für den Beweis mache ich eine Induktionen über die Function \Kruskalgetparentpath.
