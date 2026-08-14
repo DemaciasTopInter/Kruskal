@@ -3,7 +3,7 @@ Um jetzt den Aussagen über die Laufzeit zu treffen muss ich, wie in Kapitel \re
 
 Der Code aus diesem Kapitel ist in der Datei Algolean.lean zu finden.
 
-\subsection{Model 1 und 2}\todo{sub\-section 1 und 2}
+\subsection{Erstes Herantasten}
 Wie erklärt musste ich zunächst festgelegt, was die grundlegenden Funktionen sind, die ich zählen möchte und eine entsprechende Query definieren.
 Ich habe dabei vorerst für die Union und die Find Funktion, also \KruskalupdateunionFind und \KruskalconnectedcomponentofunionFindofid, entschieden.
 
@@ -191,7 +191,7 @@ Dadurch werden die folgenden beiden Lemmata direkt durch Lemma \ref{Kruskalkrusk
 
 Für den Laufzeitbeweis brauche ich zunächst das folgende Hilfslemma.
 
-\begin{lemma}[\KruskalkruskalhelpertimetwoindependentedgesSoFar]
+\begin{lemma}[\KruskalkruskalhelpertimetwoindependentedgesSoFar]\label{KruskalkruskalhelpertimetwoindependentedgesSoFar}
   Die Laufzeit hängt nicht von der mitgeführten ErgebnisKantenListe ab.
   Für zwei verschiedene ErgebnisKantenListen kommt bei Laufzeitberechnung von \Kruskalkruskalhelperprog im Model \Kruskalkruskalmodeltwo also dasselbe raus.
 \end{lemma}
@@ -202,39 +202,71 @@ Für den Laufzeitbeweis brauche ich zunächst das folgende Hilfslemma.
   Danach greift dann schon die Induktionshypothese.
 \end{proof}
 
-Jetzt nutze ich aus, dass ich Union und Find separat zähle, und zeige die Laufzeit zunächst für Union.
+Jetzt nutze ich aus, dass ich Union und Find separat zähle, und zeige die Laufzeit zunächst für Union, bevor im Anschluss dann die kombinierte Laufzeit kommt.
 
 \begin{lemma}[\Kruskalkruskalhelpertimetworight]
-  Wenn für eine natürliche Zahl n die Länge der Ergebnis-Liste von \Kruskalkruskalhelper kleiner ist als n,
+  Wenn für eine natürliche Zahl n die Länge der Ergebnisliste von \Kruskalkruskalhelper kleiner ist als n,
   dann wird bei gleichem Input in \Kruskalkruskalhelperprog im Model \Kruskalkruskalmodeltwo Union höchstens n mal gezählt.
+
+  Die Zahl n ist hierbei allgemein gehalten, gemeint ist aber die Anzahl der Knoten.
 \end{lemma}
 \begin{proof}
-  
+  Auch den Beweis führe ich per Induktion über die Kanten-Liste.
+  Im Basisfall wird keine der Funktionen aufgerufen.
+  Im Induktionsschritt gibt es eine erste Kante e und ich muss unterscheiden, ob die Knoten von e in derselben Zusammenhangskomponente liegen.
+  Falls ja, wird e nicht aufgenommen und Union nicht gezählt.
+  Die Aussage wird also von der Induktionshypothese abgedeckt.
+  Falls nein, wird e in die ErgebnisKantenListe aufgenommen und Union gezählt.
+  Sei nun n' eine Zahl, die um eins kleiner ist als n.
+  Ich ersetze nun im Ziel n durch n' + 1.
+  Dadurch kann ich auf beiden Seiten eins abziehen.
+  In der Hypothese, dass die Länge der Ergebnisliste von \Kruskalkruskalhelper kleiner ist als n, ersetze ich n ebenfalls.
+  Mit der Hilfe von Lemma \ref{KruskalkruskalhelperedgesSoFarappend} kann ich in der Hypothese ErgebnisKantenListe inklusive e aus der Funktion heraus holen.
+  Die Länge [e] ist eins.
+  Ich kann also auf beiden Seiten eins abziehen.
+  Anschließend benutze ich das gleiche Lemma, um die ErgebnisKantenListe, dieses Mal ohne e, zurück in die Funktion zu stecken.
+  Dadurch passt die Hypothese jetzt zu n', aber es fehlt jetzt e in der ErgebnisKantenListe.
+  Nach Lemma \ref{KruskalkruskalhelpertimetwoindependentedgesSoFar} kann ich auch im Ziel e in der ErgebnisKantenListe loswerden.
+  Damit passt es dann zur Hypothese und ich kann die Induktionshypothese anwenden.
 \end{proof}
 
 
 
 \begin{lemma}[\Kruskalkruskalhelpertimetwo]
-  
+  \Kruskalkruskalhelperprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens zweimal so oft auf,
+  wie die Kanten-Liste lang ist und Union höchstens einmal so oft, wie die Knoten-Liste lang ist.
 \end{lemma}
 \begin{proof}
-  
+  Sei n die Anzahl der Knoten, also die ID des höchsten Knotens plus eins.
+  Ich muss die Aussage für beide Teile des Tupels zeigen.
+  Für Union ist das genau die Aussage des vorherigen Lemmas.
+  Für Find mache ich ebenfalls eine Induktion über die Kanten-Liste.
+  Im Basisfall wird Find nicht aufgerufen.
+  Im Induktionsschritt gibt es eine erste Kante und eine Restliste.
+  Find wird zweimal aufgerufen, aber die doppelte Länge der Kanten-Liste ist auch zwei plus die doppelte Länge der Restliste.
+  Ich kann also auf beiden Seiten zwei abziehen, dann greift die Induktionshypothese
 \end{proof}
 
 
 
 \begin{lemma}[\Kruskalkruskaltimetwo]
-  
+  \Kruskalkruskalprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens zweimal so oft auf,
+  wie die Kanten-Liste lang ist und Union höchstens einmal so oft, wie die Knoten-Liste lang ist.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt direkt aus dem vorherigen Lemma.
 \end{proof}
 
 
 
-\subsection{Model 3 und find}\todo{sub\-section 3 und find}
+\subsection{Die tatsächliche Laufzeit}\todo{sub\-section 3 und find}
 
-
+Bisher zähle ich die Aufrufe von Union und Find und verwende für beide den konstanten Wert eins.
+Allerdings wird bei Union nur einmal etwas ersetzt, während Find sich immer wieder rekursiv selbst aufruft.
+Wie ich später zeigen werde, bis zu $\log_2|V|$ Mal.
+Dementsprechend sollte $\log_2|V|$ der wert von Find sein.
+Bevor ich aber jetzt einfach ein weiteres Modell mit dem entsprechenden Wert schreibe, muss ich bedenken, dass der Beweis auf der strikten Rang-Invariante beruht.
+\todo{hier weiter}
 
 \begin{definition}[\KruskalunionFindstrict]
   

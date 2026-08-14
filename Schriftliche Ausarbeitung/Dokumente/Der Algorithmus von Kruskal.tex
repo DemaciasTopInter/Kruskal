@@ -93,7 +93,7 @@ Das ist allerdings ein Widerspruch, denn in diesem Fall hätte der Algorithmus $
 Die Union-Find-Struktur bietet eine effiziente Möglichkeit, um festzustellen, ob zwei Knoten in derselben Zusammenhangskomponente liegen, also verbunden sind.
 Dafür merkt sie sich für jeden Knoten einen Zeiger, der auf die jeweilige Zusammenhangskomponente zeigt, welche wiederum durch einen ihrer Knoten repräsentiert wird.
 
-Die Abfrage, in welcher Zusammenhangskomponente sich ein Knoten befindet (\textbf{find}), wird rekursiv wie folgt beantwortet: 
+Die Abfrage, in welcher Zusammenhangskomponente sich ein Knoten befindet (\textbf{Find}), wird rekursiv wie folgt beantwortet: 
 Zeigt der Knoten auf sich selbst, wird er als Repräsentant zurückgegeben.
 Falls nicht, wird der Knoten, auf den er zeigt abgefragt und dessen Ergebnis zurückgegeben.
 
@@ -106,7 +106,7 @@ Ein Beispiel dafür sieht man in Abbildung \ref{UnionFindInit}.
 
 \input{Grafiken/UnionFindInit}
 
-Wenn jetzt eine Kante hinzugefügt wird, dann verbindet sie die beiden Zusammenhangskomponenten ihrer Knoten zu einer (\textbf{union}).
+Wenn jetzt eine Kante hinzugefügt wird, dann verbindet sie die beiden Zusammenhangskomponenten ihrer Knoten zu einer (\textbf{Union}).
 Dafür zeigt nun der Zeiger des Repräsentanten der einen Zusammenhangskomponente auf den Repräsentanten der anderen.
 Siehe Abbildung \ref{UnionFindErweiterung1} bis \ref{UnionFindErweiterung3}.
 
@@ -119,8 +119,8 @@ Um nicht jedes Mal nachzählen zu müssen, wird sich dafür die Länge der läng
 Werden zwei Zusammenhangskomponenten mit Repräsentanten mit unterschiedlichem Rang vereinigt, bleiben die Ränge unverändert.
 Nur wenn die Repräsentanten den gleichen Rang haben, wird der Rang des Repräsentanten, der jetzt die vereinigte Zusammenhangskomponente repräsentiert um eins erhöht,
 was man in Abbildung \ref{UnionFindRangInit} bis \ref{UnionFindRangErweiterung3} sieht.
-Daraus ergibt sich, dass der maximale Rang eines Knoten $\log_2(|V|)$ sein kann und bei jedem rekursiven Aufruf von find ist der Rang des Folgeknotens höher als der des vorherigen.
-Damit ist $O(\log_2(|V|))$ auch automatisch die Laufzeitschranke für find.
+Daraus ergibt sich, dass der maximale Rang eines Knoten $\log_2(|V|)$ sein kann und bei jedem rekursiven Aufruf von Find ist der Rang des Folgeknotens höher als der des vorherigen.
+Damit ist $O(\log_2(|V|))$ auch automatisch die Laufzeitschranke für Find.
 
 \input{Grafiken/UnionFindRangInit}
 
