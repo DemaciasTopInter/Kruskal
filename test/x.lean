@@ -62,3 +62,15 @@ theorem length_of_filter_mem {α : Type} {l : List α} {a : α} [DecidableEq α]
       simp [h_mem] at ih
       rw [Nat.add_comm] at ih
       exact ih
+
+def isZero (n : Nat) : Bool :=
+  match n with
+  | .zero   => true
+  | .succ _ => false
+
+def isZero' : Nat → Bool
+  | .zero   => true
+  | .succ _ => false
+
+#check isZero' t
+#eval isZero' t

@@ -27,10 +27,49 @@ def walk_of_deletet_edge {V : Type u} {u v : V} {e : Sym2 V} {G : SimpleGraph V}
   | .nil =>
     .nil
 
-theorem edge_mem_walk {V : Type u} {u v : V} {e : Sym2 V} {G H : SimpleGraph V} (h_eq : G = H.deleteEdges {e}) (h_not_reachable : ¬G.Reachable u v) : ∀ (p : H.Walk u v), e ∈ p.edges := by
+theorem edge_in_walk {V : Type u} {u v : V} {e : Sym2 V} {G H : SimpleGraph V} (h_eq : G = H.deleteEdges {e}) (h_not_reachable : ¬G.Reachable u v) : ∀ (p : H.Walk u v), e ∈ p.edges := by
   intro p
   by_contra h_not_in
   let w := walk_of_deletet_edge h_not_in
   simp [h_eq, SimpleGraph.Reachable] at h_not_reachable
   have := h_not_reachable.false w
   exact this
+
+theorem vertex_of_edge_in_walk_reachable {V : Type u} {u v a b : V} {G : SimpleGraph V} {p : G.Walk u v} (h_in : s(a, b) ∈ p.edges) : G.Reachable u a := by
+  induction p with
+  | nil =>
+    simp at h_in
+  | cons h_adj p' ih =>
+    simp at h_in
+    rcases h_in with ⟨h | h⟩ | h_in
+    · simp [h]
+    · simp [h]
+      exact ⟨SimpleGraph.Walk.cons h_adj SimpleGraph.Walk.nil⟩
+    · have h := ih h_in
+      rcases h with ⟨p⟩
+      exact ⟨SimpleGraph.Walk.cons h_adj p⟩
+
+theorem vertex_of_edge_in_walk_reachable_without_edge {V : Type u} {u v a b : V} {G : SimpleGraph V} {p : G.Walk u v} (h_in : s(a, b) ∈ p.edges) : (G.deleteEdges {s(a, b)}).Reachable u a ∨ (G.deleteEdges {s(a, b)}).Reachable u b := by
+  induction p with
+  | nil =>
+    simp at h_in
+  | cons h_adj p' ih =>
+    rename_i u v w
+    simp at h_in
+    rcases h_in with ⟨h | h⟩ | h_in
+    · simp [h]
+    · simp [h]
+    · have h := ih h_in
+      by_cases h_u_eq_a : u = a
+      · simp [h_u_eq_a]
+      · by_cases h_u_eq_b : u = b
+        · simp [h_u_eq_b]
+        · have h_adj : (G.deleteEdges {s(a, b)}).Adj u v := by
+            simp [h_adj, h_u_eq_a, h_u_eq_b]
+          rcases h with h | h
+          · left
+            rcases h with ⟨p⟩
+            exact ⟨SimpleGraph.Walk.cons h_adj p⟩
+          · right
+            rcases h with ⟨p⟩
+            exact ⟨SimpleGraph.Walk.cons h_adj p⟩

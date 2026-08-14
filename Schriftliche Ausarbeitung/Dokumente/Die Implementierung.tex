@@ -1,11 +1,14 @@
-\section{Die Implementation}\todo{Code bei Lemmata nur falls nötig zum Verständnis}
+\section{Die Implementation}
 Ich beginne damit, meine Definition der Union-Find-Struktur und des Algorithmus von Kruskal als normale Lean Funktionen vorzustellen.
 Zu der Prog Variante komme ich dann im Abschnitt zum Beweis über die Laufzeit.
 
-Der Code aus diesem Abschnitt ist in der Datei Basic.lean zu finden.
+In diesem und den nächsten Kapiteln stelle ich den Code aus meinen drei Hauptdateien vor.
+Ich habe noch weitere Dateien mit diversen Hilfslemmata über Listen und Graphen, gehe auf die meisten davon aber nicht ein.
 
-\subsection{Grundliegende Strukturen}
-Meine grundliegenden Strukturen sind Knoten (\Kruskalnode), Kanten (\Kruskaledge), die Zeiger der Union-Find-Struktur (\KruskalunionFindLink) und die Union-Find-Struktur selbst (\KruskalunionFind).
+Der Code aus diesem Kapitel ist in der Datei Basic.lean zu finden.
+
+\subsection{grundlegende Strukturen}
+Meine grundlegenden Strukturen sind Knoten (\Kruskalnode), Kanten (\Kruskaledge), die Zeiger der Union-Find-Struktur (\KruskalunionFindLink) und die Union-Find-Struktur selbst (\KruskalunionFind).
 Knoten habe keine besonderen Eigenschaften, die sie erfüllen müssen, außer, dass sie unterscheidbar sein müssen.
 Deswegen habe ich mich für folgende Definition entschieden.
 
@@ -25,7 +28,7 @@ Das wäre von der Bedeutung her äquivalent gewesen, hätte mir hier und da ein 
 abbrev (.\textcolor{symbolcolor}{node}.) : Type := Nat
 \end{lstlisting}
 
-Allerdings wollte ich zum einen meine grundliegenden Strukturen einheitlich halten und zum anderen hatte ich anfänglich noch geplant, den Zeiger Teil des Knoten sein zu lassen.
+Allerdings wollte ich zum einen meine grundlegenden Strukturen einheitlich halten und zum anderen hatte ich anfänglich noch geplant, den Zeiger Teil des Knotens sein zu lassen.
 Davon bin ich aber abgekommen, da ein Graph mit seinen Knoten unabhängig vom Kruskal-Algorithmus existiert,
 die Union-Find-Struktur und ihre Zeiger hingegen nur innerhalb des Algorithmus und abhängig von dessen aktuellen Zustand.
 Es hat außerdem auch Vorteile neue Typen zu definieren, zu den Lean noch nicht für jede Klasse eine Instanz kennt, da sie Übersicht verschaffen, indem sie klar signalisieren, was sie sind
@@ -35,14 +38,14 @@ Es ergibt zum Beispiel keinen Sinn zwei Knoten zu addieren, würde bei einer Def
 Kanten müssen ebenfalls unterscheidbar sein.
 Vor allem aber verbinden sie zwei Knoten und haben Kosten.
 Bei den Kosten habe ich mich für natürliche Zahlen entschieden, da ich damit die meiste Erfahrung in Lean habe.
-Außerdem sollte das auch keinen Unterschied machen, denn es gibt für jeden Graph mit Kantenkosten in $\mathbb{Q}$ einen isomorphen mit welchen in $\mathbb{N}$.
+Außerdem sollte das auch keinen Unterschied machen, denn es gibt für jeden Graphen mit Kantenkosten in $\mathbb{Q}$ einen isomorphen mit welchen in $\mathbb{N}$.
 Als weitere Eigenschaft wünsche ich mir, dass Dopplungen von Kanten vermieden werden.
-Der Kruskal-Algorithmus ist definiert für ungerichtete Graphen, also sind für Knoten u und v, die Kante von u nach v und die Kante von v nach u die selbe Kante.
-Um also Dopplungen zu vermeiden, habe ich die Bedingung gestellt, dass die ID des ersten Knoten echt kleiner als die des zweiten sein soll.
+Der Kruskal-Algorithmus ist definiert für ungerichtete Graphen, also sind für Knoten u und v, die Kante von u nach v und die Kante von v nach u dieselbe Kante.
+Um also Dopplungen zu vermeiden, habe ich die Bedingung gestellt, dass die ID des ersten Knotens echt kleiner als die des zweiten sein soll.
 
 \begin{definition}[\Kruskaledge]
   Eine Kante hat eine eigene ID, sowie die IDs ihrer beiden Knoten.
-  Desweiteren hat sie Kosten in $\mathbb{N}$,
+  Des Weiteren hat sie Kosten in $\mathbb{N}$,
   sowie den Nachweis, dass die erste Knoten-ID die kleinere ist.
 \end{definition}
 \begin{lstlisting}
@@ -57,8 +60,8 @@ structure (.\Kruskaledge.) : Type where
 
 Durch edge.nodesLt habe ich als Nebeneffekt Selbstkanten verboten, also Kanten, die einen Knoten mit sich selbst verbinden.
 Das habe ich aber bewusst in Kauf genommen, da es sich auf das Ergebnis nicht auswirken würde.
-Der Algorithmus würde solche Kanten niemals aufnehmen, da jeder Knoten immer in der selben Zusammenhangskomponente ist wie er selbst.
-Hätte ich Selbskanten nicht von vorneherein ausgeschlossen, hätte ich zur Performancesteigerung eine Abfrage in den Algorithmus eingebaut,
+Der Algorithmus würde solche Kanten niemals aufnehmen, da jeder Knoten immer in derselben Zusammenhangskomponente ist wie er selbst.
+Hätte ich Selbstkanten nicht von vorneherein ausgeschlossen, hätte ich zur Performancesteigerung eine Abfrage in den Algorithmus eingebaut,
 der diese noch vor dem Prüfen der Zusammenhangskomponente aussortiert.
 
 Dazu sei noch angemerkt, dass die edge.id eher kosmetischer Natur ist und von mir nur zu debug Zwecken benutzt wird.
@@ -71,7 +74,7 @@ Auf der anderen Seite habe ich festgelegt, dass eine Kante kleiner gleich ($\le$
 Das war notwendig, um die Kanten-Liste nach Kosten sortieren zu können.
 Das Problem, das sich daraus ergibt, ist, dass $\le$ jetzt nicht antisymmetrisch ist.
 Für zwei Kanten e und f gilt also nicht, dass aus e $\le$ f $\land$ f $\le$ e auch automatisch e = f folgt.
-Dadurch konnte ich manche Lemma aus Mathlib über sortierte Listen nicht benutzen, da sie Lineare Ordnung voraus setzen, was die Antisymmetrie von $\le$ beinhaltet.
+Dadurch konnte ich manche Lemmata aus Mathlib über sortierte Listen nicht benutzen, da sie lineare Ordnung voraussetzen, was die Antisymmetrie von $\le$ beinhaltet.
 
 Die Zeiger müssen auf den ersten Blick keine Bedingungen erfüllen.
 Sie beinhalten nur die Information, zu welchem Knoten sie gehören, auf welchen sie zeigen und ihren Rang.
@@ -95,7 +98,7 @@ Die Union-Find-Struktur besteht eigentlich nur aus der Liste an Zeigern, aber f�
     \item Für jeden Knoten muss es genau einen Zeiger geben.
     \item Jeder Zeiger zeigt auf einen eindeutigen Knoten.
     \item Es gibt genau so viele Zeiger wie Knoten.
-    \item Wenn ein Zeiger nicht auf seinen eigenen Knoten zeigt, dann hat der Zeiger des Knoten, auf den er zeigt, einen höheren Rang.
+    \item Wenn ein Zeiger nicht auf seinen eigenen Knoten zeigt, dann hat der Zeiger des Knotens, auf den er zeigt, einen höheren Rang.
     \item Es gibt keine Dopplungen.
     \item Es gilt die Rang-Invariante
 \end{itemize}
@@ -133,7 +136,8 @@ Der ist zwar nicht groß, aber zur besseren Übersicht habe ich ihn trotzdem in 
   und nach matching\_ccId gibt es für y auch einen eindeutigen Zeiger uFLy.
 \end{proof}
 \begin{lstlisting}
-theorem (.\Kruskalexistsparentlink.) {nodeList : List node} (linkList : List (unionFindLink nodeList)) (matching_nodeId : ∀ x ∈ nodeList, ∃! uFL ∈ linkList, x.id = uFL.nodeId) (matching_ccId : ∀ uFL ∈ linkList, ∃! x ∈ nodeList, x.id = uFL.ccId) : ∀ uFLx ∈ linkList, ∃ uFLy ∈ linkList, uFLy.nodeId = uFLx.ccId
+theorem (.\Kruskalexistsparentlink.) {nodeList : List node} (linkList : List (unionFindLink nodeList)) (matching_nodeId : ∀ x ∈ nodeList, ∃! uFL ∈ linkList, x.id = uFL.nodeId) (matching_ccId : ∀ uFL ∈ linkList, ∃! x ∈ nodeList, x.id = uFL.ccId)
+    : ∀ uFLx ∈ linkList, ∃ uFLy ∈ linkList, uFLy.nodeId = uFLx.ccId
 \end{lstlisting}
 
 
@@ -146,7 +150,7 @@ Zuerst habe ich den trivialen Fall einer leeren Knoten-Liste abgefragt.
 In diesem Fall ist auch die Zeiger-Liste leer und keiner der Beweise ist komplexer als zwei simp.
 
 Die Erstellung der Zeiger-Liste habe ich in eine verschachtelte Hilfsfunktion ausgelagert,
-die für jeden Knoten einen Zeiger mit Rang 0 erzeugt,der auf ihn selbst zeigt.
+die für jeden Knoten einen Zeiger mit Rang 0 erzeugt, der auf ihn selbst zeigt.
 Hierfür war es auch wichtig, erst den trivialen Fall abzufragen, damit jetzt die 0 kleiner als die Länge der Knoten-Liste und damit als Rang zulässig ist.
 
 \begin{definition}[\KruskalinitunionFindlinkList]
@@ -170,13 +174,18 @@ def (.\KruskalinitunionFindlinkList.) (nodeList : List node) (h_nonempty : nodeL
 \begin{proof}
   Sei x ein Knoten aus der Knoten-List und sei uFLx ein Zeiger von x, der auf x zeigt und Rang 0 hat.
   Dann ist uFLx der gesuchte Zeiger,
-  denn uFLx ist in \KruskalinitunionFindlinkList.
+  denn uFLx ist in \KruskalinitunionFindlinkList und gehört zu x.
   Sei weiter uFLy ein Zeiger, der zu x gehört, dann sind uFlx und uFLy identisch,
   da alle Zeiger in \KruskalinitunionFindlinkList Rang 0 haben und auf ihren eigenen Knoten Zeigen.
 \end{proof}
 % Um matching\_nodeId zu zeigen, habe ich für einen generischen Knoten den entsprechenden Zeiger gebaut und gezeigt, dass sich dieser auch in der Zeiger-Liste befindet.
 % Anschließend musste ich zeigen, dass dieser Zeiger auch die Anforderungen erfüllt (was er per Definition tut)
 % und, da ich $\exists!$ gefordert habe, dass jeder Zeiger aus der Liste, der die Anforderungen erfüllt, in Wahrheit der selbe ist.
+
+Hier einmal der Code zum Veranschaulichen.
+Für alle weiteren Lemmata werde ich hier aber nur noch die Deklaration aufführen und auch nur, wenn es dem Verständnis hilft.
+Wer der den Code in Gänze lesen möchte, kann dies in meinem Repository\cite{mein_repo} auf Github tun.
+Alle in blau geschriebenen Definitionen und Lemmata sind anklickbar und habe Links zu den entsprechenden Stellen im Code hinterlegt.
 
 \begin{lstlisting}
 theorem (.\KruskalinitunionFindlinkListmatchingnodeId.) {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ nodeList, ∃! uFL, uFL ∈ (init_unionFind.linkList nodeList h_nonempty) ∧ x.id = uFL.nodeId := by
@@ -211,33 +220,35 @@ da ihr Aussagen in direktem Zusammenhang mit der Definition der Funktion stehen.
 \begin{lemma}[\KruskalinitunionFindlinkListhelperappend]\label{KruskalinitunionFindlinkListhelperappend}
   Die Funktion init\_unionFind.linkList.helper ist distributiv über der Listenkonkentation.
   Sie lässt sich also wie folgt splitten.
-  Für zwei Zeiger listen l$_1$ und l$_2$ ist init\_unionFind.link\-List.helper (l$_1$ ++ l$_2$) = init\_unionFind.linkList.helper l$_1$ ++ init\_unionFind.link\-List.helper l$_2$.
+  % Für zwei Zeiger listen l$_1$ und l$_2$ ist init\_unionFind.link\-List.helper (l$_1$ ++ l$_2$) = init\_unionFind.linkList.helper l$_1$ ++ init\_unionFind.link\-List.helper l$_2$.
 \end{lemma}
 \begin{lstlisting}
-theorem (.\KruskalinitunionFindlinkListhelperappend.) (nodeList l₁ l₂ : List node) (h_nonempty : nodeList.length ≠ 0) : init_unionFind.linkList.helper nodeList h_nonempty (l₁ ++ l₂) = (init_unionFind.linkList.helper nodeList h_nonempty l₁) ++ (init_unionFind.linkList.helper nodeList h_nonempty l₂)
+theorem (.\KruskalinitunionFindlinkListhelperappend.) (nodeList l₁ l₂ : List node) (h_nonempty : nodeList.length ≠ 0)
+    : init_unionFind.linkList.helper nodeList h_nonempty (l₁ ++ l₂) =
+    (init_unionFind.linkList.helper nodeList h_nonempty l₁) ++ (init_unionFind.linkList.helper nodeList h_nonempty l₂)
 \end{lstlisting}
 
-Dass ich diese Aussage nicht über \KruskalinitunionFindlinkList sondern deren innere Hilfsfunktion treffe, liegt daran, dass der Typ der Zeiger von der Knoten-Liste abhängt.
-Außerdem ist es relevant, dass alle Zeiger den selben Typ haben, um die Listen vergleichen oder an einander hängen zu können.
+Dass ich diese Aussage nicht über \KruskalinitunionFindlinkList, sondern deren innere Hilfsfunktion treffe, liegt daran, dass der Typ der Zeiger von der Knoten-Liste abhängt.
+Außerdem ist es relevant, dass alle Zeiger denselben Typ haben, um die Listen vergleichen oder aneinander hängen zu können.
 Hier hängt der Typ zwar immer noch von der Knoten-Liste nodeList ab, aber eben nicht von l$_1$ oder l$_2$.
 
 \begin{lemma}[\KruskalinitunionFindlinkListhelperallselfconnected]\label{KruskalinitunionFindlinkListhelperallselfconnected}
   Alle Zeiger der Liste zeigen auf ihren eigenen Knoten.
 \end{lemma}
-\begin{lstlisting}
-theorem (.\KruskalinitunionFindlinkListhelperallselfconnected.) (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.nodeId = x.ccId
-\end{lstlisting}
+% \begin{lstlisting}
+% theorem (.\KruskalinitunionFindlinkListhelperallselfconnected.) (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.nodeId = x.ccId
+% \end{lstlisting}
 
 \begin{lemma}[\KruskalinitunionFindlinkListhelperallrankzero]
   Alle Zeiger der Liste haben Rang 0.
 \end{lemma}
-\begin{lstlisting}
-theorem (.\KruskalinitunionFindlinkListhelperallrankzero.) (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.rank = ⟨0, zero_lt_iff.mpr h_nonempty⟩
-\end{lstlisting}
+% \begin{lstlisting}
+% theorem (.\KruskalinitunionFindlinkListhelperallrankzero.) (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.rank = ⟨0, zero_lt_iff.mpr h_nonempty⟩
+% \end{lstlisting}
 
 Der Beweis für matching\_ccId wird größtenteils analog zum Beweis für mat\-ching\_nodeId geführt.
-Der Unterschied besteht im wesentlichen in der Richtung, da ich jetzt für einen Zeiger den entsprechenden Knoten baue.
-Dem entsprechend brauchte ich auch das Teilungs-Lemma in die andere Richtung.
+Der Unterschied besteht im Wesentlichen in der Richtung, da ich jetzt für einen Zeiger den entsprechenden Knoten baue.
+Dementsprechend brauchte ich auch das Teilungs-Lemma in die andere Richtung.
 Das war jedoch komplexer als die Hinrichtung, da ich zuerst definieren musste, wie ich aus einer Zeiger-Liste auf eine Knoten-Liste schließe
 und anschließend beweisen, dass es in diesem Fall dieselbe ist, aus der die Zeiger-Liste selbst erzeugt wurde.
 
@@ -258,9 +269,9 @@ Außerdem musste ich für das Teilungs-Lemma noch zeigen, dass die Funktion inje
 \begin{proof}
   Der Beweis ergibt sich direkt aus einer verschachtelten Induktion beziehungsweise Fallunterscheidung über beide Listen.
 \end{proof}
-\begin{lstlisting}
-theorem init_unionFind.linkList.helper_injectiv (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List node) (h_init_eq : init_unionFind.linkList.helper nodeList h_nonempty l₁ = init_unionFind.linkList.helper nodeList h_nonempty l₂) : l₁ = l₂ := by
-\end{lstlisting}
+% \begin{lstlisting}
+% theorem init_unionFind.linkList.helper_injectiv (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List node) (h_init_eq : init_unionFind.linkList.helper nodeList h_nonempty l₁ = init_unionFind.linkList.helper nodeList h_nonempty l₂) : l₁ = l₂ := by
+% \end{lstlisting}
 
 \begin{lemma}[\KruskalinitunionFindlinkListhelperappendreverse]
   Sei node\-List eine Knoten-Liste.
@@ -279,19 +290,19 @@ theorem init_unionFind.linkList.helper_injectiv (nodeList : List node) (h_nonemp
   Aus Lemma \ref{KruskalinitunionFindlinkListhelperappend} folgt nun, dass init\_union\-Find.linkList.helper von (k$_1$ ++ k$_2$) gleich l$_1$ ++ l$_2$ ist
   und da die Funktion injektiv ist, folgt nodeList = k$_1$ ++ k$_2$.
 \end{proof}
-\begin{lstlisting}
-theorem (.\KruskalinitunionFindlinkListhelperappendreverse.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List (unionFindLink nodeList)) (h_split : init_unionFind.linkList.helper nodeList h_nonempty nodeList = l₁ ++ l₂) : ∃ k₁ k₂, nodeList = k₁ ++ k₂ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₂ = l₂ := by
-  let k₁ := nodeList_of_unionFind.linkList nodeList l₁
-  let k₂ := nodeList_of_unionFind.linkList nodeList l₂
-  refine ⟨k₁, k₂, ?_⟩
-  have h_eq₂ : init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ := …
+% \begin{lstlisting}
+% theorem (.\KruskalinitunionFindlinkListhelperappendreverse.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l₁ l₂ : List (unionFindLink nodeList)) (h_split : init_unionFind.linkList.helper nodeList h_nonempty nodeList = l₁ ++ l₂) : ∃ k₁ k₂, nodeList = k₁ ++ k₂ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ ∧ init_unionFind.linkList.helper nodeList h_nonempty k₂ = l₂ := by
+%   let k₁ := nodeList_of_unionFind.linkList nodeList l₁
+%   let k₂ := nodeList_of_unionFind.linkList nodeList l₂
+%   refine ⟨k₁, k₂, ?_⟩
+%   have h_eq₂ : init_unionFind.linkList.helper nodeList h_nonempty k₁ = l₁ := …
 
-  have h_eq₃ : init_unionFind.linkList.helper nodeList h_nonempty k₂ = l₂ := …
+%   have h_eq₃ : init_unionFind.linkList.helper nodeList h_nonempty k₂ = l₂ := …
 
-  have h_eq₁ : nodeList = k₁ ++ k₂ := …
+%   have h_eq₁ : nodeList = k₁ ++ k₂ := …
 
-  refine ⟨h_eq₁, h_eq₂, h_eq₃⟩
-\end{lstlisting}
+%   refine ⟨h_eq₁, h_eq₂, h_eq₃⟩
+% \end{lstlisting}
 
 \begin{lemma}[\KruskalinitunionFindlinkListmatchingccId]
   Die Liste erfüllt mat\-ching\_ccId, also gibt es für jeden Zeiger aus \KruskalinitunionFindlinkList genau einen Knoten aus der Knoten-Liste, auf den er zeigt.
@@ -307,22 +318,22 @@ theorem (.\KruskalinitunionFindlinkListhelperappendreverse.) (nodeList : List no
   und das erste Element von k$_2$ ist tatsächlich x.
   Also ist x in nodeList.
 \end{proof}
-\begin{lstlisting}
-theorem (.\KruskalinitunionFindlinkListmatchingccId.) {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ uFL ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = uFL.ccId
-\end{lstlisting}
+% \begin{lstlisting}
+% theorem (.\KruskalinitunionFindlinkListmatchingccId.) {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ uFL ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = uFL.ccId
+% \end{lstlisting}
 
 Der Beweis für matching\_length lässt sich durch eine einfache Listen-Induktion zeigen, diese hat aber einen Haken.
 Wie schon bei den Teilungs-Lemmata ist das Problem, dass der Typ Zeiger von der Knoten-Liste abhängt.
 Deshalb hätten bei einer Induktion über die Knoten-Liste die Zeiger-Listen in der Induktionshypothese und im Ziel einen verschiedenen Typ und die Induktionshypothese ließe sich nicht anwenden.
-Entsprechend führe ich auch hier den Beweis nicht über init\_unionFind.link\-List und die Knoten-Liste, sonder über die innere Hilfsfunktion und eine beliebige Knoten-Liste.
+Entsprechend führe ich auch hier den Beweis nicht über init\_unionFind.link\-List und die Knoten-Liste, sondern über die innere Hilfsfunktion und eine beliebige Knoten-Liste.
 Gleiches gilt für den Beweis von nodup.
 
 \begin{lemma}[\KruskalinitunionFindlinkListhelpermatchinglength]
   Für eine Knoten-Liste l ist die Länge von init\_unionFind.linkList.helper von l gleich der Länge von l.
 \end{lemma}
-\begin{lstlisting}
-theorem (.\KruskalinitunionFindlinkListhelpermatchinglength.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) : (init_unionFind.linkList.helper nodeList h_nonempty l).length = l.length
-\end{lstlisting}
+% \begin{lstlisting}
+% theorem (.\KruskalinitunionFindlinkListhelpermatchinglength.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) : (init_unionFind.linkList.helper nodeList h_nonempty l).length = l.length
+% \end{lstlisting}
 
 \begin{lemma}[\KruskalinitunionFindlinkListhelpernodup]
   Für eine Knoten-Liste l hat init\_unionFind.linkList.helper von l keine Dopplungen unter der Bedingung, dass auch l schon keine doppelten Knoten hat.
@@ -330,9 +341,9 @@ theorem (.\KruskalinitunionFindlinkListhelpermatchinglength.) (nodeList : List n
 \begin{proof}
   Der Beweis erfolgt über eine verschachtelte Induktion und ein einfaches Vergleichen möglicher Fälle.
 \end{proof}
-\begin{lstlisting}
-theorem (.\KruskalinitunionFindlinkListhelpernodup.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) (h_nodup : l.Nodup) : (init_unionFind.linkList.helper nodeList h_nonempty l).Nodup
-\end{lstlisting}
+% \begin{lstlisting}
+% theorem (.\KruskalinitunionFindlinkListhelpernodup.) (nodeList : List node) (h_nonempty : nodeList.length ≠ 0) (l : List node) (h_nodup : l.Nodup) : (init_unionFind.linkList.helper nodeList h_nonempty l).Nodup
+% \end{lstlisting}
 
 Die Bedingung matching\_rank hat kein eigenes Lemma bekommen, da es durch das Hilfslemma, dass alle Zeiger der Liste Rang 0 haben gelöst wurde.
 
@@ -370,11 +381,11 @@ def (.\KruskalinitunionFind.) (nodeList : List node) (h_nodup : nodeList.Nodup) 
 \subsection{Find}
 Um für einen Zeiger die Zusammenhangskomponente zu finden, geht man die Kette der Zeiger bis zum Ende.
 Zeigt der aktuelle Zeiger auf seinen eigenen Knoten ist man am Ende angekommen und der Knoten repräsentiert die Zusammenhangskomponente,
-tut er das nicht, geht man weiter zum Zeiger des Knoten, auf den er zeigt.
+tut er das nicht, geht man weiter zum Zeiger des Knotens, auf den er zeigt.
 
 Da das eine rekursive Funktion ist, und es kein Element gibt, das in jedem Schritt kleiner wird, braucht Lean einen Nachweis, dass diese Funktion auch terminiert.
 Über matching\_rank zeige ich, dass der Rang des neuen Zeigers höher ist als der des aktuellen.
-Dadurch habe ich doch eine natürlische Zahl, die in jedem Schritt kleiner wird, nämlich die obere Schranke des Rangs, also |V|, minus der Rang des aktuellen Zeigers.
+Dadurch habe ich doch eine natürliche Zahl, die in jedem Schritt kleiner wird, nämlich die obere Schranke des Rangs, also |V|, minus der Rang des aktuellen Zeigers.
 Das ist auch der Grund, warum ich den Rang überhaupt beschränke.
 
 \begin{definition}[\KruskalconnectedcomponentofunionFindofunionFindLink]
@@ -449,7 +460,7 @@ dass der Zeiger des Repräsentanten der Zusammenhangskomponente tatsächlich auf
 
 \subsection{Union}
 Da beim Verbinden zweier Zusammenhangskomponenten mit gleichem Rang der Rang des einen Zeigers um eins erhöht wird,
-brauchte ich zuerst den Nachweise, dass dadurch nicht die Rang-Obergrenze überschritten werden.
+brauchte ich zuerst den Nachweis, dass dadurch nicht die Rang-Obergrenze überschritten werden.
 
 \begin{lemma}[\KruskalunionFindranksuccisLt]
   Seien uFLx und uFLy die Zeiger der Repräsentanten zweier verschiedener Zusammenhangskomponenten
@@ -457,21 +468,21 @@ brauchte ich zuerst den Nachweise, dass dadurch nicht die Rang-Obergrenze übers
 \end{lemma}
 \begin{proof}
   Sei M die Menge der Zeiger mit kleinerem Rang als uFLx und uFLy.
-  Gemäß der Rang-Invariante ist |M| $\ge$  Rang von uFLx und per Definition sind uFLx und uFLy $\notin$ M.
+  Gemäß der Rang-Invariante ist |M| $\ge$  Rang von uFLx und definitionsgemäß sind uFLx und uFLy $\notin$ M.
   Deshalb ist die Rang-Obergrenze, sprich die Kardinalität der Knoten Menge, mindestens |M| + 2.
   Also ist der Rang von uFLx $+ 1 \le$ |M| + 1 < |M| + 2 $\le$ |N|.
 \end{proof}
-\begin{lstlisting}
-theorem (.\KruskalunionFindranksuccisLt.)  {nodeList : List node} (uF : unionFind nodeList) (x y : unionFindLink nodeList) : x ≠ y → x ∈ uF.linkList → y ∈ uF.linkList → x.nodeId = x.ccId → y.nodeId = y.ccId → x.rank = y.rank → x.rank.val.succ < nodeList.length
-\end{lstlisting}
+% \begin{lstlisting}
+% theorem unionFind.rank_succ_isLt  {nodeList : List node} (uF : unionFind nodeList) (uFLx uFLy : unionFindLink nodeList) : uFLx ≠ uFLy → uFLx ∈ uF.linkList → uFLy ∈ uF.linkList → uFLx.nodeId = uFLx.ccId → uFLy.nodeId = uFLy.ccId → uFLx.rank = uFLy.rank → uFLx.rank.val.succ < nodeList.length
+% \end{lstlisting}
 
 Bei der union-Funktion, oder wie ich sie genannt habe \KruskalupdateunionFind, die zwei Zusammenhangskomponenten mit Repräsentanten x und y verbindet,
-habe ich zuerst den Fall ausgeschlossen, dass es sich um die selbe Zusammenhangskomponente handelt.
+habe ich zuerst den Fall ausgeschlossen, dass es sich um dieselbe Zusammenhangskomponente handelt.
 Danach habe ich mir die Zeiger der Repräsentanten geholt und anschließend direkt mit der nächsten Fallunterscheidung weiter gemacht und unterschieden, welcher Zeiger den höheren Rang hat.
-In beiden Fällen habe ich fast das selbe gemacht nur, dass ich x und y sowie ihre jeweiligen Zeiger getauscht habe.
+In beiden Fällen habe ich fast dasselbe gemacht nur, dass ich x und y sowie ihre jeweiligen Zeiger getauscht habe.
 
 Ich erstelle zwei neue Zeiger für x und y.
-Der mit kleineren Rang (oder bei gleichem Rang der erste) zeigt jetzt auf den anderen und der wiederum bekommt seinen Rang aktualisiert.
+Der mit kleinerem Rang (oder bei gleichem Rang der erste) zeigt jetzt auf den anderen und der wiederum bekommt seinen Rang aktualisiert.
 Dann erstelle ich eine neue Zeiger-Liste, die auf der alten Liste beruht, aber bei der die beiden alten Zeiger durch die neuen ersetzt sind.
 Danach muss ich noch zeigen, dass die Bedingungen aus \KruskalunionFind für die neue Liste gelten.
 
@@ -507,8 +518,7 @@ def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList)
         -- Der Teil ist fast gleich aber mit x und y und uFLx und uFLy jeweils vertauscht
 \end{lstlisting}
 
-Ich habe unter anderem die Beweise für die \KruskalunionFind Bedingungen ausgelagert.
-Da diese teilweise sehr groß sind und vor allem eine Menge Argumente übergeben bekommen, erwähne ich hier lediglich die Namen.\todo{nur zum Verständnis}
+Ich habe unter anderem die Beweise für die \KruskalunionFind Bedingungen ausgelagert, um die Funktion kompakter zu halten.
 
 \begin{theorem}
   Die neue Liste erfüllt immer noch die Bedingungen der Union-Find-Struktur.
@@ -523,7 +533,7 @@ In den nachfolgenden Lemmata benutze ich immer wieder die folgenden beiden Hilfs
   Ein Element, das Teil einer Liste ist, in der ein Element ersetzt wurde, ist entweder Teil der Liste oder gleich dem ersetzenden Element.
 \end{lemma}
 \begin{lemma}[\memsetofneindex]
-  Ein Element, dass an einer Stelle in einer Liste vorkommt, kommt auch noch in der Liste vor, wenn an einer anderen Stelle ein Element ersetzt wird.
+  Ein Element, das an einer Stelle in einer Liste vorkommt, kommt auch noch in der Liste vor, wenn an einer anderen Stelle ein Element ersetzt wird.
 \end{lemma}
 \begin{proof}
   Beide zeige ich per verschachtelter Induktion, einmal über die Liste und einmal über den Index, an dem ersetzt wird.
@@ -557,7 +567,7 @@ Jetzt zu den eigentlichen Lemmata des Theorems:
   Das Passen bzw. Nichtpassen der neuen Zeiger ist ein einfacher Abgleich der Knoten-ID. 
   Dass alle anderen nicht passen, begründe ich damit, dass sie davor schon nicht gepasst haben, da der einzige, der davor gepasst hat, ersetzt wurde
   und im Fall, dass z weder x noch y ist, zeige ich, dass sowohl die beiden neuen als auch die beiden alten Zeiger von x
-  und y nicht zu z passen und dem entsprechend der ursprüngliche Zeiger von z noch immer in der Liste sein muss, da er nicht ersetzt wurde.
+  und y nicht zu z passen und dementsprechend der ursprüngliche Zeiger von z noch immer in der Liste sein muss, da er nicht ersetzt wurde.
 \end{proof}
 
 % update_unionFind_matching_ccId
@@ -612,12 +622,12 @@ Für das nachfolgende Lemma benötige ich noch ein weiteres Hilfslemma.
   Zeigt uFLz auf x, dann folgt daraus, dass der Rang von uFLz kleiner ist als der von uFLx 
   und da dieser kleiner gleich dem von uFLx' ist, ist so die Bedingung erfüllt.
   Äquivalent dazu ist der Fall, wenn uFLz auf y zeigt.
-  Es bleibt also noch der Fall, dass uFLz auf einen beliebigen anderen Knoten zeigt und dem entsprechend einen niedrigeren Rang hat als dessen Zeiger.
+  Es bleibt also noch der Fall, dass uFLz auf einen beliebigen anderen Knoten zeigt und dementsprechend einen niedrigeren Rang hat als dessen Zeiger.
   Da dieser Zeiger keiner der ersetzten Zeiger ist, ist er auch in der neuen Liste und noch immer der einzigartige Zeiger dieses Knotens.
   Damit ist dann auch in diesem Fall die Bedingung erfüllt.
 \end{proof}
 
-Für die Rang-Invariante habe ich zwei Lemma geschrieben:
+Für die Rang-Invariante habe ich zwei Lemmata geschrieben:
 \KruskalupdateunionFindrankInvariant ist für den Fall, dass der Rang von uFLx kleiner als der von uFLy ist
 und \KruskalupdateunionFindrankInvariantofrankeq für den Fall, dass die Ränge gleich sind.
 
@@ -627,7 +637,7 @@ und \KruskalupdateunionFindrankInvariantofrankeq für den Fall, dass die Ränge 
 \end{lemma}
 \begin{proof}
   In diesem Fall ist uFLy' = uFLy und uFLx' und uFLx haben den gleichen Rang.
-  Das ersetzen von uFLy durch uFLy' verändert also die Liste nicht.
+  Das Ersetzen von uFLy durch uFLy' verändert also die Liste nicht.
   Sei uFLz ein beliebiger Zeiger aus der neuen Liste, dann ist uFLz = uFLx' oder ein Zeiger aus der altern Liste.
   Ist uFLz = uFLx', dann ist der Rang von uFLz gleich dem von uFLx und es gibt ebenso viele Zeiger in der alten Liste mit kleinerem Rang,
   die nicht auf ihren eigenen Knoten zeigen.
@@ -654,7 +664,7 @@ und \KruskalupdateunionFindrankInvariantofrankeq für den Fall, dass die Ränge 
 
 
 \subsection{Kruskal}
-Da in Mathlib bei allen Aussagen über Graphen Aussagen über Knoten-und Kantenmengen definiert werden, war ich zunächst versucht, den In- und Output auch als Mengen zu definieren.
+Da in Mathlib bei allen Aussagen über Graphen Aussagen über Knoten und Kantenmengen definiert werden, war ich zunächst versucht, den Input und Output auch als Mengen zu definieren.
 Dabei ist eine Menge in Lean eine Abbildung von einem Typ zu einer Aussage, also eine Bedingung an die Elemente des Typs und alle, die die Bedingung erfüllen sind Teil der Menge.
 Jedoch sind Mengen zwar gut geeignet, um darüber Aussagen zu treffen und Beweise zu führen,
 aber nicht dafür gedacht, Teil von ausführbaren Programmen zu sein.
@@ -667,7 +677,7 @@ Der Algorithmus wird auf Graphen angewendet und als Input übergebe ich die Knot
 Ich stelle sicher, dass diese auch im Sinne eines Graphen zusammen passen und dass es in der Knoten-Liste keine Dopplungen gibt.
 
 \begin{definition}[\Kruskalmatchingedge]\label{Kruskalmatchingedge}
-  Eine Kanten-Liste und eine Knoten-Liste passen zusammen, wenn für jede Kante der Kanten-Liste die Knoten, die sie verbindet auch in der Knoten-Liste sind.
+  Eine Kanten-Liste und eine Knoten-Liste passen zusammen, wenn für jede Kante der Kanten-Liste die Knoten, die sie verbindet, auch in der Knoten-Liste sind.
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalmatchingedge.)  (edgeList : List edge) (nodeList : List node) : Prop := ∀ x ∈ edgeList, (∃ y ∈ nodeList, x.node1 = y.id) ∧ (∃ z ∈ nodeList, x.node2 = z.id)
@@ -728,11 +738,11 @@ def (.\Kruskalkruskalhelper.) (edgeList : List edge) (nodeList : List node) (uF 
 
 Um \Kruskalkruskalhelper kompakter zu halten habe ich die Fallunterscheidung beim Updaten der Union-Find-Struktur
 (Definition \ref{KruskalupdateunionFind}) und der ErgebnisKantenListe,
-je nach dem, ob die Zusammenhangskomponenten x und y gleich sind, ausgelagert.
+je nachdem, ob die Zusammenhangskomponenten x und y gleich sind, ausgelagert.
 Das macht die Funktion zum einen halb so groß und zum anderen lässt sich so in späteren Lemmata besser eine Induktion über die Funktion führen.
 
 \begin{definition}[\KruskalupdateedgesSoFar]
-  Falls x und y bereits die selbe Zusammenhangskomponente sind, belasse die ErgebnisKantenListe wie sie ist.
+  Falls x und y bereits dieselbe Zusammenhangskomponente sind, belasse die ErgebnisKantenListe wie sie ist.
   Falls nicht, füge die Kante e der ErgebnisKantenListe hinzu.
 \end{definition}
 \begin{lstlisting}
@@ -784,7 +794,7 @@ def (.\KruskalnodeListofedgeListhelper.) (edgeList : List edge) (nodeList : List
 Um \Kruskalkruskal mit dieser Knoten-Liste aufrufen zu können, muss ich noch zeigen, dass das ein valider Input ist.
 
 \begin{theorem}
-  Ein Kanten-Liste passt mit der aus ihr erzeugten Knoten-Liste im Sinne von Definition \ref{Kruskalmatchingedge} zusammen
+  Eine Kanten-Liste passt mit der aus ihr erzeugten Knoten-Liste im Sinne von Definition \ref{Kruskalmatchingedge} zusammen
   und die aus ihr erzeugte Knoten-Liste hat keine Dopplungen.
 \end{theorem}
 
@@ -792,7 +802,7 @@ Hierfür brauche ich zunächst zwei Hilfslemmata, die die Hauptlemmata stark ver
 
 \begin{lemma}[\KruskalnodeListofedgeListhelpereq]
   Für eine Kanten-Liste macht es keinen Unterschied, ob \KruskalnodeListofedgeListhelper für sie mit einer gegebenen Knoten-Liste aufgerufen wird, oder mit einer leeren,
-  wobei dann alle Knoten aus der gegebenen Knoten-Liste aus dem aus der Ergebnis-Liste rausgefiltert und anschließend hinten angehängt werden.
+  wobei dann alle Knoten aus der gegebenen Knoten-Liste aus dem aus der Ergebnis-Liste herausgefiltert und anschließend hinten angehängt werden.
 \end{lemma}
 \begin{lstlisting}
 theorem (.\KruskalnodeListofedgeListhelpereq.) (edgeList : List edge) (nodeList : List node) : nodeList_of_edgeList_helper edgeList nodeList = ((nodeList_of_edgeList_helper edgeList []).filter (fun x => x ∉ nodeList)) ++ nodeList
@@ -800,7 +810,7 @@ theorem (.\KruskalnodeListofedgeListhelpereq.) (edgeList : List edge) (nodeList 
 \begin{proof}
   Der Beweis erfolgt per Induktion über die Kanten-Listen.
   Im Basisfall verbleibt auf beiden Seiten der Gleichung nur die Knoten-Liste.
-  Im Induktionsschritt gibt es eine extra Kante, deren Knoten, je nach dem, ob und wenn ja welche in der Knoten-Liste enthalten sind, aufgenommen werden.
+  Im Induktionsschritt gibt es eine extra Kante, deren Knoten, je nachdem, ob und wenn ja welche in der Knoten-Liste enthalten sind, aufgenommen werden.
   In jedem Fall lässt das Filtern auf der anderen Seite die gleichen Knoten übrig und sie werden in die Knoten-Liste aufgenommen
   und die Gleichung entspricht nun der Induktionshypothese.
 \end{proof}
@@ -811,11 +821,11 @@ Das folgende Hilfslemma beschreibt genau die Eigenschaft, die \KruskalnodeListof
   Ein Knoten ist genau dann in der aus einer Kanten-Liste erzeugten Knoten-Liste, wenn es in der entsprechenden Kanten-Liste eine Kante gibt, die ihn mit einem anderen Knoten verbindet.
 \end{lemma}
 \begin{proof}
-  Da es eine \glqq genau dann wenn\grqq -Aussage ist, muss ich es in beide Richtungen zeigen.
+  Da es eine \glqq genau dann, wenn\grqq -Aussage ist, muss ich es in beide Richtungen zeigen.
   In beiden Fällen mache ich das mit einer Induktion über die Kanten-Liste.
 
   $\rightarrow:$
-  Im Basisfall ist die erzeugte Knoten-Liste leer und es gibt kein entsprechenden Knoten.
+  Im Basisfall ist die erzeugte Knoten-Liste leer und es gibt keinen entsprechenden Knoten.
   Im Induktionsschritt kann ich dank des vorherigen Hilfslemma unterscheiden, entweder ist die neue Kante die gesuchte, oder die gesuchte ist in der restlichen Kanten-Liste
   und ich kann die Kante ignorieren und die Induktionshypothese greift.
 
@@ -829,7 +839,7 @@ Das folgende Hilfslemma beschreibt genau die Eigenschaft, die \KruskalnodeListof
 theorem (.\KruskalmemnodeListofedgeListhelperiffnodeinedgeList.) (edgeList : List edge) (x : node) : x ∈ nodeList_of_edgeList_helper edgeList [] ↔ ∃ y ∈ edgeList, y.node1 = x.id ∨ y.node2 = x.id
 \end{lstlisting}
 
-Die beiden Hauptlemman des Theorems leiten sich nun davon ab.
+Die beiden Hauptlemmata des Theorems leiten sich nun davon ab.
 
 \begin{lemma}[\KruskalmatchingedgefornodeListofedgeList]
   Eine Kanten-Liste und die aus ihr erzeugte Knoten-Liste passen zusammen.

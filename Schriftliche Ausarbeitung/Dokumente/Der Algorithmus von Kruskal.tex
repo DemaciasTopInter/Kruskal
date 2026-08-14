@@ -1,6 +1,6 @@
 \section{Der Algorithmus von Kruskal}
 Der Algorithmus von Kruskal wurde vom Mathematiker Joseph Bernard Kruskal entwickelt und 1956 publiziert\cite{kruskal_article}.
-Der Algorithmus findet für einen ungerichteten endliche Graphen mit Kantenkosten einen minimalen Spannbaum.
+Der Algorithmus findet für einen ungerichteten endliche Graphen mit Kantenkosten einen minimalen Spannbaum / Spannwald.
 
 \subsection{Was ist ein Graph}
 Ein \textbf{Graph} $G = (V, E)$ besteht aus einer Menge an Knoten $V$ und einer Menge an Kanten $E \subseteq V \times V$. Eine Kante ist die Verbindung zwischen zwei Knoten. 
@@ -8,33 +8,34 @@ Man unterscheidet zwischen verschiedenen Arten von Graphen:
 \begin{itemize}
   \item Man spricht von \textbf{endlichen Graphen}, wenn $V$ und $E$ endlich sind, andernfalls von \textbf{unendlichen Graphen}.
   \item Bei einem \textbf{gerichteten Graphen} besteht für zwei Knoten $u$ und $v$ ein Unterschied zwischen einer Kante von $u$ nach $v$ und einer Kante von $v$ nach $u$ und es kann auch sein,
-  dass nur eine davon in $E$ enthalten ist. Bei einem \textbf{ungerichteten Graphen} hingegen ist das die selbe Kante.
+  dass nur eine davon in $E$ enthalten ist. Bei einem \textbf{ungerichteten Graphen} hingegen ist das dieselbe Kante.
   \item Wenn eine Funktion $c : E \rightarrow \mathbb{R}$ definiert ist, die jeder Kante einen Wert zuweist, spricht man von einem Graphen mit \textbf{Kantenkosten}.
 \end{itemize}
 Ein \textbf{Kantenzug} (engl. Walk) ist eine Liste von Kanten $e_1, e_2, e_3, \dots, e_n \in E$, sodass für je zwei aufeinander folgende Kanten $e_i, e_{i+1}$ gilt, 
 dass es Knoten $u, v, w \in V$ gibt und $e_i = (u,v)$ geht und $e_{i+1}=(v,w)$, also jede Kante fängt da an, woh ihre Vorgängerin aufhört.
-Kommt in einem Kantenzug keine Kante doppelt vor dann nennt man ihn einen \textbf{Pfad}.
+Kommt in einem Kantenzug keine Kante doppelt vor, dann nennt man ihn einen \textbf{Pfad}.
 
 Wenn es für zwei Knoten $u, v \in V$ einen Kantenzug von $u$ nach $v$ gibt, also die erste Kante bei $u$ anfängt und die letzte bei $v$ aufhört,
 dann sind $u$ und $v$ \textbf{verbunden} (engl. connected).
 Es gilt, dass jeder Knoten durch den leeren Kantenzug mit sich selbst verbunden ist.
-Die Eigenschaft verbunden zu sein definiert auf der Menge der Knoten ein Äquivalenzrelation.
+Die Eigenschaft verbunden zu sein definiert auf der Menge der Knoten eine Äquivalenzrelation.
 Die dadurch mit definierten Äquivalenzklassen heißen \textbf{Zusammenhangskomponenten} (engl. connected component).
-Das bedeutet, alle Knoten, die mit einander verbunden sind, sind in der selben Zusammenhangskomponente.
+Das bedeutet, alle Knoten, die miteinander verbunden sind, sind in derselben Zusammenhangskomponente.
 Sind in einem Graphen alle Knoten paarweise verbunden, also es nur eine Zusammenhangskomponente gibt, nennt man ihn \textbf{zusammenhängend}.
 
 Ein nicht leerer Pfad von $u$ nach $u$, also der beim selben Knoten anfängt und aufhört, heißt \textbf{Kreis}.
 Gibt es in einem Graphen keinen einzigen Kreis, so nennt man ihn \textbf{kreisfrei} oder \textbf{azyklisch} (engl. acyclic).
 
 \subsection{Was ist ein Spannbaum}
-Gegeben ein Graph G = (V, E) mit Knotenmenge V und Kantenmenge E, dann ist ein Graph T = (V, E') ein Spannbaum, wenn: 
+Gegeben ein Graph G = (V, E) mit Knotenmenge V und Kantenmenge E, dann ist ein Graph T = (V, E') ein Spannbaum / Spannwald, wenn: 
 \begin{itemize}
   \item T ein Subgraph von G, also E' $\subseteq$ E ist.
   \item In T keine Kreise vorkommen.
   \item Alle Knoten aus V, die in G durch einen Kantenzug verbunden sind, auch in T verbunden sind.
 \end{itemize}
-Wenn also G vollständig verbunden ist, dann ist es auch T und man spricht tatsächlich von einem Spannbaum. 
-Besteht G hingegen aus mehreren Klustern von Knoten zwischen denen es keine verbindende Kante gibt, dann gibt es in T entsprechend die selben Klaster und  man  spricht von einem Spannwald.
+Wenn dabei G vollständig verbunden ist, dann ist es auch T und man spricht tatsächlich von einem Spannbaum. 
+Besteht G hingegen aus mehreren Clustern von Knoten, zwischen denen es keine verbindende Kante gibt, dann gibt es in T entsprechend dieselben Cluster und  man  spricht von einem Spannwald.
+Im Folgenden werde ich fast nur noch den Begriff Spannbaum benutzen, meine aber Spannwälder mit.
 
 Ein minimaler Spannbaum ist ein Spannbaum, der die Summe der Kantenkosten minimiert. Das heißt, wenn M = (V, E$^\ast$) ein minimaler Spannbaum von G ist, 
 dann muss für jeden anderen Spannbaum T = (V, E') von G die Summe der Kantenkosten mindestens so groß sein, wie die von M.
@@ -44,8 +45,8 @@ $$\sum_{e \in E^\ast} c(e) \le \sum_{e \in E'} c(e)$$
 Der Algorithmus sortiert zunächst die Kantenliste aufsteigend nach Kosten.
 Anschließend iteriert er über die Kanten der sortierten Kantenliste, beginnend bei der mit den niedrigsten Kosten.
 Für jede Kante prüft er nun, ob er die beiden Knoten der Kante schon über einen Kantenzug verbunden hat.
-Falls nein übernimmt er die Kante und merkt sich, dass die beiden Knoten jetzt vebunden sind.
-Falls ja wird die Kante verworfen.
+Falls nein, übernimmt er die Kante und merkt sich, dass die beiden Knoten jetzt verbunden sind.
+Falls ja, wird die Kante verworfen.
 Zum Schluss gibt er die Liste der übernommenen Kanten zurück.
 
 In Kruskals Worten: 
@@ -72,7 +73,7 @@ In Kruskals Worten:
   \EndFunction
 \end{algorithmic}
 % \end{algorithm}
-Für die Funktion ExistiertEinKreis gibt es verschiedene Möglichkeiten. Eine triviale wäre zum Beispiel eine Tiefensuche von jedem Knoten aus.
+Für die Funktion ExistiertEinKreis gibt es verschiedene Möglichkeiten, sie zu Implementieren. Eine triviale wäre zum Beispiel eine Tiefensuche von jedem Knoten aus.
 Das ist jedoch nicht sehr effizient. Besser ist es, wenn man weiß, dass die ErgebnisKantenListe vorher kreisfrei war, nur zu prüfen, ob durch die neue Kante ein Kreis entsteht.
 Das ist genau dann der Fall, falls die beiden Knoten der Kante bereits durch einen Kantenzug verbunden sind. Das lässt sich mit einer einzigen Tiefensuche in linearer Zeit prüfen.
 Es geht allerdings noch besser. Mit der Union-Find-Struktur, die ich im Folgenden vorstellen werde, lässt sich die Kreisfreiheit in logarithmischer Zeit prüfen.
@@ -85,7 +86,7 @@ Dass $E'$ keine Kreise enthält, ist offensichtlich, da die leere Liste keine Kr
 Wenn es Knoten $u, v \in V$ gibt, die in G verbunden sind aber nicht in T, dann gibt es per Definition einen Kantenzug $e_1, e_2, e_3, \dots, e_n \in E$, der $u$ und $v$ verbindet aber keinen in $E'$.
 Dann gibt es Knoten $w_0, w_1, \dots, w_n \in V$, sodass $\forall i, e_i$ eine Kante von $w_{i-1}$ nach $w_i$ ist. Demnach ist $u = w_0$ und $v = w_n$.
 Dann gibt es ein $j \le n$, sodass $\forall i < j, u$ mit $w_i$ verbunden ist, aber nicht mit $w_j$.
-Darus folgt, $e_j \notin E'$ und $E'\cap\{e_j\}$ hat keinen Kreis.
+Daraus folgt, $e_j \notin E'$ und $E'\cap\{e_j\}$ hat keinen Kreis.
 Das ist allerdings ein Widerspruch, denn in diesem Fall hätte der Algorithmus $e_j$ mit ins Ergebnis aufgenommen.
 
 \subsection{Die Union-Find-Struktur}
@@ -93,8 +94,8 @@ Die Union-Find-Struktur bietet eine effiziente Möglichkeit, um festzustellen, o
 Dafür merkt sie sich für jeden Knoten einen Zeiger, der auf die jeweilige Zusammenhangskomponente zeigt, welche wiederum durch einen ihrer Knoten repräsentiert wird.
 
 Die Abfrage, in welcher Zusammenhangskomponente sich ein Knoten befindet (\textbf{find}), wird rekursiv wie folgt beantwortet: 
-Zeigt der Knoten auf sich selbst, wird er als Repräsentant zurück gegeben.
-Falls nicht, wird der Knoten, auf den er zeigt abgefragt und dessen Ergebnis zurück gegeben.
+Zeigt der Knoten auf sich selbst, wird er als Repräsentant zurückgegeben.
+Falls nicht, wird der Knoten, auf den er zeigt abgefragt und dessen Ergebnis zurückgegeben.
 
 Eine Kante erzeugt genau dann keinen Kreis, wenn ihre beiden Knoten noch nicht verbunden sind, also in verschiedenen Zusammenhangskomponenten sind.
 
@@ -111,13 +112,14 @@ Siehe Abbildung \ref{UnionFindErweiterung1} bis \ref{UnionFindErweiterung3}.
 
 \input{Grafiken/UnionFindErweiterung}
 
-Es gibt noch eine Verbesserung. Um zu verhindern, dass die Kette an Zeigern immer länger wird und man womöglich erst jeden anderen Knoten fragen muss um die Zusammenhangskomponente zu erfahren,
+Es gibt noch eine Verbesserung.
+Um zu verhindern, dass die Kette an Zeigern immer länger wird und man womöglich erst jeden anderen Knoten fragen muss, um die Zusammenhangskomponente zu erfahren,
 wird immer der Repräsentant mit den kürzeren Ketten an den mit den längeren Ketten gehängt.
-Um nicht jedes mal nachzählen zu müssen, wird sich dafür die Länge der längsten Kette gemerkt, der sogenannte \textbf{Rang} (engl. rank).
+Um nicht jedes Mal nachzählen zu müssen, wird sich dafür die Länge der längsten Kette gemerkt, der sogenannte \textbf{Rang} (engl. rank).
 Werden zwei Zusammenhangskomponenten mit Repräsentanten mit unterschiedlichem Rang vereinigt, bleiben die Ränge unverändert.
 Nur wenn die Repräsentanten den gleichen Rang haben, wird der Rang des Repräsentanten, der jetzt die vereinigte Zusammenhangskomponente repräsentiert um eins erhöht,
 was man in Abbildung \ref{UnionFindRangInit} bis \ref{UnionFindRangErweiterung3} sieht.
-Daraus ergibt sich, dass der maximale Rang eines Knoten $\log_2(|V|)$ sein kann und bei jedem rekursiven Aufruf von find ist der Rang des Folgeknoten höher als der des vorherigen.
+Daraus ergibt sich, dass der maximale Rang eines Knoten $\log_2(|V|)$ sein kann und bei jedem rekursiven Aufruf von find ist der Rang des Folgeknotens höher als der des vorherigen.
 Damit ist $O(\log_2(|V|))$ auch automatisch die Laufzeitschranke für find.
 
 \input{Grafiken/UnionFindRangInit}

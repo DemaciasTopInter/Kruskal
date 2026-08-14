@@ -9,10 +9,10 @@ Ein großer Teil der theoretischen Informatik bildet daher die Entwicklung und A
 Traditionell werden mathematische Beweise in natürlicher Sprache formuliert und von anderen Mathematikern oder Informatikern überprüft.
 Obwohl diese Vorgehensweise in der Praxis bewährt ist, bleibt sie anfällig für menschliche Fehler.
 Insbesondere bei umfangreichen oder technisch anspruchsvollen Beweisen können Ungenauigkeiten oder unbegründete Schlussfolgerungen unbemerkt bleiben.
-Es bleibt also immer eine gewisse Restunsicherheit, ob man einem Beweis auch wirlich trauen kann.
+Es bleibt also immer eine gewisse Restunsicherheit, ob man einem Beweis auch wirklich trauen kann.
 
-Die Antwort auf diese Unsicherheit sind Formale Beweise.
-Dabei werden die angenommenen Vorraussetzungen sowie die einzelnen Beweisschritt in einer präzisen formalen Sprache beschrieben 
+Die Antwort auf diese Unsicherheit sind formale Beweise.
+Dabei werden die angenommenen Voraussetzungen sowie die einzelnen Beweisschritte in einer präzisen formalen Sprache beschrieben 
 und jeder Schritt muss den Regeln eines zugrunde liegenden logischen Systems entsprechen.
 Diese Regeln legen fest, wie eine Aussage aus anderen bereits geltenden Aussagen abgeleitet werden kann.
 Da keine informellen Argumente oder logischen Sprünge zugelassen sind, kann jeder Schluss automatisch überprüft werden.
@@ -25,18 +25,20 @@ Dabei erzeugt ein Beweisassistent einen Beweis nicht selbstständig, sondern kon
 In den vergangenen Jahren haben Beweisassistenten zunehmend an Bedeutung gewonnen.
 Sie werden sowohl zur Formalisierung mathematischer Theorien als auch zur Verifikation von Algorithmen, Programmen und Hardware eingesetzt.
 Einer der derzeit verbreitetsten Beweisassistenten ist Lean.
-Lean basiert auf der abhängigen Typentheorie (engl. Dependent Type Theory) und ermöglicht es, mathematische Definitionen, Algorithmen und ihre Eigenschaften innerhalb einer gemeinsamen formalen Umgebung zu beschreiben.
+Lean basiert auf der abhängigen Typentheorie (engl. Dependent Type Theory) und ermöglicht es, mathematische Definitionen,
+Algorithmen und ihre Eigenschaften innerhalb einer gemeinsamen formalen Umgebung zu beschreiben.
 Durch die umfangreiche Bibliothek Mathlib stehen bereits zahlreiche mathematische Begriffe und Sätze zur Verfügung,
 die bei der Formalisierung neuer Ergebnisse wiederverwendet werden können.
 
 Die Formalisierung eines Algorithmus in Lean umfasst nicht nur dessen Implementierung, sondern auch den Nachweis seiner Eigenschaften.
 Dadurch entsteht ein maschinell überprüfbarer Beweis, dessen Korrektheit unmittelbar aus den Regeln des zugrunde liegenden formalen Systems folgt.
 
-Ein Beispiel, warum die Formalisierung sinnvoll ist, ist die Historie des Vier-Farben-Satz\cite{vier_farben_wiki}, der besagt, dass jede Landkarte mit vier Farben färbbar ist, sodass keine zwei Nachbarländer die selbe Farbe haben.
+Ein Beispiel, warum die Formalisierung sinnvoll ist, ist die Historie des Vier-Farben-Satz\cite{vier_farben_wiki}, der besagt,
+dass jede Landkarte mit vier Farben färbbar ist, sodass keine zwei Nachbarländer dieselbe Farbe haben.
 Die Vermutung dazu wurde 1852 von Francis Guthrie angestellt.
 1879 veröffentlichte Alfred Kempe einen Beweis für den Satz, der zwar fehlerhaft war, was aber elf Jahre lang niemandem auffiel.
 Der nächste Beweis kam dann 1880 von Peter Guthrie Tait, wurde aber ebenfalls elf Jahre später widerlegt.
-Der erste Entwurf für einen computergestützen Beweis wurde in den 1960er und 1970er Jahren von Heinrich Heesch entwickelt.
+Der erste Entwurf für einen computergestützten Beweis wurde in den 1960er und 1970er Jahren von Heinrich Heesch entwickelt.
 1976 wurde der Satz dann von Kenneth Appel und Wolfgang Haken tatsächlich bewiesen.
 Dieser Beweis wurde in den folgenden Jahren noch mehrmals vereinfacht und gilt bis heute als korrekt.
 2005 wurde der Satz dann von Georges Gonthier und Benjamin Werner in dem Beweisassistenten Coq formal bewiesen\cite{vier_farben_paper}.
@@ -47,7 +49,8 @@ Viele Optimierungsprobleme lassen sich durch Graphen modellieren.
 Eine zentrale Rolle spielen dabei minimale Spannbäume, die beispielsweise in Kommunikationsnetzen, Verkehrsplanung oder Clustering eingesetzt werden. % mehr
 Einer der bekanntesten Algorithmen zur Berechnung minimaler Spannbäume ist der Algorithmus von Kruskal.
 
-Für einen Algorithmus sind zwei Eigenschaften von besonderem Interesse: Zum einen muss gezeigt werden, dass der Algorithmus tatsächlich die gewünschte Lösung berechnet (Korrektheit). Zum anderen ist seine Effizienz von Bedeutung, weshalb seine asymptotische Laufzeit analysiert wird.
+Für einen Algorithmus sind zwei Eigenschaften von besonderem Interesse: Zum einen muss gezeigt werden, dass der Algorithmus tatsächlich die gewünschte Lösung berechnet (Korrektheit).
+Zum anderen ist seine Effizienz von Bedeutung, weshalb seine asymptotische Laufzeit analysiert wird.
 
 Ziel dieser Arbeit ist die Formalisierung des Korrektheits- und Laufzeitbeweises des Algorithmus von Kruskal im Beweisassistenten Lean mit der Benutzung des Algolean Framework.
 Dabei werden sowohl die mathematischen Grundlagen als auch die Umsetzung der Beweise in Lean betrachtet.

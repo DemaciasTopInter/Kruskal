@@ -1,18 +1,18 @@
-\section{Der Korrektheitsbeweis}\label{Korrektheitsbeweis}\todo{section Korrektheitsbeweis}
+\section{Der Korrektheitsbeweis}\label{Korrektheitsbeweis}
 Eine der Tücken von Lean ist, das es sehr pedantisch ist und es daher schwer abzuschätzen ist, wie umfangreich ein Beweis tatsächlich wird.
 Da jedes Detail beschrieben und jeder mögliche Fall unterschieden werden muss, ist es möglich, dass ein Beweis,
 der in natürlicher Sprache in einem Satz erklärt ist in Lean 5 Zeilen oder 500 Zeilen lang sein kann.
 Das hängt von verschiedenen Faktoren ab, zum einen, wie komplex der Beweis tatsächlich ist, zum andern, wie viel Vorarbeit es dazu bereits in der Mathlib Bibliothek gibt,
-außerdem spielt die Wahl der Definitionen eine Rolle und wie gut man sich in den Lemmata auskennt und mit den Feinheiten von Lean vertaut ist.
-Ich weis nicht, wie oft ich mir gedacht habe, ich ersetze noch ein sorry und zwei Stunden später waren da statt dem einen sorry zweihundert Zeilen Code mehr mit fünf weiteren enthaltenen sorrys.
+außerdem spielt die Wahl der Definitionen eine Rolle und wie gut man sich in den Lemmata auskennt und mit den Feinheiten von Lean vertraut ist.
+Ich weiß nicht, wie oft ich mir gedacht habe, ich ersetze noch ein sorry und zwei Stunden später waren da statt dem einen sorry zweihundert Zeilen Code mehr mit fünf weiteren enthaltenen sorrys.
 
 Ich muss sagen, dass ich das Ausmaß des Korrektheitsbeweises unterschätzt habe und es mir zeitlich nicht gelungen ist, den Beweis fertig zu stellen.
 Nichtsdestotrotz stelle ich im Folgenden meine Ansätze vor, wie weit ich gekommen bin und meine Überlegungen zu den fehlenden Teilen.
 
-Der Code aus diesem Abschnitt ist in der Datei Correctness.lean zu finden.
+Der Code aus diesem Kapitel ist in der Datei Correctness.lean zu finden.
 
 \subsection{Ziel}
-Ziel des Korrektheitsbeweises ist es zu zeigen, dass das Program bei korrektem Input tatsächlich die Kantenmenge für einen minimalen Spannbaum liefert.
+Ziel des Korrektheitsbeweises ist es zu zeigen, dass das Programm bei korrektem Input tatsächlich die Kantenmenge für einen minimalen Spannbaum liefert.
 Ich muss also zunächst definieren, was ein Spannbaum ist und unter welchen Umständen er minimal ist.
 Dafür habe ich auf die SimpleGraph Struktur aus Mathlib zurückgegriffen, um Graphen darzustellen.
 Diese hat den Vorteil, dass sie einen ungerichteten Graphen implementiert und bereits eine Menge Lemmata dazu in Mathlib enthalten sind,
@@ -27,15 +27,15 @@ Der Nachteil ist, dass sie keine Kantenkosten unterstützt.
 def (.\KruskalSimpleGraphIsSpanningTree.) (G H : SimpleGraph α) : Prop := H ≤ G ∧ H.IsAcyclic ∧ (∀ (x y : α), G.Reachable x y ↔ H.Reachable x y)
 \end{lstlisting}
 
-Um einen einen Spannbaum minimal zu nennen, muss ich über seine Kantenkosten sprechen.
+Um einen Spannbaum minimal zu nennen, muss ich über seine Kantenkosten sprechen.
 Da die Kanten eines SimpleGraph keine Kosten haben, musste ich eine Verknüpfung zwischen ihnen und den von mir definierten Kanten schaffen.
-Desweiteren brauche ich einen Ausdruck, der die Summe der Kosten einer Kanten-Liste beschreibt.
+Des Weiteren brauche ich einen Ausdruck, der die Summe der Kosten einer Kanten-Liste beschreibt.
 Dafür habe ich hier einmal den Definitionen \ref{KruskalcostofedgeList}, \ref{KruskalnodeListofedgeListmax} und \ref{KruskalSimpleGraphofnofedgeList} aus dem folgenden Abschnitt vorgegriffen.
 
-\begin{definition}[\KruskalminimalSpanninTreeofedgeList]
+\begin{definition}[\KruskalminimalSpanninTreeofedgeList]\label{KruskalminimalSpanninTreeofedgeList}
   Eine Kanten-Liste (minEdgeList) bildet einen minimalen Spannbaum zu einer zweiten Kanten-Liste (edgeList),
   wenn der aus ihr erzeugte Graph ein Spannbaum des aus der zweiten Liste erzeugten Graphen ist
-  und jede andere Kanten-Liste (otherEdgeList), deren Graph auch ein Spannbaum ist, mindestens genau so hohe kombinierte Kantenkosten hat.
+  und jede andere Kanten-Liste (otherEdgeList), deren Graph auch ein Spannbaum ist, mindestens genauso hohe kombinierte Kantenkosten hat.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalminimalSpanninTreeofedgeList.) {minEdgeList : List edge} {edgeList : List edge} {n : Nat} (h_nonempty₁ : minEdgeList ≠ []) (h_nonempty₂ : edgeList ≠ []) (h_eq₁ : n = (nodeList_of_edgeList_max minEdgeList h_nonempty₁).id.succ) (h_eq₂ : n = (nodeList_of_edgeList_max edgeList h_nonempty₂).id.succ)
@@ -69,7 +69,7 @@ dass für einen zusammenhängenden Graphen auch das Ergebnis des Algorithmus zus
 Da meine Kanten-Liste aber immer endlich ist, muss die Knotenmenge, damit es überhaupt zusammenhängende Graphen geben kann auch endlich sein.
 Deshalb habe ich mich für Fin entscheiden mit der ID des höchsten Knotens, der von einer Kante verbunden wird.
 
-Eine Funktion, die mir aus einer Kanten-Liste die dazugehörigen Knoten-Liste ausgibt, habe ich bereits (\KruskalnodeListofedgeList).
+Eine Funktion, die mir aus einer Kanten-Liste die dazugehörige Knoten-Liste ausgibt, habe ich bereits (\KruskalnodeListofedgeList).
 Um von dieser das Maximum zu bekommen, brauchte ich zunächst den Nachweis, dass diese nicht leer ist.
 Diesen habe ich entsprechend der Hilfsfunktion aufgeteilt.
 
@@ -88,14 +88,14 @@ Diesen habe ich entsprechend der Hilfsfunktion aufgeteilt.
   Für eine nicht leere Kanten-Liste, ist die dazugehörige Knoten-Liste auch nicht leer.
 \end{lemma}
 \begin{proof}
-  Mit eine Fallunterscheidung über die Kanten-Liste, kann man zeigen, dass sie entweder leer ist und damit der Vorraussetzung widerspricht,
+  Mit einer Fallunterscheidung über die Kanten-Liste, kann man zeigen, dass sie entweder leer ist und damit der Voraussetzung widerspricht,
   oder sie hat ein erstes Element, dessen Knoten zur Knoten-Liste hinzugefügt werden können, und dann greift das Lemma über die Hilfsfunktion.
 \end{proof}
 
 Damit lässt sich dann das Maximum dieser Knoten-Liste bestimmen und somit dann auch der Typ für die Knotenmenge des SimpleGraph.
 
 \begin{definition}[\KruskalnodeListofedgeListmax]\label{KruskalnodeListofedgeListmax}
-  Der Kosten mit der höchsten ID von allen Knoten, die durch eine Kante der Kanten-Liste verbunden sind.
+  Der Knoten mit der höchsten ID von allen Knoten, die durch eine Kante der Kanten-Liste verbunden sind.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalnodeListofedgeListmax.) (edgeList : List edge) (h : edgeList ≠ []) : node := (nodeList_of_edgeList edgeList).max (nodeList_of_edgeList_nonempty edgeList h)
@@ -131,13 +131,13 @@ def (.\KruskalSimpleGraphofedgeList.) (edgeList : List edge) (h : edgeList ≠ [
 \end{lstlisting}
 
 Das Problem, dass sich aus dieser Definitionen heraus ergibt, ist, dass der Typ der Knoten und damit auch der Typ des SimpleGraph von der Kanten-Liste abhängen.
-Es ist also nicht ohne Weiteres möglich, die Graphen von zwei verschiedenen Kanten-Listen mit einander zu vergleichen, denn zum Beispiel die Relation = ist nur für Terme mit gleichem Typ definiert.
+Es ist also nicht ohne Weiteres möglich, die Graphen von zwei verschiedenen Kanten-Listen miteinander zu vergleichen, denn zum Beispiel die Relation = ist nur für Terme mit gleichem Typ definiert.
 Auch wenn man einen Nachweis hat, dass der höchste verknüpfte Knoten in beiden Listen der gleiche ist, ist das nur bedingt hilfreich,
-da man damit zwar den Typ eines Graphen casten kann, sodass er den Typ des anderen matcht, was man in Lean allerdings so oft es geht vermeiden möchte,
+da man damit zwar den Typ eines Graphen casten kann, sodass er den Typ des anderen matcht, was man in Lean allerdings, so oft es geht, vermeiden möchte,
 da man so sehr leicht in Leans \glqq Typen-Hölle \grqq landen kann.
 
-Meine Idee war es deshalb, die Anpassung des Typs direkt mit in die Definition auf zunehmen.
-Ich habe dafür dafür einen weiteren SimpleGraph definiert, der seine Eigenschaften von der ersten Definition ableitet.
+Meine Idee war es deshalb, die Anpassung des Typs direkt mit in die Definition aufzunehmen.
+Ich habe dafür einen weiteren SimpleGraph definiert, der seine Eigenschaften von der ersten Definition ableitet.
 
 \begin{definition}[\KruskalSimpleGraphofnofedgeList]\label{KruskalSimpleGraphofnofedgeList}
   Der SimpleGraph einer Kan\-ten-Liste, angepasst an eine natürliche Zahl n.
@@ -162,7 +162,7 @@ muss ich jetzt auch für das Ergebnis des Kruskal Algorithmus zeige, dass es nic
 Dafür benutze ich das folgende Hilfslemma.
 
 \begin{lemma}[\KruskalconnectedcomponentofinitunionFindofideqid]
-  Für jede Knoten-ID ist die ID des Repräsentanten der dazugehörige Zusammenhangskomponente in einer frisch initialisierten Union-Find-Struktur sie selbst.
+  Für jede Knoten-ID ist die ID des Repräsentanten der dazugehörigen Zusammenhangskomponente in einer frisch initialisierten Union-Find-Struktur sie selbst.
 \end{lemma}
 \begin{proof}
   Der Beweis leitet sich direkt aus Lemma \ref{KruskalinitunionFindlinkListhelperallselfconnected} ab.
@@ -186,7 +186,7 @@ Den Beweis habe ich analog zu den Lemmata geführt, die belegen, dass die Knoten
 \end{lemma}
 \begin{proof}
   Für den Beweis mache ich zunächst eine Fallunterscheidung über die Kante-Liste.
-  Falls sie leer ist, widerspricht das der Vorraussetzung.
+  Falls sie leer ist, widerspricht das der Voraussetzung.
   Falls nicht, gibt es eine erste Kante e und ich kann die sortierte Kante-Liste aufteilen in eine Liste l1 davor, e selbst und eine Liste l2 danach.
   Dann kann ich eine weitere Fallunterscheidung über l1 machen, um zu zeigen, dass die sortierte Kante-Liste eine erste Kante hat.
   Falls sie leer ist, ist es e, falls nicht, ist es die erste Kante von l1.
@@ -194,10 +194,10 @@ Den Beweis habe ich analog zu den Lemmata geführt, die belegen, dass die Knoten
   Ab da greift dann \Kruskalkruskalhelpernonempty.
 \end{proof}
 
-Damit lässt sich dann auch Folgendes definieren.\todo{Satz gefällt mir noch weniger}
+Damit lässt sich dann der Graph der Ergebnisliste wie folgt definieren.
 
 \begin{definition}[\KruskalSimpleGraphofkruskal]
-  Die Repräsentation des Ergebnis des Algorithmus von Kruskal als SimpleGraph.
+  Die Repräsentation des Ergebnisses des Algorithmus von Kruskal als SimpleGraph.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalSimpleGraphofkruskal.) (edgeList : List edge) (h : edgeList ≠ []) := SimpleGraph_of_n_of_edgeList (nodeList_of_edgeList_max (kruskal_of_edgeList edgeList) _).id.succ (kruskal_of_edgeList edgeList) (kruskal_nonempty edgeList h) (rfl)
@@ -214,11 +214,11 @@ Ich beginne damit, zu zeigen, dass es sich um einen Subgraph handelt.
 \end{theorem}
 
 Die Eigenschaft Subgraph bedeutet, das jede Kante des Subgraphen auch eine Kante des Graphen ist.
-Der erste Schritt dafür ist zu zeigen, dass der Output des Algorithmus eine SubListe vom Input ist.
+Der erste Schritt dafür ist zu zeigen, dass der Output des Algorithmus eine Subliste vom Input ist.
 Das Muster mit dem geteilten Beweis über die Hilfsfunktion sollte mittlerweile klar sei.
 
 \begin{lemma}[\Kruskalkruskalhelpersublist]\label{Kruskalkruskalhelpersublist}
-  Jede Kante im Output von \Kruskalkruskalhelper kommt auch in der Kanten-Liste oder oder in der mitgeführten ErgebnisKantenListe bereits vor.
+  Jede Kante im Output von \Kruskalkruskalhelper kommt auch in der Kanten-Liste oder in der mitgeführten ErgebnisKantenListe bereits vor.
 \end{lemma}
 \begin{proof}
   In diesem Beweis mache ich eine Induktion über die Funktion.
@@ -230,17 +230,17 @@ Das Muster mit dem geteilten Beweis über die Hilfsfunktion sollte mittlerweile 
 
 
 \begin{lemma}[\Kruskalkruskalsublist]
-  Jede Kante in der Output Liste von \Kruskalkruskal ist auch Teil der Input Liste.
+  Jede Kante in der Outputliste von \Kruskalkruskal ist auch Teil der Input Liste.
 \end{lemma}
 \begin{proof}
-  Der Beweis folgt direkt aus dem vorangegangenen Beweis über die Hilfsfunktion, da jedes Elemente einer sortierten Liste auch Teil der Liste selbst ist.
+  Der Beweis folgt direkt aus dem vorangegangenen Beweis über die Hilfsfunktion, da jedes Element einer sortierten Liste auch Teil der Liste selbst ist.
 \end{proof}
 
-Im nächsten Schritt muss ich nun zeigen, dass \KruskalSimpleGraphofkruskal und \KruskalSimpleGraphofnofedgeList den selben Typ haben, also den gleichen höchsten Knoten haben.
-Dafür benötige ich aber zuerst vier auf einander aufbauende Hilfslemmata.
+Im nächsten Schritt muss ich nun zeigen, dass \KruskalSimpleGraphofkruskal und \KruskalSimpleGraphofnofedgeList denselben Typ haben, also den gleichen höchsten Knoten haben.
+Dafür benötige ich aber zuerst vier aufeinander aufbauende Hilfslemmata.
 
 \begin{lemma}[\KruskalkruskalhelperedgesSoFarappend]\label{KruskalkruskalhelperedgesSoFarappend}
-  Wenn die mitgeführten ErgebnisKantenListe aus zwei aneinander gehängten Listen edgesSoFar$_1$ und edgesSo\-Far$_2$ besteht, dann ist ist das Ergebnis von \Kruskalkruskalhelper das selbe,
+  Wenn die mitgeführte ErgebnisKantenListe aus zwei aneinander gehängten Listen edgesSoFar$_1$ und edgesSo\-Far$_2$ besteht, dann ist das Ergebnis von \Kruskalkruskalhelper dasselbe,
   als wenn die ErgebnisKantenListe nur edgesSoFar$_1$ besteht und edgesSoFar$_2$ dafür stattdessen ans Ergebnis angehängt wird.
 \end{lemma}
 \begin{lstlisting}
@@ -256,7 +256,7 @@ theorem kruskal_helper.edgesSoFar_append
 \begin{proof}
   Auch in diesem Beweis mache ich eine Induktion über die Funktion.
   Im Basisfall ist die Kanten-Liste leer und auf beiden Seiten der Gleichung bleiben die aneinander gehängten Listen übrig.
-  Auch hier lässt sich im zweiten Fall die Induktionshypothese so anpassen, dass sie zum Ziel passt, unabhängig dovon, ob die Kante in die ErgebnisKantenListe aufgenommen wird,
+  Auch hier lässt sich im zweiten Fall die Induktionshypothese so anpassen, dass sie zum Ziel passt, unabhängig davon, ob die Kante in die ErgebnisKantenListe aufgenommen wird,
   oder nicht.
 \end{proof}
 
@@ -276,7 +276,7 @@ theorem kruskal_helper.edgesSoFar_append
   Beweisen tue ich es per Induktion über \KruskalconnectedcomponentofunionFindofunionFindLink.
   Im Basisfall zeigt der Zeiger auf seinen eigenen Knoten und da er in dem Fall auf z zeigt, ist z sein Knoten.
   Im anderen Fall ist z per Induktionshypothese der Knoten seines Nachfolgers.
-  Er zeigt also auf z und nach Vorraussetzung des Lemmas ist er damit selbst der Zeiger von z.
+  Er zeigt also auf z und nach Voraussetzung des Lemmas ist er damit selbst der Zeiger von z.
 
   $\leftarrow:$
   Die Gegenrichtung folgt direkt daraus, dass der Zeiger von z auf z selbst zeigt und der Definition von \KruskalconnectedcomponentofunionFindofid
@@ -284,11 +284,11 @@ theorem kruskal_helper.edgesSoFar_append
 
 
 
-\begin{lemma}[\Kruskalkruskalhelpernotconinvariantappend]
+\begin{lemma}[\Kruskalkruskalhelpernotconinvariantappend]\todo{schöner Satz}
   Wenn es einen Knoten z gibt, der im ersten Teil der Kanten-Liste bei keiner Kante als verbundener Knoten vorkommt und dessen Zeiger in der aktuellen Union-Find-Struktur uF der einzige ist,
   der auf ihn zeigt, dann gibt es eine weitere Union-Find-Struktur uF', in der immer noch sein eigener Zeiger der einzige ist, der auf z zeigt
   und mit der der Aufruf von \Kruskalkruskalhelper mit der ganzen Kanten-Liste und uF gleich ist, zu einem Aufruf mit dem zweiten Teil der Kanten-Liste und uF',
-  bei dem das Ergebnis eines Aufrufes mit leerer ErgebnisKantenListe, dem ersten Teil der Kanten-Liste und uF, der an die ErgebnisKantenListe vorne angehängt wurde.
+  bei dem das Ergebnis eines Aufrufs mit leerer ErgebnisKantenListe, dem ersten Teil der Kanten-Liste und uF, der an die ErgebnisKantenListe vorne angehängt wurde.
 
   Das beschreibt die Situation, nachdem der Algorithmus durch den ersten Teil der Kanten-Liste durchiteriert ist.
 \end{lemma}
@@ -313,8 +313,8 @@ theorem (.\Kruskalkruskalhelpernotconinvariantappend.)
   Seien nun x und y die Zusammenhangskomponenten der Knoten von e.
   Dann unterscheide ich, ob x gleich y ist.
   Falls ja, wird e nicht aufgenommen, und das Ziel entspricht der Induktionshypothese.
-  Falls nicht, kann ich dank Lemma \ref{KruskalkruskalhelperedgesSoFarappend} im Ziel und der Induktionshypothese die ErgebnisKantenListe und [e] nach hinten raus ziehen.
-  Dadurch und durch die Generalisierung kann ich nun die Induktionshypothese anwenden.
+  Falls nicht, kann ich dank Lemma \ref{KruskalkruskalhelperedgesSoFarappend} im Ziel und der Induktionshypothese die ErgebnisKantenListe und [e] nach hinten herausziehen.
+  Dadurch und durch die Generalisierung kann ich jetzt die Induktionshypothese anwenden.
   Anschließend muss ich noch zeigen, dass in der geupdateten Union-Find-Struktur immer noch der einzige Zeiger, der auf z zeigt, sein eigener ist.
   Dafür zeige ich zunächst, dass wegen Lemma \ref{KruskalconnectedcomponentofunionFindofidnotcon} weder x noch y gleich z sein können,
   danach, dass deswegen die neuen Zeiger von x und y auch nicht auf z zeigen.
@@ -332,16 +332,16 @@ theorem (.\Kruskalkruskalhelpernotconinvariantappend.)
 
   $\rightarrow:$
   Sei ein Knoten x in der Knoten-Liste der Ergebnisliste, dann gibt es wegen Lemma \ref{KruskalmemnodeListofedgeListhelperiffnodeinedgeList} eine Kante e in der Ergebnisliste, die x verknüpft.
-  Nach Lemma \ref{Kruskalkruskalhelpersublist} ist e desshalb auch Teil der Kanten-Liste
+  Nach Lemma \ref{Kruskalkruskalhelpersublist} ist e deshalb auch Teil der Kanten-Liste
   und wieder wegen Lemma \ref{KruskalmemnodeListofedgeListhelperiffnodeinedgeList} ist x dann auch Teil deren Knoten-Liste.
 
   $\leftarrow:$
   Auch in dem Beweis für die Gegenrichtung kommt häufiger Lemma \ref{KruskalmemnodeListofedgeListhelperiffnodeinedgeList} zum Einsatz.
   Sei ein Knoten x in der Knoten-Liste der Kanten-Liste, dann gibt es auch eine Kante e in der Kanten-Liste, die x verknüpft.
-  e ist dem entsprechend auch in der sortierten Kanten-Liste und liefert somit auch den Existenzbeweis, nach dem es auch eine erste Kante f gibt, die x verknüpft
+  e ist dementsprechend auch in der sortierten Kanten-Liste und liefert somit auch den Existenzbeweis, nach dem es auch eine erste Kante f gibt, die x verknüpft
   und ich die sortierte Kanten-Liste aufteilen kann, in eine Liste l$_1$ vor f, in der keine Kante x verknüpft, f und eine Liste l$_2$ danach.
   Da bei der Initialisierung der Union-Find-Struktur noch alle Zeiger auf ihren eigenen Knoten zeigen, ist auch der Zeiger von x der einzige, der auf ihn zeigt.
-  Durch das vorrangegangene Lemma kann ich nun zu dem Punkt vorstoßen, wo der Algorithmus soweit durch die sortierte Kanten-Liste iteriert ist, dass f die erste Kante der verbleibenden
+  Durch das vorangegangene Lemma kann ich nun zu dem Punkt vorstoßen, wo der Algorithmus so weit durch die sortierte Kanten-Liste iteriert ist, dass f die erste Kante der verbleibenden
   Liste ist. Da der Zeiger von x noch immer der einzige ist, der auf x zeigt, also x alleine in seiner Zusammenhangskomponente ist, ist der andere Knoten von f in einer anderen.
   Deshalb wird f in die ErgebnisKantenListe mit aufgenommen und diese kann ich nach Lemma \ref{KruskalkruskalhelperedgesSoFarappend} bereits aus der Funktion herausziehen und hinten anhängen.
   Damit gibt es mit f also eine Kante in der Ergebnisliste, die x verbindet, also ist x auch Teil der Knoten-Liste.
@@ -358,11 +358,11 @@ theorem (.\Kruskalkruskalhelpernotconinvariantappend.)
 
 Damit kann ich dann auch das Theorem beweisen.
 
-\begin{lemma}[\KruskalSimpleGraphofkruskalIsSubgraph]
+\begin{lemma}[\KruskalSimpleGraphofkruskalIsSubgraph]\label{KruskalSimpleGraphofkruskalIsSubgraph}
   Für eine nicht leere Kanten-Liste ist \KruskalSimpleGraphofkruskal ein Subgraph von \KruskalSimpleGraphofnofedgeList.
 \end{lemma}
 \begin{proof}
-  Dank Lemma \ref{KruskalnodeListofedgeListmaxeq} ist sicher gestellt, dass beide Graphen den selben Typ haben und ich kann sie mit $\le$ vergleichen.
+  Dank Lemma \ref{KruskalnodeListofedgeListmaxeq} ist sichergestellt, dass beide Graphen denselben Typ haben und ich kann sie mit $\le$ vergleichen.
   Der Beweis folgt dann direkt aus Lemma \ref{Kruskalkruskalhelpersublist}.
 \end{proof}
 
@@ -371,7 +371,7 @@ Damit kann ich dann auch das Theorem beweisen.
 Die nächste Bedingung für einen Spannbaum ist, dass der Graph keine Kreise hat.
 
 \begin{theorem}
-  \KruskalSimpleGraphofkruskal ist Azyklisch.
+  \KruskalSimpleGraphofkruskal ist azyklisch.
 \end{theorem}
 
 Mein Gedanke war, dass ich die Kreisfreiheit zeigen kann, wenn ich nachweisen kann, dass folgende Eigenschaft über \Kruskalkruskalhelper invariant ist:
@@ -386,7 +386,11 @@ Die Eigenschaft lässt sich dann mit der nächsten Invariante zeigen und diese d
 \end{itemize}
 
 Hier habe ich den größten Teil noch geschafft aber die letzten Lücken konnte ich nicht mehr schließen.
-\todo{Reihen\-folge festlegen und Text zwischen den Lemmata}
+Zunächst brauche ein paar Hilfslemma, die mir es mir erleichtern, über Zeiger und ihre Knoten zu sprechen, beziehungsweise sie beim Definieren dingfest zu machen.
+Anschließend definiere ich, was ein Parent ist und was ein Parentpath, sowie, welche Eigenschaften aus ihrer Definition folgen.
+
+Dass es zu einem Zeiger auch den passenden Knoten gibt, ist von der Intension der Definition klar,
+allerdings brauche ich trotzdem einen Existenzbeweis um den Konten in einem Beweis benennen zu können.
 
 \begin{lemma}[\KruskalnodeofuFL]\label{KruskalnodeofuFL}
   Zu einem Zeiger uFL der Union-Find-Struktur gibt es einen dazugehörigen Knoten in der Knoten-Liste, falls diese keine Duplikate hat.
@@ -395,14 +399,15 @@ Hier habe ich den größten Teil noch geschafft aber die letzten Lücken konnte 
   Hier führe ich einen Beweis durch Widerspruch.
   Wenn es also den dazugehörigen Knoten nicht gibt, dann kann ich die Zeiger-Liste in zwei Listen l$_1$ und l$_2$ vor und hinter uFL aufteilen
   und nach der matching\_nodeId Bedingung der Union-Find-Struktur hat also jeder Knoten seinen Zeiger in l$_1$ oder l$_2$.
-  Nach der der matching\_length Bedingung sind die Zeiger-Liste und die Knoten-Liste gleich lang.
+  Nach der matching\_length Bedingung sind die Zeiger-Liste und die Knoten-Liste gleich lang.
   Dementsprechend sind l$_1$ und l$_2$ zusammen ohne uFL um eins kürzer als die Knoten-Liste.
-  Dass das dann nicht aufgehen kann, zeige ich indem ich eine Funktion definiere, die jedem Knoten ihren Zeiger zuweist und zeige, dass sie injektiv ist,
+  Dass das dann nicht aufgehen kann, zeige ich, indem ich eine Funktion definiere, die jedem Knoten ihren Zeiger zuweist und zeige, dass sie injektiv ist,
   da bei einer injektiven Funktion der Bildbereich mindestens so groß sein muss, wie der Definitionsbereich
   und da die Liste keine Duplikate hat, ist der Definitionsbereich so groß wie die Länge der Liste.
 \end{proof}
 
-
+Durch den Wechsel zwischen der find-Funktion per Knoten-ID und der per Zeiger, kommt es häufiger vor,
+dass sich ein Zeiger bereits als Konstante im Kontext befindet und gleichzeitig in einer Aussage über seine Knoten-ID aus der Liste gewählt wird.
 
 \begin{lemma}[\KruskaluFLchooseself]
   Wählt man für einen Zeiger uFl den ersten Zeiger aus der Zeiger-Liste, der die gleiche Knoten-ID hat wie uFL, so erhält man genau uFL selbst.
@@ -414,16 +419,16 @@ Hier habe ich den größten Teil noch geschafft aber die letzten Lücken konnte 
 
 
 \begin{lemma}[\KruskalnodeIdltmax]
-  Die Knoten-ID eines Zeigers ist maximal so hoch, wie die ID des höchsten Knoten in der Knoten-Liste.
+  Die Knoten-ID eines Zeigers ist maximal so hoch, wie die ID des höchsten Knotens in der Knoten-Liste.
 \end{lemma}
 \begin{proof}
-  Da es ja einen zugehörigen Knoten mit der entsprechenden ID in der Liste gibt, folgt die Aussage dierekt aus der Definition des Maximums.
+  Da es ja einen zugehörigen Knoten mit der entsprechenden ID in der Liste gibt, folgt die Aussage direkt aus der Definition des Maximums.
 \end{proof}
 
 
 
 \begin{lemma}[\KruskalconnectedcomponentofunionFindofidltmax]
-  Die ID des Repräsentanten der Zusammenhangskomponente eines Knotens ist maximal so hoch, wie die ID des höchsten Knoten in der Knoten-Liste.
+  Die ID des Repräsentanten der Zusammenhangskomponente eines Knotens ist maximal so hoch, wie die ID des höchsten Knotens in der Knoten-Liste.
 \end{lemma}
 \begin{proof}
   Der Beweis folgt direkt aus dem vorherigen Lemma und Lemma \ref{KruskalexistunionFindLinkofconnectedcomponentofunionFindofid}
@@ -434,7 +439,7 @@ wobei in diesem Fall die Kinder auf ihre Eltern zeigen.
 So habe ich es auch bereits innerhalb der Definition von \KruskalconnectedcomponentofunionFindofunionFindLink gemacht.
 
 \begin{definition}[\Kruskalparent]
-  Für einen Zeiger heißt der der Zeiger des Knotens auf den er zeigt der Parent.
+  Für einen Zeiger, heißt der Zeiger des Knotens, auf den er zeigt der Parent.
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalparent.)
@@ -458,11 +463,11 @@ def (.\Kruskalparent.)
 
 
 \begin{lemma}[\Kruskalconparent]
-  Ein Zeiger und sein Parent haben die selbe Zusammenhangskomponente.
+  Ein Zeiger und sein Parent haben dieselbe Zusammenhangskomponente.
 \end{lemma}
 \begin{proof}
   Hier mache ich eine Fallunterscheidung, ob der Zeiger auf seinen eigenen Knoten zeigt.
-  Falls ja, ist er selbst sein Parent und falls nein, macht \KruskalconnectedcomponentofunionFindofunionFindLink per Definition den nächsten Aufruf über den Parent.
+  Falls ja, ist er selbst sein Parent und falls nein, macht \KruskalconnectedcomponentofunionFindofunionFindLink definitionsgemäß den nächsten Aufruf über den Parent.
 \end{proof}
 
 
@@ -474,7 +479,8 @@ def (.\Kruskalparent.)
   Auch dieser Beweis folgt direkt aus der Definition des Parents.
 \end{proof}
 
-
+Die Funktion \KruskalconnectedcomponentofunionFindofunionFindLink geht rekursiv von Parent zu Parent.
+Die Liste, die sich daraus ergibt, habe ich den Parentpath genannt.
 
 \begin{definition}[\Kruskalgetparentpath]
   Eine Funktion, die zu einem Zeiger die Liste seiner Vorfahren (Parentpath) zurückgibt, beginnend beim Zeiger selbst, sodass jeder weitere Zeiger der Parent seines Vorgängers ist,
@@ -524,11 +530,11 @@ termination_by nodeList.length - uFL.rank
 
 
 \begin{lemma}[\KruskalconnectedcomponentofunionFindofunionFindLinkofgetparentpath]
-  Alle Zeiger eines Parentpaths haben die selbe Zusammenhangskomponente, also die des aufrufenden Zeigers.
+  Alle Zeiger eines Parentpaths haben dieselbe Zusammenhangskomponente, also die des aufrufenden Zeigers.
 \end{lemma}
 \begin{proof}
-  Für den Beweis mache ich eine Induktionen über die Function \Kruskalgetparentpath.
-  Im Basisfall besteht der Parentpath nur aus dem aufrufenden Zeigers selbst.
+  Für den Beweis mache ich eine Induktion über die Function \Kruskalgetparentpath.
+  Im Basisfall besteht der Parentpath nur aus dem aufrufenden Zeiger selbst.
   Im anderen Fall besagt die Induktionshypothese, dass ab dem Parent alle dieselbe Zusammenhangskomponente haben.
   Da jeder Zeiger dieselbe Zusammenhangskomponente wie sein Parent hat, ist das auch die Zusammenhangskomponente des aufrufenden Zeigers
 \end{proof}
@@ -548,50 +554,56 @@ termination_by nodeList.length - uFL.rank
   Wenn ein Zeiger in einem Parentpath auf seinen eigenen Knoten zeigt, dann ist er dessen letztes Element.
 \end{lemma}
 \begin{proof}
-  Auch bietet sich eine Induktion über \Kruskalgetparentpath an.
-  Im Basisfall zeigt der aufrufende Zeiger auf seinen eigenen Knoten und weil er deshalb der einzige Zeiger im Parentpath ist, ist er auch der letzte.
+  Auch hier bietet sich eine Induktion über \Kruskalgetparentpath an.
+  Im Basisfall zeigt der aufrufende Zeiger auf seinen eigenen Knoten und weil er deshalb der einzige Zeiger im Parentpath ist, ist er auch der Letzte.
   Im Induktionsschritt zeigt der aufrufende Zeiger nicht auf seinen eigenen Knoten, damit muss er nicht betrachtet werden und für den Rest greift die Induktionshypothese.
 \end{proof}
 
 
 
 \begin{lemma}[\KruskalgetparentpathlasteqconnectedcomponentofunionFindofunionFindLink]\label{KruskalgetparentpathlasteqconnectedcomponentofunionFindofunionFindLink}
-  Die Knoten-ID des letzten Zeigers einens Parentpath ist die ID des Repräsentanten der Zusammenhangskomponente des Zeigers, dessen Parentpath es ist.
+  Die Knoten-ID des letzten Zeigers eines Parentpaths ist die ID des Repräsentanten der Zusammenhangskomponente des Zeigers, dessen Parentpath es ist.
 \end{lemma}
 \begin{proof}
   Da der letzte Zeiger eines Parentpaths auf seinen eigenen Knoten zeigt, ist sein Knoten auch der Repräsentant seiner Zusammenhangskomponente.
-  Weil alle Zeiger des Parentpaths die selbe Zusammenhangskomponente habe, gilt das auch für den aufrufenden Zeiger.
+  Weil alle Zeiger des Parentpaths dieselbe Zusammenhangskomponente habe, gilt das auch für den aufrufenden Zeiger.
 \end{proof}
 
 % Bis hier Quality of live\todo{hier}
 
-Um jetzt die dritte Invariante zu zeigen, beginne ich damit, zu zeigen, dass sie am Anfang gilt.
+% Um jetzt die dritte Invariante zu zeigen, beginne ich damit, zu zeigen, dass sie am Anfang gilt.
 
-\begin{lemma}[\KruskalinitunionFindreachableparent]
-  Wenn die Union-Find-Struktur frisch initialisiert wurde, dann ist für jeden Zeiger der eigene Knoten und der Knoten des Parents im Graph der ErgebnisKantenListe durch einen Kantenzug erreichbar.
-\end{lemma}
-\begin{proof}
-  In einer frisch initialisierten Union-Find-Struktur zeigt jeder Zeiger auf seinen eigenen Knoten, ist also sein eingener Parent.
-  Sein Knoten ist durch den leeren Kantenzug mit sich selbst verbunden.
-\end{proof}
+% \begin{lemma}[\KruskalinitunionFindreachableparent]
+%   Wenn die Union-Find-Struktur frisch initialisiert wurde, dann ist für jeden Zeiger der eigene Knoten und der Knoten des Parents im Graph der ErgebnisKantenListe durch einen Kantenzug erreichbar.
+% \end{lemma}
+% \begin{proof}
+%   In einer frisch initialisierten Union-Find-Struktur zeigt jeder Zeiger auf seinen eigenen Knoten, ist also sein eigener Parent.
+%   Sein Knoten ist durch den leeren Kantenzug mit sich selbst verbunden.
+% \end{proof}
 
+Um jetzt die dritte Invariante zu zeigen, beginne ich damit, einen Kantenzug entlang des Parentpaths zu konstruieren, beziehungsweise.
 
-
-\begin{lemma}[\Kruskalparentwalk]
+\begin{lemma}[\Kruskalparentwalk]\label{Kruskalparentwalk}
   Wenn für jeden Zeiger der eigene Knoten und der Knoten des Parents im Graph der ErgebnisKantenListe durch einen Kantenzug erreichbar ist,
   dann auch der Knoten des letzten Zeigers seines Parentpaths.
 \end{lemma}
 \begin{proof}
   Das ist wieder ein Beweis mit einer Induktion über \Kruskalgetparentpath.
   Im Basisfall ist der aufrufenden Zeiger selbst der letzte und es reicht der leere Kantenzug.
-  Im anderen Fall gibt es nach Vorraussetzung einen Kantenzug vom aufrufenden Zeiger zu seinem Parent.
+  Im anderen Fall gibt es nach Voraussetzung einen Kantenzug vom aufrufenden Zeiger zu seinem Parent.
   Nach der Induktionshypothese gibt es vom Parent auch einen Kantenzug zum letzten Zeiger.
   Hängt man diese beiden Kantenzüge aneinander, erhält man einen vom aufrufenden Zeiger bis zum letzten.
 \end{proof}
 
+Diesen Kantenzug kann ich nun im eigentlichen Lemma zur Invarianz benutzen, um die Knoten der neuen Kante mit den Repräsentanten ihrer Zusammenhangskomponenten zu verknüpfen.
+Allerdings gibt es noch eine Schwierigkeit.
+Da die ErgebnisKantenListe länger werden kann, weiß ich nicht, ob sich nicht dadurch auch das Ergebnis von \KruskalnodeListofedgeList ändert.
+Ich kann also \KruskalSimpleGraphofnofedgeList nicht verwenden, da ich nicht weiß, ob der Graph der aktuellen ErgebnisKantenListe und der der neuen denselben Typ haben.
+Deswegen beschreibe ich die Eigenschaften der Graphen direkt in geschweiften Klammern.
+Für die Beschränkung durch die ID des höchsten Knotens habe ich mich auf eine nicht näher beschriebene implizite Knoten-Liste bezogen, auf die sich auch die Union-Find-Struktur bezieht.
+Diese Schreibweise führe ich so auch für die anderen Invarianten fort.
 
-
-\begin{lemma}[\KruskalupdateunionFindreachableparent]
+\begin{lemma}[\KruskalupdateunionFindreachableparent]\label{KruskalupdateunionFindreachableparent}
   Wenn für die aktuelle Union-Find-Struktur und die aktuelle ErgebnisKantenListe gilt,
   dass für jeden Zeiger sich der eigene Knoten und der Knoten des Parents im Graph der ErgebnisKantenListe durch einen Kantenzug erreichen können,
   dann gilt das auch für die geupdatete Union-Find-Struktur und die geupdatete ErgebnisKantenListe.
@@ -600,7 +612,7 @@ Um jetzt die dritte Invariante zu zeigen, beginne ich damit, zu zeigen, dass sie
   Seien e1 und e2 die Knoten der neuen Kante und seien x und y die Repräsentanten ihrer Zusammenhangskomponenten.
   Ich unterscheide, ob x und y gleiche sind.
   Falls ja, wird die Kante nicht aufgenommen und die Union-Find-Struktur und die ErgebnisKantenListe verändern sich nicht.
-  Falls nein, mache ich direkt die nächste Fallunterscheidung, je nach dem ob der Zeiger von x oder der Zeiger von y den höheren Rang hat, um zu wissen, wie deren neue Zeiger aussehen.
+  Falls nein, mache ich direkt die nächste Fallunterscheidung, je nachdem ob der Zeiger von x oder der Zeiger von y den höheren Rang hat, um zu wissen, wie deren neue Zeiger aussehen.
   In beiden Fällen mache ich aber fast das Gleiche.
   Sei nun beispielsweise x der Knoten mit dem kleineren Rang und sei weiter uFL ein beliebiger Zeiger der geupdateten Union-Find-Struktur,
   dann ist er entweder der neue Zeiger von x oder y oder er ist einer der alten Zeiger.
@@ -608,7 +620,7 @@ Um jetzt die dritte Invariante zu zeigen, beginne ich damit, zu zeigen, dass sie
   Falls es einer der alten Zeiger ist, dann gab es bereits im alten Graph einen entsprechenden Kantenzug und da der alte Graph ein Subgraph des neuen ist, gibt es den dort immer noch.
   
   Falls uFl der neue Zeiger von x ist, dann ist der neue Zeiger y sein Parent.
-  Entsprechend dem vorrangegangenen Lemma gibt es einen Kantenzug von e1 zum Knoten des letzten Zeigers des Parentpaths seines Zeigers
+  Entsprechend dem vorangegangenen Lemma gibt es einen Kantenzug von e1 zum Knoten des letzten Zeigers des Parentpaths seines Zeigers
   und nach Lemma \ref{KruskalgetparentpathlasteqconnectedcomponentofunionFindofunionFindLink} ist das x.
   Nach der gleichen Logik gibt es auch einen Kantenzug von e2 nach y.
   Auch hier gilt, da der alte Graph ein Subgraph des neuen ist, gibt es diese Kantenzüge auch im neuen Graph.
@@ -618,80 +630,178 @@ Um jetzt die dritte Invariante zu zeigen, beginne ich damit, zu zeigen, dass sie
   Und falls uFL der neue Zeiger von y ist, dann ist er sein eigener Parent und der leere Kantenzug erfüllt die Bedingung bereits.
 \end{proof}
 
+Mit diesem Lemma habe ich auch alles, um von der \glqq genau dann wenn\grqq -Aussage der zweite Invariante die Rückrichtung zu zeigen.
+Für die Hinrichtung fehlen leider noch die folgenden beiden Lemmata.
 
-
-\begin{lemma}[\Kruskalupdateconofcon]
-
+\begin{lemma}[\Kruskalupdateconofcon]\label{Kruskalupdateconofcon}
+  Wenn zwei Knoten die gleiche Zusammenhangskomponente haben, dann gilt das nach einem Update der Union-Find-Struktur immer noch.
 \end{lemma}
-\begin{proof}
-  
-\end{proof}
+Meine Beweisidee ist, alle Fälle durchzugehen, ob einer der beiden Knoten oder der Repräsentant ihrer Zusammenhangskomponente einen der Zeiger haben, die ersetzt werden.
+Als weiteres Hilfslemma würde ich zeigen, dass Zeiger, die nicht auf ihren eigenen Knoten zeigen, unverändert bleiben.
 
-
-
-\begin{lemma}[\Kruskalnewedgecon]
-
+\begin{lemma}[\Kruskalnewedgecon]\label{Kruskalnewedgecon}
+  Nach dem Update haben die beiden Knoten der neuen Kante dieselbe Zusammenhangskomponente.
 \end{lemma}
-\begin{proof}
-  
-\end{proof}
+Hier ist meine Beweisidee, zu zeigen, dass in jedem Fall beide neuen Zeiger auf denselben Knoten zeigen und dieser ist der Repräsentant der Zusammenhangskomponente.
 
-
+Diese Situation illustriert ganz gut die Nutzung von sorry.
+Ich habe diese Lemmata mit sorry beweisen und konnte sie deshalb im folgenden Lemma zur zweiten Invariante benutzen.
+Ich habe mich zunächst aufs Hauptziel konzentriert und kleinere Lemmata erst im Anschluss bewiesen.
+Diese beiden sind dabei offen geblieben.
 
 \begin{lemma}[\KruskalkruskalhelperReachableiffcon]
-
+  Wenn für die aktuelle Union-Find-Struktur uF und die aktuelle ErgebnisKantenListe edgesSoFar gilt,
+  dass zwei beliebige Knoten genau dann im Graph von edgesSoFar durch einen Kantenzug verbunden sind, wenn sie in uF in derselben Zusammenhangskomponente liegen,
+  dann gilt das auch für die geupdatete Union-Find-Struktur uF' und die geupdatete ErgebnisKantenListe edgesSoFar'.
 \end{lemma}
 \begin{proof}
-  
+  Sei e die neue Kante, seien e1 und e2 die Knoten von e und seien a und b zwei beliebige Knoten.
+  Seien weiter cce1, cce2, cca und ccb die dazugehörigen Zusammenhangskomponenten in uF und sei G der Graph von edgesSoFar und H der Graph von edgesSoFar'.
+  Zunächst mache ich Fallunterscheidungen, um triviale Fälle auszuscheiden.
+  Falls cce1 = cce2 ist, passiert beim Update nichts, und das Ziel wird durch die Vorbedingung erfüllt
+  und falls a = b ist, sind beide Seiten immer wahr.
+
+  $\rightarrow:$
+  Seien also a und b in H durch einen Kantenzug verbunden.
+  Falls a und b in G verbunden sind, haben sie auch in uF die gleiche Zusammenhangskomponente und daher nach Lemma \ref{Kruskalupdateconofcon} auch in uF'.
+  Falls a und b in G mit je einem Knoten von e verbunden sind, haben sie nach derselben Logik die gleiche Zusammenhangskomponente in uF' wie diese
+  und nach Lemma \ref{Kruskalnewedgecon} sind die auch gleich.
+  Falls beides nicht gilt, muss der Widerspruch gezeigt werden.
+  Der Unterschied zwischen G und H besteht nur in der Zugehörigkeit von e.
+  Da a und b in H durch einen Kantenzug verbunden sind aber nicht in G, muss dieser Kantenzug die Kante e enthalten.
+  Das geht aber nur, wenn der Teilkantenzug vor e bereits a mit einem Knoten von e verbindet.
+  Gleiches gilt für den Teilkantenzug nach e und b.
+  Da diese Teilkantenzüge e nicht enthalten, sind sie auch Kantenzüge in G.
+  Dadurch sind a und b in G also entweder beide mit demselben Knoten von e und damit miteinander verbunden, oder sie sind mit je einem Knoten von e verbunden.
+
+  $\leftarrow:$
+  Es haben a und b die gleiche Zusammenhangskomponente in uF'.
+  Da in jeder Union-Find-Struktur jeder Zeiger die gleiche Zusammenhangskomponente wie sein Parent hat, sind nach Voraussetzung sein Knoten und der seines Parents in G verbunden (Invariante 3).
+  Nach Lemma \ref{KruskalupdateunionFindreachableparent} gilt das dementsprechend auch für H.
+  Dadurch kann ich mit Lemma \ref{Kruskalparentwalk} für a und b je einen Kantenzug zu den Knoten der letzten Elemente der Parentpaths ihrer Zeiger konstruieren.
+  Der Knoten des letzten Elements ist der Repräsentant der Zusammenhangskomponente, im Fall von a und b also derselbe.
+  Es gibt in H also von a und b je einen Kantenzug zum Repräsentanten.
+  Wenn man den von b umdreht und beide aneinander hängt, erhält man einen von a zu b.
 \end{proof}
 
-
+Die erste Invariante hat kein eigenes Lemma bekommen, sondern ist im Beweis enthalten, der besagt, dass der Graph der Ergebnisliste von \Kruskalkruskalhelper azyklisch ist.
 
 \begin{lemma}[\KruskalkruskalhelperIsAcyclic]
-
+  Wenn für die Union-Find-Struktur uF und die mitgeführte ErgebnisKantenListe edgesSoFar gilt,
+  dass der Graph von edgesSoFar kreisfrei ist (Invariante 1)
+  und zwei beliebige Knoten genau dann im Graph der ErgebnisKantenListe durch einen Kantenzug verbunden sind,
+  wenn sie in der Union-Find-Struktur in derselben Zusammenhangskomponente liegen (Invariante 2),
+  dann ist auch der Graph der Ergebnisliste von \Kruskalkruskalhelper kreisfrei.
 \end{lemma}
 \begin{proof}
-  
+  Diesen Beweis führe ich per Induktion über die Funktion \Kruskalkruskalhelper.
+  Im Basisfall ist edgesSoFar die Ergebnisliste.
+  Im anderen Fall muss ich zeigen, dass die Invarianten auch für die geupdatete Union-Find-Struktur uF' und die geupdatete ErgebnisKantenListe edgesSoFar' gelten
+  damit ich die Induktionshypothese anwenden kann.
+  Für Invariante 2 ist das genau die Aussage des vorherigen Lemmas.
+  Für den Beweis, dass Invariante 1 tatsächlich invariant ist, unterscheide ich, ob die Knoten der neuen Kante e in uF dieselbe Zusammenhangskomponente haben.
+  Falls ja, wird e nicht aufgenommen, also ist edgesSoFar' = edgesSoFar.
+  Falls nicht, seien G und G' die Graphen von edgesSoFar und edgesSoFar'.
+  Da die Knoten von e nicht in uF nicht in der gleichen Zusammenhangskomponente sind, sind sie nach Voraussetzung in G auch nicht verbunden.
+  G ist azyklisch und G' ist G erweitert um e.
+  Daraus folgt, dass auch G' azyklisch ist.
 \end{proof}
 
-
+Im Beweis, dass der Graph der Ergebnisliste von \Kruskalkruskal azyklisch ist, ist mir dann meine Schreiweise der Graphen in den letzten Lemmata zum Verhängnis geworden.
+Ich musste Typen konvertieren (engl. casten), um zwei Graphen vergleichen zu können.
+Um zu zeigen, dass beide Graphen gleich sind, war mir die Konvertierung allerdings im Weg.
+Ich konnte noch zeigen, dass es dafür ausreicht, wenn die konvertierte Adjazenzrelation gleich ist, bin dann aber alleine nicht weiter gekommen.
+Auf den Beweis des folgenden Lemmas bin ich also nicht selbst gekommen, er wurde mir im Zulip-Chat der Lean-Community von dem Nutzer Aaron Liu gegeben.
 
 \begin{lemma}[\KruskalcastFinfun]
-
+  Seien n und m natürliche Zahlen, f eine Relation auf Fin n und a und b vom Typ Fin m.
+  Sei weiter h der Beweis, dass n = m ist.
+  Dann ist es das Gleiche, ob f über h gecastet und anschließend auf a und b angewandt wird, oder ob a und b über h gecastet werden und darauf dann f angewandt wird.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt aus der Tatsache, dass Fin als Funktion von Nat nach Type injektiv ist.
 \end{proof}
 
 
 
-\begin{lemma}[\KruskalSimpleGraphofkruskalIsAcyclic]
-
+\begin{lemma}[\KruskalSimpleGraphofkruskalIsAcyclic]\label{KruskalSimpleGraphofkruskalIsAcyclic}
+  \KruskalSimpleGraphofkruskal ist kreisfrei.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt aus der Aussage, dass das Ergebnis der Hilfsfunktion kreisfrei ist.
+  Es bleibt also noch zu zeigen, dass die beiden Invarianten beim Aufrufen der Hilfsfunktion gelten.
+  Die initiale ErgebnisKantenListe ist die leere Liste.
+  Ihr Graph hat dementsprechend keine Kanten und nur leere Kantenzüge, ist also kreisfrei.
+  Es ist also jeder Knoten nur mit sich selbst verbunden.
+  Das passt dazu, dass in der initialisierten Union-Find-Struktur jeder Knoten alleine in seiner eigenen Zusammenhangskomponente ist.
+  Die beiden Invarianten sind also erfüllt.
 \end{proof}
 
 \subsection{Erreichbar}
 
+Die letzte Bedingung für Spannbäume ist, dass immer noch alles verbunden ist.
 
+\begin{theorem}
+  Zwei beliebige Knoten sind genau dann in \KruskalSimpleGraphofkruskal verbunden, wenn sie auch in \KruskalSimpleGraphofnofedgeList verbunden sind.
+\end{theorem}
 
-\begin{lemma}[\KruskalSimpleGraphofkruskalIsEqReachable]
+Das dazugehörige Lemma habe ich nicht mehr geschafft zu Beweisen.
 
+\begin{lemma}[\KruskalSimpleGraphofkruskalIsEqReachable]\label{KruskalSimpleGraphofkruskalIsEqReachable}
 \end{lemma}
+Meine Idee für den Beweis ist wie folgt:
 
+$\rightarrow:$
+Wenn zwei Knoten in \KruskalSimpleGraphofkruskal durch einen Kantenzug verbunden sind, dann gibt es diesen Kantenzug auch in \KruskalSimpleGraphofnofedgeList,
+da es alle Kanten, die es in \KruskalSimpleGraphofkruskal gibt, auch in \KruskalSimpleGraphofnofedgeList gibt.
 
+$\leftarrow:$
+Wenn zwei Knoten in \KruskalSimpleGraphofnofedgeList verbunden sind, aber nicht in \KruskalSimpleGraphofkruskal, führt das zum Widerspruch.
+Denn dann muss es in \KruskalSimpleGraphofnofedgeList eine Kante geben, deren Knoten in \KruskalSimpleGraphofkruskal nicht verbunden sind.
+Dann wären aber zu jedem Zeitpunkt im Algorithmus die Zusammenhangskomponente dieser Knoten verschieden gewesen.
+Die Kante wäre also aufgenommen worden.
+Ihre Knoten wären in \KruskalSimpleGraphofkruskal also verbunden.
 
-\begin{lemma}[\KruskalSimpleGraphofkruskalIsSpanningTree]
+Wenn das also noch bewiesen ist, dann ist gezeigt, dass der Algorithmus einen Spannbaum liefert.
 
+\begin{lemma}[\KruskalSimpleGraphofkruskalIsSpanningTree]\label{KruskalSimpleGraphofkruskalIsSpanningTree}
+  \KruskalSimpleGraphofkruskal ist ein Spannbaum von \KruskalSimpleGraphofnofedgeList.
 \end{lemma}
+\begin{proof}
+  Das Lemma ist die kombinierte Aussage der Lemma \ref{KruskalSimpleGraphofkruskalIsSubgraph},  \ref{KruskalSimpleGraphofkruskalIsAcyclic} und  \ref{KruskalSimpleGraphofkruskalIsEqReachable}
+\end{proof}
 
-Zusammenhängender Graph?
+Um auf den Unterschied zwischen echtem Spannbaum und Spannwald eingehen zu können, habe ich außerdem noch die Bedingung für einen zusammenhängenden Graphen gezeigt.
+
+\begin{lemma}[\KruskalSimpleGraphofkruskalconnectediffconnected]
+  \KruskalSimpleGraphofkruskal ist genau dann zusammenhängend, wenn \KruskalSimpleGraphofnofedgeList zusammenhängend ist.
+\end{lemma}
+\begin{proof}
+  Der Beweis folgt direkt aus Lemma \ref{KruskalSimpleGraphofkruskalIsEqReachable}
+\end{proof}
 
 \subsection{Minimal}
 
+Für die Minimalität hat die Zeit leider auch nicht mehr gereicht.
 
-
+\begin{theorem}
+  Der Algorithmus findet einen minimalen Spannbaum, entsprechend der Definition \ref{KruskalminimalSpanninTreeofedgeList}.
+\end{theorem}
 \begin{lemma}[\KruskalkruskalminimalSpanninTreeofedgeList]
-
 \end{lemma}
+
+Meine Idee ist hier die folgende:
+Sei edgeList die Kante-Liste und edgeList' die Ergebnisliste des Algorithmus.
+Nach Lemma \ref{KruskalSimpleGraphofkruskalIsSpanningTree} ist edgeList' ein Spannbaum von edgeList.
+Falls edgeList' kein minimaler Spannbaum von edgeList ist, dann gibt es bessere Kanten-Liste edgeList$^*$.
+Spannbäume haben dieselbe Anzahl an Kanten.
+Wenn ich eine Kante e aus edgeList$^*$, die nicht in edgeList' ist, zu edgeList' hinzufügen würde, schließt sich ein Kreis, da sie sonst bereits in edgeList' enthalten wäre.
+Ich könnte also dafür eine andere Kante des Kreises, die nicht in edgeList$^*$ ist, aus edgeList' herauswerfen, sodass edgeList' ein Spannbaum bleibt.
+Das könnte ich so lange wiederholen, bis beide Listen gleich sind.
+Dann muss es, damit edgeList$^*$ besser ist, eine Kanteaus edgeList$^*$ geben, die nicht in edgeList' ist und die günstiger ist als die Kante, die für sie aus edgeList' herausgeworfen wird.
+Eine solche Kante kann es aber nicht geben, denn sonst käme sie im Algorithmus vor ihrem Pendant dran und würde übernommen werden, da sie ohne diesen keinen Kreis schließt.
+Sie wäre also schon in edgeList' enthalten.
+% Zu jeder Kante e aus edgeList$^*$ gibt es ein Pendant e' in edgeList, so dass e' die Kante ist, ab deren hinzufügen im Algorithmus die Knoten von e in derselben Zusammenhangskomponente sind.
+% Dann muss es, damit edgeList$^*$ besser ist, eine Kante geben, die günstiger ist als ihr Pendant.
+% Eine solche Kante kann es aber nicht geben, denn sonst käme sie im Algorithmus vor ihrem Pendant dran und würde übernommen werden, da ihre Knoten noch nicht in derselben Zusammenhangskomponente sind.
+% Sie wäre also ihr eigenes Pendant und daher nicht günstiger.

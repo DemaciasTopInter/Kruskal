@@ -186,27 +186,27 @@ structure unionFind (nodeList : List node) : Type where
   nodup : linkList.Nodup
   rankInvariant (uFLx : unionFindLink nodeList) : uFLx ∈ linkList → (linkList.filter (fun uFLy => uFLy.rank < uFLx.rank ∧ ¬uFLy.nodeId = uFLy.ccId)).length ≥ uFLx.rank
 
-theorem unionFind.rank_succ_isLt  {nodeList : List node} (uF : unionFind nodeList) (x y : unionFindLink nodeList) : x ≠ y → x ∈ uF.linkList → y ∈ uF.linkList → x.nodeId = x.ccId → y.nodeId = y.ccId → x.rank = y.rank → x.rank.val.succ < nodeList.length := by
-  intro h_ne h_x_in h_y_in h_x_selfcon h_y_selfcon h_rank_eq
-  have h_rankInvariant := uF.rankInvariant x h_x_in
-  set p : unionFindLink nodeList → Prop := (fun (z : unionFindLink nodeList) => decide (z.rank < x.rank ∧ ¬z.nodeId = z.ccId))
-  have h_not_p_x : ¬p x := by
+theorem unionFind.rank_succ_isLt  {nodeList : List node} (uF : unionFind nodeList) (uFLx uFLy : unionFindLink nodeList) : uFLx ≠ uFLy → uFLx ∈ uF.linkList → uFLy ∈ uF.linkList → uFLx.nodeId = uFLx.ccId → uFLy.nodeId = uFLy.ccId → uFLx.rank = uFLy.rank → uFLx.rank.val.succ < nodeList.length := by
+  intro h_ne h_uFLx_in h_uFLy_in h_uFLx_selfcon h_uFLy_selfcon h_rank_eq
+  have h_rankInvariant := uF.rankInvariant uFLx h_uFLx_in
+  set p : unionFindLink nodeList → Prop := (fun (z : unionFindLink nodeList) => decide (z.rank < uFLx.rank ∧ ¬z.nodeId = z.ccId))
+  have h_not_p_uFLx : ¬p uFLx := by
     simp [p]
-  have h_not_p_y : ¬p y := by
+  have h_not_p_uFLy : ¬p uFLy := by
     simp [p, h_rank_eq]
-  have h_filter_eq : List.filter p uF.linkList = List.filter p ((uF.linkList.erase x).erase y) := by
-    simp [filter_erase_eq_self_of_not_prop h_not_p_x (p := p) (l := uF.linkList)]
-    simp [filter_erase_eq_self_of_not_prop h_not_p_y (p := p) (l := uF.linkList.erase x)]
-  have h_length_eq : uF.linkList.length = ((uF.linkList.erase x).erase y).length + 2 := by
-    have h_y_in : y ∈ (uF.linkList.erase x) := by
-      simp [h_ne.symm, h_y_in]
-    simp [← List.length_erase_add_one h_x_in, ← List.length_erase_add_one h_y_in]
+  have h_filter_eq : List.filter p uF.linkList = List.filter p ((uF.linkList.erase uFLx).erase uFLy) := by
+    simp [filter_erase_eq_self_of_not_prop h_not_p_uFLx (p := p) (l := uF.linkList)]
+    simp [filter_erase_eq_self_of_not_prop h_not_p_uFLy (p := p) (l := uF.linkList.erase uFLx)]
+  have h_length_eq : uF.linkList.length = ((uF.linkList.erase uFLx).erase uFLy).length + 2 := by
+    have h_uFLy_in : uFLy ∈ (uF.linkList.erase uFLx) := by
+      simp [h_ne.symm, h_uFLy_in]
+    simp [← List.length_erase_add_one h_uFLx_in, ← List.length_erase_add_one h_uFLy_in]
   simp [uF.matching_length, h_length_eq]
   apply le_trans h_rankInvariant
   simp [p] at h_filter_eq
   simp
   rw [h_filter_eq]
-  have h_le := List.length_filter_le p ((uF.linkList.erase x).erase y)
+  have h_le := List.length_filter_le p ((uF.linkList.erase uFLx).erase uFLy)
   simp [p] at h_le
   simp [h_le]
 

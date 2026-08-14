@@ -2,7 +2,7 @@
 Algolean\cite{algolean} ist ein Framework für Algorithmen und Komplexitätstheorie
 und sein Kern ist die Freie Monade\cite{the_free_monad} Prog.
 Der Name Algolean ist ein Wortspiel und kann auf zwei Arten gelesen werde.
-Entweder als \glqq Algo\grqq ~+ \glqq lean\grqq, also im Sinn einer Algorithmus Bibliothek in Lean, oder \glqq Algol\grqq ~+ \glqq ean\grqq, als Homage an Algol, wobei dann \glqq ean\grqq ~so ausgesprochen wird, dass sich der Name als Algolsch übersetzen lässt.
+Entweder als \glqq Algo\grqq ~+ \glqq lean\grqq, also im Sinn einer Algorithmus Bibliothek in Lean, oder \glqq Algol\grqq ~+ \glqq ean\grqq, als Hommage an Algol, wobei dann \glqq ean\grqq ~so ausgesprochen wird, dass sich der Name als Algolsch übersetzen lässt.
 
 Die Grundidee des Frameworks ist es,
 den Nutzer bei der Formalisierung seiner Algorithmen zu zwingen, seine Grundoperationen und deren Kosten im Vorhinein zu bestimmen.
@@ -11,11 +11,11 @@ Die Komplexität beziehungsweise Laufzeit der Algorithmen werden dann als direkt
 Der Grund, warum dieses Framework überhaupt benötigt wird ist, dass man nicht einfach eine Funktion definieren kann,
 die eine Funktion und einen Input übergeben bekommt, und dann einfach zählt, wie oft bestimmte Funktion beim Ausführen aufgerufen werden.
 Denn Lean sieht zwischen intentional verschiedenen Funktionen, die also für verschiedene Zwecke gedacht sind und beim Ausführen komplett unterschiedliche Dinge tun,
-keinen Unterschied, solange sie extentional gleich sind, also für den selben Input den selben Output liefern.
+keinen Unterschied, solange sie extentional gleich sind, also für denselben Input denselben Output liefern.
 Es wären also nicht erkennbar, welche Funktion genau übergeben wurde.
 
 Aus diesem Grund arbeitet Algolean mit der Freien Monade.
-Monaden sind in funktionalen Programmiersprachen der Weg um Computerberechnungen mit Seiteneffekten zu modelieren.
+Monaden sind in funktionalen Programmiersprachen der Weg um Computerberechnungen mit Seiteneffekten zu modellieren.
 Das prominenteste Beispiel für eine Monade ist IO, über die zum Beispiel alle Interaktionen mit dem Standard Input und Output laufen.
 % \cite{monad_wiki}
 
@@ -23,19 +23,19 @@ Einer der Seiteneffekte der Freien Monade ist, dass sie beim Aufrufen von Funkti
 
 Innerhalb von Monaden wird die do-Notation benutzt.
 Ähnlich dem Taktikmodus, der mit by geöffnet wird, beginnt diese mit \textbf{do}.
-Die do-Notation kann das sequenzielle Abarbeiten sowie For- und Whileschleifen einer imperativen Programiersprache simulieren.
+Die do-Notation kann das sequenzielle Abarbeiten sowie For- und Whileschleifen einer imperativen Programmiersprache simulieren.
 Für die do-Notation und für Monaden typisch ist außerdem, das Zuweisen mit $\leftarrow$, was mit den Typen zusammenhängt und auf das ich später noch einmal zu sprechen komme.
-Dabei ist unter der Haube alles funktionale Programierung.
+Dabei ist unter der Haube alles funktionale Programmierung.
 
-Mehr Informationen zu Monaden im algemeinen finden sich in dem Buch Functional Programming in Lean\cite{functional_programming_in_lean} von David Thrane Christiansen
-und zur Freien Monade im speziellen im Blogbeitrag The Free Monad\cite{the_free_monad} von Tanner Duve.
+Mehr Informationen zu Monaden im Algemeinen finden sich in dem Buch Functional Programming in Lean\cite{functional_programming_in_lean} von David Thrane Christiansen
+und zur Freien Monade im Speziellen im Blogbeitrag The Free Monad\cite{the_free_monad} von Tanner Duve.
 
 
 Die für meine Arbeit am relevantesten Elemente von Algolean erkläre ich im Folgenden anhand des Beispiels listLinearSearch aus dem Algolean Repository von Shreyas Srinivas und Eric Wieser:
 
 Die grundlegenden Funktionen, die man zählen möchte, werden in einer \textbf{Query} deklariert.
 Eine Query ist eine induktive Funktion von Type nach Type.
-Jede grundliegende Funktion, bekommt dabei einen eigenen Konstruktor und hat als Typ die Query angewendet auf den Rückgabetyp der Funktion.
+Jede grundlegende Funktion bekommt dabei einen eigenen Konstruktor und hat als Typ die Query angewendet auf den Rückgabetyp der Funktion.
 Im Beispiel hat die Query, ListSearch $\alpha$ nur einen Konstruktor, nämlich den, für das Vergleichen von einem Element a und einer Liste l und da der Rückgabetyp eines Vergleich Bool ist, ist der Typ des Konstruktors ListSearch $\alpha$ von Bool.
 \begin{lstlisting}
 inductive ListSearch (α : Type*) : Type → Type _ where
@@ -43,7 +43,7 @@ inductive ListSearch (α : Type*) : Type → Type _ where
 \end{lstlisting}
 
 Ein Modell (engl. \textbf{Model}) einer Query definiert dann, wie sich die Funktionen verhalten und was die jeweiligen Kosten sind.
-Dabei ist es möglich mehrere verschiedene Modelle für die selbe Query zu definieren.
+Dabei ist es möglich mehrere verschiedene Modelle für dieselbe Query zu definieren.
 Der Typ eines Modells für eine Query Q und einen Kostentyp c ist dann Model Q c.
 Im Beispiel vergleicht die Funktion, ob es sich um das erste Element der Liste handelt und die Kosten für einen solchen Vergleich sind konstant 1.
 \begin{lstlisting}
@@ -54,13 +54,13 @@ def ListSearch.natCost [BEq α] : Model (ListSearch α) ℕ where
 \end{lstlisting}
 
 Ein Algorithmus / Programm für eine bestimmte Query Q mit einem Rückgabetyp $\alpha$ wird jetzt als Monade vom Typ \textbf{Prog} Q $\alpha$ in der do-Notation definiert.
-Dabei können dann die in der Query definierten Funktionen verwendet werden, wobei man darauf achten muss, dass man $\leftarrow$ benutzt um einer Variablen den Rückgabewert der Funktion zuzuweisen.
-Tut man das nicht und verwender stattdessen :=, dann hat das Ergebnis den falschen Typ, nämlich den, den man beim Definieren der Query angegeben hat.
+Dabei können dann die in der Query definierten Funktionen verwendet werden, wobei man darauf achten muss, dass man $\leftarrow$ benutzt, um einer Variablen den Rückgabewert der Funktion zuzuweisen.
+Tut man das nicht und verwendet stattdessen :=, dann hat das Ergebnis den falschen Typ, nämlich den, den man beim Definieren der Query angegeben hat.
 Im Beispiel wäre das dann ListSearch $\alpha$ Bool anstelle von Bool.
-Was auch zu beachten ist, ist dass man den Algorithmus für eine Query und nicht für ein Modell schreibt.
+Was auch zu beachten ist, ist, dass man den Algorithmus für eine Query und nicht für ein Modell schreibt.
 Das bedeutet, dass die Funktionen deklariert aber nicht definiert sind.
-Dementsprechend muss man, wenn man genauere Informationen haben möchte, wie das Ergebnis zu Stande kommt, einen komplexeren Rückgabetyp definieren, in dem die Informationen mitgegeben werden können.
-Worauf es beim Schreiben des Algorithmuses dann ankommt, ist, dass man auch die entsprechenden Queryaufrufe verwendet und keine äquivalenten normalen Funktionen,
+Dementsprechend muss man, wenn man genauere Informationen haben möchte, wie das Ergebnis zustande kommt, einen komplexeren Rückgabetyp definieren, in dem die Informationen mitgegeben werden können.
+Worauf es beim Schreiben des Algorithmus dann ankommt, ist, dass man auch die entsprechenden Queryaufrufe verwendet und keine äquivalenten normalen Funktionen,
 denn nur die Queryaufrufe werden am Ende gezählt.
 Wenn man also keine Queryaufrufe verwendet, wird man als Ergebnis bekommen, dass der Algorithmus eine Laufzeit von 0 hat.
 Im Beispiel ist der Algorithmus die lineare Suche.
@@ -80,16 +80,16 @@ def listLinearSearch (l : List α) (x : α) : Prog (ListSearch α) Bool := do
 Wenn man einen Algorithmus jetzt ausführen will, oder seine Laufzeit berechnen, dann kann man sich nun ein zur Query passendes Modell wählen und den Algorithmus für dieses Modell auswerten.
 Dafür gibt es die Funktion \textbf{Prog.eval} und \textbf{Prog.time}.
 Da der ganze Aufbau mit Query, Modell und Monade einen großen Overhead bedeuten, ist die Intention bei Algolean,
-dass man zu dem Algorithmus als Prog den Algorithmus noch ein weiteres mal als normale Lean Funktion implementiert,
+dass man zu dem Algorithmus als Prog den Algorithmus noch ein weiteres Mal als normale Lean Funktion implementiert,
 und anschließend zeigt, dass für das entsprechende Modell die beiden äquivalent sind.
 Dadurch ist es möglich, die ganzen Beweise zur Korrektheit ohne diesen Overhead zu führen.
 Im Beispiel wird als erstes gezeigt, dass die als Prog geschriebene lineare Suche äquivalent zur bereits existierenden Funktion List.contains ist.
 Da List.contains als abbrev von List.elem definiert ist, wird die Aussage hier per Induktion über die Funktion List.elem gezeigt.
 Sie ist allerdings so kompakt geschrieben, dass sich Basisfall, Induktionsschritt und Induktionshypothese nicht erkennen lassen,
-was fuktioniert, da List.elem dem Algorithmus im Aufbau sehr stark ähnelt.
+was funktioniert, da List.elem dem Algorithmus im Aufbau sehr stark ähnelt.
 Das Lemma wird dabei mit simp markiert, sodass in den folgenden Lemmata bei der Benutzung von simp eine automatische Ersetzung vorgenommen wird.
 Anschließend wird gezeigt, dass der Algorithmus korrekt funktioniert, also true zurückgibt, falls das Element in der Liste enthalten ist, und false, falls nicht.
-Da beides für List.contains bereits bekannt ist, werden diese Lemma direkt von simp gelöst.
+Da beides für List.contains bereits bekannt ist, werden diese Lemmata direkt von simp gelöst.
 \begin{lstlisting}
 @[simp, grind =]
 lemma listLinearSearch_eval [BEq α] (l : List α) (x : α) :
