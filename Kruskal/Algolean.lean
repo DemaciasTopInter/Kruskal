@@ -158,7 +158,6 @@ theorem kruskal_helper_time2_right (edgeList : List edge) (nodeList : List node)
     simp [kruskal_helper_prog]
   | cons e edgeList ih =>
     simp [kruskal_helper_prog, kruskal_model2, ← add_assoc]
-    -- simp [add_comm, add_assoc]
     set updated_uF := update_unionFind uF (connected_component_of_unionFind_of_id uF e.node1 (kruskal_helper._proof_1 nodeList e edgeList h_matching_edge)) (connected_component_of_unionFind_of_id uF e.node2 (kruskal_helper._proof_2 nodeList e edgeList h_matching_edge)) (kruskal_helper._proof_4 nodeList uF e (kruskal_helper._proof_1 nodeList e edgeList h_matching_edge)) (kruskal_helper._proof_5 nodeList uF e (kruskal_helper._proof_2 nodeList e edgeList h_matching_edge)) with ← h_updated_uF
     set updated_edgesSoFar := update_edgesSoFar edgesSoFar e (connected_component_of_unionFind_of_id uF e.node1 (kruskal_helper._proof_1 nodeList e edgeList h_matching_edge)) (connected_component_of_unionFind_of_id uF e.node2 (kruskal_helper._proof_2 nodeList e edgeList h_matching_edge)) with ← h_updated_edgesSoFar
 
@@ -234,7 +233,7 @@ theorem kruskal_time2 (edgeList : List edge) (nodeList : List node) (h_matching_
     simp [h_nodeList]
     simp only [nodeList_of_edgeList_max_eq edgeList h_nonempty'] at h
     simp [kruskal_of_edgeList, kruskal, nodeList_of_edgeList_max] at h
-    grind
+    grind -- nutzt h_nodup' und h_nodup_con
   have h := kruskal_helper_time2 (edgeList.mergeSort fun a b => decide (a ≤ b)) nodeList (init_unionFind nodeList h_nodup) [] (by simp [matching_edge]; exact h_matching_edge) h_nodup h_nonempty h_lt
   apply le_of_le_of_eq h
   simp
@@ -291,8 +290,7 @@ def kruskal_prog_strict (edgeList : List edge) (nodeList : List node) (h_matchin
       simp [edgeListSorted] at h_e_in
       simp [matching_edge] at h_matching_edge
       exact h_matching_edge e h_e_in
-    have h_uF_rankInvariant : uF.rankInvariant_strict := by
-      exact init_unionFind.rankInvariant_strict _
+    have h_uF_rankInvariant : uF.rankInvariant_strict := init_unionFind.rankInvariant_strict _
     return ← kruskal_helper_prog_strict edgeListSorted nodeList uF [] h_matching_edge h_nodup h_uF_rankInvariant
 
 
@@ -310,7 +308,7 @@ theorem kruskal_helper_eval3 (edgeList : List edge) (nodeList : List node) (uF :
     simp [matching_edge] at h_matching_edge ih
     have ih := ih updated_uF updated_edgesSoFar h_matching_edge.right (update_unionFind.rankInvariant_strict _ _ _ _ _ h_rankInvariant)
     simp [ih, kruskal_model3, Prog.eval]
-    grind
+    simp only [updated_uF, updated_edgesSoFar]
 
 theorem kruskal_eval3 (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup)
   : kruskal edgeList nodeList h_matching_edge h_nodup = (kruskal_prog_strict edgeList nodeList h_matching_edge h_nodup).eval (kruskal_model3 nodeList) := by
@@ -416,7 +414,7 @@ theorem kruskal_time3 (edgeList : List edge) (nodeList : List node) (h_matching_
     simp [h_nodeList]
     simp only [nodeList_of_edgeList_max_eq edgeList h_nonempty'] at h
     simp [kruskal_of_edgeList, kruskal, nodeList_of_edgeList_max] at h
-    grind
+    grind -- nutzt h_nodup' und h_nodup_con
   set uF := init_unionFind nodeList h_nodup
   have h_rankInvariant : uF.rankInvariant_strict := init_unionFind.rankInvariant_strict _
   have h := kruskal_helper_time3 (edgeList.mergeSort fun a b => decide (a ≤ b)) nodeList (init_unionFind nodeList h_nodup) [] (by simp [matching_edge]; exact h_matching_edge) h_nodup h_nonempty h_lt  h_rankInvariant
@@ -477,17 +475,8 @@ def find_model (nodeList : List node) : Model (find_query nodeList) (Nat × Nat)
   evalQuery
     | .parent uFL h_in h_not_self_con =>
       let p := parent uFL h_in
-      have h_p_in := by
-        rename_i uF
-        have h_p_in : p ∈ uF.linkList := by
-          simp [p, parent, List.choose_mem]
-        exact h_p_in
-      have h_rank : p.rank > uFL.rank := by
-        rename_i uF
-        simp [p, parent]
-        have h := uF.matching_rank uFL h_in
-        simp [h_not_self_con] at h
-        exact h
+      have h_p_in := parent_in h_in
+      have h_rank : p.rank > uFL.rank := (unionFind.matching_rank _ uFL h_in).resolve_left h_not_self_con
       ⟨p, h_p_in, h_rank⟩
     | .union (uF : unionFind nodeList) x y h₁ h₂ h_rankInvariant => ⟨update_unionFind uF x y h₁ h₂, update_unionFind.rankInvariant_strict _ _ _ _ _ h_rankInvariant⟩
   cost
@@ -518,26 +507,18 @@ theorem connected_component_of_unionFind_of_unionFindLink_prog_time_log {nodeLis
     simp
   | case2 uFL h_uFL_in h_not_self_con ih =>
     set p := parent uFL h_uFL_in with ← h_p
-    have h_p_in := by
-      have h_p_in : p ∈ uF.linkList := by
-        simp [p, parent, List.choose_mem]
-      exact h_p_in
-    have h_rank : p.rank > uFL.rank := by
-      simp [p, parent]
-      have h := uF.matching_rank uFL h_uFL_in
-      simp [ne_comm.mp h_not_self_con] at h
-      exact h
+    have h_p_in := parent_in h_uFL_in
+    have h_rank : p.rank > uFL.rank := (unionFind.matching_rank _ uFL h_uFL_in).resolve_left (ne_comm.mp h_not_self_con)
     let f : found_parent uF uFL := ⟨p, h_p_in, h_rank⟩
     have ih := ih f
     simp [find_model, h_p]
     simp [find_model, f] at ih
     have h_le : (1, 0) + (Nat.log 2 nodeList.length - ↑p.rank, 0) ≤ (Nat.log 2 nodeList.length - ↑uFL.rank, 0) := by
       simp
-      grind
+      grind -- benutzt h_max_rank
     apply le_trans ?_ h_le
-    apply add_le_add
-    · simp
-    · exact ih
+    apply add_le_add ?_ ih
+    simp
 
 theorem connected_component_of_unionFind_of_id_prog_time_log {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) (h_rankInvariant : uF.rankInvariant_strict) : (connected_component_of_unionFind_of_id_prog uF id h).time (find_model nodeList) ≤ (Nat.log 2 nodeList.length, 0) := by
   simp [connected_component_of_unionFind_of_id_prog]
@@ -555,7 +536,7 @@ theorem connected_component_of_unionFind_of_id_prog_time_log {nodeList : List no
 def reduction {nodeList : List node} : Reduction (kruskal_query_strict nodeList) (find_query nodeList) where
   reduce
     | .find uF id h _ => connected_component_of_unionFind_of_id_prog uF id h
-    | .union uF x y h₁ h₂ h_rankInvariant => do find_query.union uF x y h₁ h₂ h_rankInvariant
+    | .union uF x y h₁ h₂ h_rankInvariant => find_query.union uF x y h₁ h₂ h_rankInvariant
 
 theorem model_evalQuery_eq {nodeList : List node} : ∀ {l} (q : (kruskal_query_strict nodeList) l), (reduction.reduce q).eval (find_model nodeList) = (kruskal_model3 nodeList).evalQuery q := by
   intro t q
@@ -563,16 +544,7 @@ theorem model_evalQuery_eq {nodeList : List node} : ∀ {l} (q : (kruskal_query_
   | find uF id h h_rankInvariant =>
     have h' : (reduction.reduce (kruskal_query_strict.find uF id h h_rankInvariant)).eval (find_model nodeList) = (connected_component_of_unionFind_of_id_prog uF id h).eval (find_model nodeList) := by
       simp [reduction]
-    simp [kruskal_model3, h']
-    have h_found_eq : ∀ (a b : found nodeList uF), a.id = b.id → a = b := by
-      intro a b h_eq
-      cases a
-      cases b
-      simp at h_eq
-      simp [h_eq]
-    apply h_found_eq
-    simp
-    exact (connected_component_of_unionFind_of_id_prog_eval _ _ _).symm
+    simp [kruskal_model3, h', connected_component_of_unionFind_of_id_prog_eval]
   | union uF x y h₁ h₂ =>
     simp [find_model, kruskal_model3, reduction]
 

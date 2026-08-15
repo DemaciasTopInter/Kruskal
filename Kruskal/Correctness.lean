@@ -2015,12 +2015,10 @@ theorem le_two_pow_minus_one (n : Nat) : n ≤ 2^n-1 := by
     rw [h]
     exact Nat.lt_two_pow_self
 
-def unionFind.rankInvariant_strict {nodeList : List node} (uF : unionFind nodeList) := ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path (uFL := x) (uF := uF) h_x_in else False)).length ≥ 2^(uFL.rank.val)
+def unionFind.rankInvariant_strict {nodeList : List node} (uF : unionFind nodeList) := ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path h_x_in else False)).length ≥ 2^(uFL.rank.val)
 
 theorem unionFind.rankInvariant_of_rankInvariant_strict {nodeList : List node} {uF : unionFind nodeList} (h_rankInvariant : uF.rankInvariant_strict) : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => x.rank < uFL.rank ∧ ¬x.nodeId = x.ccId)).length ≥ uFL.rank := by
   intro uFL h_in
-  -- rcases uFL with ⟨nodeId, ccId, rank⟩
-  -- rcases rank with ⟨rank, h_lt⟩
   set rank := uFL.rank.val with ← h_rank
   revert h_rank
   induction rank generalizing uFL with

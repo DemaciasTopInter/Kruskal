@@ -1,5 +1,9 @@
 \section{Der Beweis über die Laufzeit}\todo{section Laufzeit}
-Um jetzt den Aussagen über die Laufzeit zu treffen muss ich, wie in Kapitel \ref{Algolean} beschrieben, den Algorithmus ein weiteres Mal definieren und dieses Mal als Prog.
+Was ich zeigen möchte, ist, dass die Laufzeit $O(E\log_2|V|)$ ist.
+Besser kann sie nicht werden, da bereits das Sortieren der Kanten-Liste am Anfang eine Laufzeit von $O(E\log_2|E|)$ hat, was dasselbe ist wie $O(E\log_2|V|)$, da $|E| \le |V|^2$.
+Ich zeige also, dass ich Union und Find $O(|E|)$ Mal aufrufe und diese wiederum eine Laufzeit von höchsten $O(\log|V|)$ haben.
+
+Um jetzt den Aussagen über die Laufzeit zu treffen, muss ich, wie in Kapitel \ref{Algolean} beschrieben, den Algorithmus ein weiteres Mal definieren und dieses Mal als Prog.
 
 Der Code aus diesem Kapitel ist in der Datei Algolean.lean zu finden.
 
@@ -8,7 +12,7 @@ Wie erklärt musste ich zunächst festgelegt, was die grundlegenden Funktionen s
 Ich habe dabei vorerst für die Union und die Find Funktion, also \KruskalupdateunionFind und \KruskalconnectedcomponentofunionFindofid, entschieden.
 
 \begin{definition}[\Kruskalkruskalquery]
-  Eine Query mit den Funktionen Find und Union.
+  Eine Query mit den Funktionen Find und Union, bei der Find den Rückgabetyp \Kruskalfound hat, welchen ich nachfolgend definiere.
 \end{definition}
 \begin{lstlisting}
 inductive (.\Kruskalkruskalquery.) (nodeList : List node) : Type → Type _ where
@@ -16,7 +20,7 @@ inductive (.\Kruskalkruskalquery.) (nodeList : List node) : Type → Type _ wher
   | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : kruskal_query nodeList (unionFind nodeList)
 \end{lstlisting}
 
-Da diese Funktionen nur deklariert aber nicht definiert sind, konnte ich als Rückgabetyp für Find nicht Nat benutzen, da ich \Kruskalkruskal verwende,
+Da diese Funktionen nur deklariert aber nicht definiert sind, konnte ich als Rückgabetyp für Find nicht Nat benutzen, da ich in \Kruskalkruskal verwende,
 dass es für das Ergebnis einen Zeiger gibt, der zum entsprechenden Knoten gehört und auf diesen zeigt.
 Deshalb brauchte ich einen Typ, der diese Bedingung beinhaltet.
 
@@ -34,7 +38,7 @@ Da die Query nun definiert ist, kann ich nun den Kruskal Algorithmus als Program
 Dabei war es mein Ziel den Aufbau so ähnlich wie möglich zu halten.
 
 \begin{definition}[\Kruskalkruskalhelperprog]
-  Die Porg Version von \Kruskalkruskalhelper für die Query \Kruskalkruskalquery.
+  Die Prog-Version von \Kruskalkruskalhelper für die Query \Kruskalkruskalquery.
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalkruskalhelperprog.) (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : Prog (kruskal_query nodeList) (List edge) := do
@@ -60,7 +64,7 @@ def (.\Kruskalkruskalhelperprog.) (edgeList : List edge) (nodeList : List node) 
 \end{lstlisting}
 
 \begin{definition}[\Kruskalkruskalprog]
-  Die Porg Version von \Kruskalkruskal für die Query \Kruskalkruskalquery.
+  Die Prog-Version von \Kruskalkruskal für die Query \Kruskalkruskalquery.
 \end{definition}
 \begin{lstlisting}
 def kruskal_prog (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : Prog (kruskal_query nodeList) (List edge) := do
@@ -81,7 +85,7 @@ Dadurch lässt sich zum einen der Grund für die Laufzeit genauer analysieren,
 zu anderen, kann ich den Laufzeitbeweis über jede Funktionen einzeln führen.
 
 \begin{definition}[\Kruskalkruskalmodelone]
-  Das Modell definiert Find als \KruskalconnectedcomponentofunionFindofid mit Kosten (1, 0)
+  Das Modell definiert Find als Kombination von \KruskalconnectedcomponentofunionFindofid und Lemma \ref{KruskalexistunionFindLinkofconnectedcomponentofunionFindofid} mit Kosten (1, 0)
   und Union als \KruskalupdateunionFind mit Kosten (0, 1).
 \end{definition}
 \begin{lstlisting}
@@ -150,7 +154,7 @@ Bei meinem zweiten Modell war mein Gedanke, dass ich das Updaten nur zählen mö
 Abgesehen davon ist es gleich.
 
 \begin{definition}[\Kruskalkruskalmodeltwo]
-  Das Modell definiert Find als \KruskalconnectedcomponentofunionFindofid mit Kosten (1, 0)
+  Das Modell definiert Find als Kombination von \KruskalconnectedcomponentofunionFindofid und Lemma \ref{KruskalexistunionFindLinkofconnectedcomponentofunionFindofid} mit Kosten (1, 0)
   und Union als \KruskalupdateunionFind mit Kosten (0, 1), falls dadurch Union-Find-Struktur verändert wird, sonst (0, 0).
 \end{definition}
 \begin{lstlisting}
@@ -169,7 +173,7 @@ def (.\Kruskalkruskalmodeltwo.) (nodeList : List node) : Model (kruskal_query no
 Wie zuvor ist es nun mein Ziel, zu zeigen, dass das Programm auch in diesem Modell noch dasselbe mach und wie oft es dabei jede Funktion aufruft.
 
 \begin{theorem}
-    \Kruskalkruskalprog macht im Model \Kruskalkruskalmodeltwo das Gleiche wie \Kruskalkruskal und ruft dabei höchstens $2 |E|$ mal Find auf und höchstens $|V|$ mal Union.
+    \Kruskalkruskalprog macht im Model \Kruskalkruskalmodeltwo das Gleiche wie \Kruskalkruskal und ruft dabei höchstens $2|E|$ mal Find auf und höchstens $|V|$ mal Union.
 \end{theorem}
 
 Zuerst zeige ich, dass beide Modelle gleich auswerten.
@@ -230,11 +234,10 @@ Jetzt nutze ich aus, dass ich Union und Find separat zähle, und zeige die Laufz
   Damit passt es dann zur Hypothese und ich kann die Induktionshypothese anwenden.
 \end{proof}
 
-
+In den folgenden beiden Lemmata benutze ich für $|E|$ die Länge der Kanten-Liste, aber für $|V|$ die Anzahl der Knoten im SimpleGraph.\todo{warum}
 
 \begin{lemma}[\Kruskalkruskalhelpertimetwo]
-  \Kruskalkruskalhelperprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens zweimal so oft auf,
-  wie die Kanten-Liste lang ist und Union höchstens einmal so oft, wie die Knoten-Liste lang ist.
+  \Kruskalkruskalhelperprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens $2|E|$ Mal auf und Union höchstens $|V|$ Mal.
 \end{lemma}
 \begin{proof}
   Sei n die Anzahl der Knoten, also die ID des höchsten Knotens plus eins.
@@ -250,8 +253,7 @@ Jetzt nutze ich aus, dass ich Union und Find separat zähle, und zeige die Laufz
 
 
 \begin{lemma}[\Kruskalkruskaltimetwo]
-  \Kruskalkruskalprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens zweimal so oft auf,
-  wie die Kanten-Liste lang ist und Union höchstens einmal so oft, wie die Knoten-Liste lang ist.
+  \Kruskalkruskalprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens $2|E|$ Mal auf und Union höchstens $|V|$ Mal.
 \end{lemma}
 \begin{proof}
   Der Beweis folgt direkt aus dem vorherigen Lemma.
@@ -265,11 +267,12 @@ Bisher zähle ich die Aufrufe von Union und Find und verwende für beide den kon
 Allerdings wird bei Union nur einmal etwas ersetzt, während Find sich immer wieder rekursiv selbst aufruft.
 Wie ich später zeigen werde, bis zu $\log_2|V|$ Mal.
 Dementsprechend sollte $\log_2|V|$ der wert von Find sein.
-Bevor ich aber jetzt einfach ein weiteres Modell mit dem entsprechenden Wert schreibe, muss ich bedenken, dass der Beweis auf der strikten Rang-Invariante beruht.
-\todo{hier weiter}
+Bevor ich aber jetzt einfach ein weiteres Modell mit dem entsprechenden Wert schreibe, musste ich bedenken, dass der Beweis auf der strikten Rang-Invariante beruht.
+Ich habe mir überlegt, dass ich mir Beweisarbeit spare, wenn ich die strikte Rang-Invariante fest in den Algorithmus einbaue.
+Dafür brauchte ich eine neue Query, die garantiert, dass das Ergebnis von Union die strikte Rang-Invariante einhält.
 
 \begin{definition}[\KruskalunionFindstrict]
-  
+  Die Union-Find-Struktur mit strikter Rang-Invariante.
 \end{definition}
 \begin{lstlisting}
 structure (.\KruskalunionFindstrict.) (nodeList : List node) : Type where
@@ -281,7 +284,7 @@ structure (.\KruskalunionFindstrict.) (nodeList : List node) : Type where
 
 
 \begin{definition}[\Kruskalkruskalquerystrict]
-  
+  Eine Query mit den Funktionen Find und Union, bei der Find den Rückgabetyp \Kruskalfound und Union den Rückgabetyp \KruskalunionFindstrict hat.
 \end{definition}
 \begin{lstlisting}
 inductive (.\Kruskalkruskalquerystrict.) (nodeList : List node) : Type → Type _ where
@@ -289,10 +292,11 @@ inductive (.\Kruskalkruskalquerystrict.) (nodeList : List node) : Type → Type 
   | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : kruskal_query_strict nodeList (unionFind_strict nodeList)
 \end{lstlisting}
 
-
+Für diese Query kann ich dann mein Modell und eine angepasste Form von \Kruskalkruskalprog definieren.
 
 \begin{definition}[\Kruskalkruskalmodelthree]
-  
+  Das Modell definiert Find als Kombination von \KruskalconnectedcomponentofunionFindofid und Lemma \ref{KruskalexistunionFindLinkofconnectedcomponentofunionFindofid} mit Kosten (1, 0)
+  und Union als Kombination von \KruskalupdateunionFind und Lemma \ref{KruskalupdateunionFindrankInvariantstrict} mit Kosten (0, 1), falls dadurch Union-Find-Struktur verändert wird, sonst (0, 0).
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalkruskalmodelthree.) (nodeList : List node) : Model (kruskal_query_strict nodeList) (Nat × Nat) where
@@ -310,73 +314,101 @@ def (.\Kruskalkruskalmodelthree.) (nodeList : List node) : Model (kruskal_query_
 
 
 \begin{definition}[\Kruskalkruskalhelperprogstrict]
-  
+  Die Prog-Version von \Kruskalkruskalhelper für die Query \Kruskalkruskalquerystrict mit Einhaltung der strikte Rang-Invariante.
 \end{definition}
-
-
+\begin{lstlisting}
+def kruskal_helper_prog_strict (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) (h_rankInvariant : uF.rankInvariant_strict) : Prog (kruskal_query_strict nodeList) (List edge) := do
+  match edgeList with
+  | [] => return edgesSoFar
+  | e::es =>
+    have h : ∃ x ∈ nodeList, x.id = e.node1 := by
+      have h : (∃ x ∈ nodeList, e.node1 = x.id) → (∃ x ∈ nodeList, x.id = e.node1) := by simp [eq_comm]
+      simp [h (h_matching_edge e List.mem_cons_self).left]
+    let found_x : (found nodeList uF) ← kruskal_query_strict.find uF e.node1 h h_rankInvariant
+    let x := found_x.id
+    have h' : ∃ x ∈ nodeList, x.id = e.node2 := by
+      have h' : (∃ x ∈ nodeList, e.node2 = x.id) → (∃ x ∈ nodeList, x.id = e.node2) := by simp [eq_comm]
+      simp [h' (h_matching_edge e List.mem_cons_self).right]
+    let found_y : (found nodeList uF) ← kruskal_query_strict.find uF e.node2 h' h_rankInvariant
+    let y := found_y.id
+    have h_matching_edge' : ∀ x ∈ es, (∃ y ∈ nodeList, x.node1 = y.id) ∧ ∃ z ∈ nodeList, x.node2 = z.id := by
+      intro z h_in
+      simp [h_matching_edge z (List.mem_cons_of_mem e h_in)]
+    let updated_uF : (unionFind_strict nodeList) ← kruskal_query_strict.union uF x y found_x.ex found_y.ex h_rankInvariant
+    let updated_edgesSoFar := update_edgesSoFar edgesSoFar e x y
+    return ← kruskal_helper_prog_strict es nodeList updated_uF.uF updated_edgesSoFar h_matching_edge' h_nodup updated_uF.rankInvariant_strict
+\end{lstlisting}
 
 \begin{definition}[\Kruskalkruskalprogstrict]
-  
+  Die Prog-Version von \Kruskalkruskal für die Query \Kruskalkruskalquerystrict mit Einhaltung der strikte Rang-Invariante.
 \end{definition}
+\begin{lstlisting}
+def kruskal_prog_strict (edgeList : List edge) (nodeList : List node) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : Prog (kruskal_query_strict nodeList) (List edge) := do
+    let edgeListSorted : List edge := edgeList.mergeSort
+    let uF : unionFind nodeList := init_unionFind nodeList h_nodup
+    have h_matching_edge : matching_edge edgeListSorted nodeList := by
+      intro e h_e_in
+      simp [edgeListSorted] at h_e_in
+      simp [matching_edge] at h_matching_edge
+      exact h_matching_edge e h_e_in
+    have h_uF_rankInvariant : uF.rankInvariant_strict := by
+      exact init_unionFind.rankInvariant_strict _
+    return ← kruskal_helper_prog_strict edgeListSorted nodeList uF [] h_matching_edge h_nodup h_uF_rankInvariant
+\end{lstlisting}
 
+Der Unterschied zu \Kruskalkruskalprog ist dabei minimal.
+Ich benutze am Anfang Lemma \ref{KruskalinitunionFindrankInvariantstrict}, um zu zeigen, dass die strikte Rang-Invariante bei der Initialisierung gilt und ab da wird sie einfach immer mitgeführt.
 
+Als Nächstes kommen wider die Nachweise, dass das Verhalten der Funktion gleich ist und anschließend die Beweise für die Laufzeit.
+Da aber \Kruskalkruskalprogstrict und \Kruskalkruskalmodelthree soviel Ähnlichkeit zu den vorherigen Varianten haben, sind die Beweise zum Großteil fasst identisch.
+
+\begin{theorem}
+  \Kruskalkruskalprogstrict macht im Modell \Kruskalkruskalmodelthree dasselbe wie \Kruskalkruskal und zählt dabei für Find höchstens $2E\log_2|V|$ und für Union höchstens $|V|$.
+\end{theorem}
+
+Die beiden Beweise dafür, dass das Verhalten das Gleiche ist, sind ganz genau so, wie die Beweise bei Modell 1.
 
 \begin{lemma}[\Kruskalkruskalhelperevalthree]
-  
+  \Kruskalkruskalhelperprogstrict macht im Model \Kruskalkruskalmodelthree das Gleiche wie \Kruskalkruskalhelper.
 \end{lemma}
-\begin{proof}
-  
-\end{proof}
-
-
-
 \begin{lemma}[\Kruskalkruskalevalthree]
-  
+  \Kruskalkruskalprogstrict macht im Model \Kruskalkruskalmodelthree das Gleiche wie \Kruskalkruskal.
 \end{lemma}
-\begin{proof}
-  
-\end{proof}
 
-
+Auch die Beweise zur Laufzeit entsprechen größten Teils denen von Modell 2.
 
 \begin{lemma}[\KruskalkruskalhelpertimethreeindependentedgesSoFar]
-  
+  Die Laufzeit hängt nicht von der mitgeführten ErgebnisKantenListe ab.
+  Für zwei verschiedene ErgebnisKantenListen kommt bei Laufzeitberechnung von \Kruskalkruskalhelperprogstrict im Model \Kruskalkruskalmodelthree also dasselbe raus.
 \end{lemma}
-\begin{proof}
-  
-\end{proof}
-
-
-
 \begin{lemma}[\Kruskalkruskalhelpertimethreeright]
-  
+  Wenn für eine natürliche Zahl n die Länge der Ergebnisliste von \Kruskalkruskalhelper kleiner ist als n,
+  dann wird bei gleichem Input in \Kruskalkruskalhelperprogstrict im Model \Kruskalkruskalmodelthree Union höchstens n mal gezählt.
 \end{lemma}
-\begin{proof}
-  
-\end{proof}
 
+In den folgenden beiden Lemmata benutze ich im Ausdruck für Find für $|E|$ die Länge der Kanten-Liste und für $|V|$ die Länge der Knoten-Liste,
+aber im Ausdruck für Union benutze ich für $|V|$ die Anzahl der Knoten im SimpleGraph.\todo{warum}
 
+Der Unterschied hier zu den Lemmata von Modell 2 ist bei Find der konstante Faktor $\log_2|V|$.
+Ich ziehe also zum Beispiel an der entsprechenden Stelle nicht auf beiden Seiten zwei ab, sondern $2\log_2|V|$.
+Abgesehen davon sind aber auch diese Lemmata gleich.
 
 \begin{lemma}[\Kruskalkruskalhelpertimethree]
-  
+  \Kruskalkruskalhelperprogstrict zählt im Model \Kruskalkruskalmodelthree beim Ausführen für Find höchstens $2E\log_2|V|$ auf und für Union höchstens $|V|$.
 \end{lemma}
-\begin{proof}
-  
-\end{proof}
-
-
-
 \begin{lemma}[\Kruskalkruskaltimethree]
-  
+  \Kruskalkruskalprogstrict zählt im Model \Kruskalkruskalmodelthree beim Ausführen für Find höchstens $2E\log_2|V|$ auf und für Union höchstens $|V|$.
 \end{lemma}
-\begin{proof}
-  
-\end{proof}
 
-
+Damit ist die Laufzeit, die ich zeigen wollte, gezeigt.
+Was noch fehlt, ist der Beweis, dass die Laufzeit von Find wirklich höchstens $\log_2|V|$ ist.
+Dafür möchte ich nun zählen, wie oft \KruskalconnectedcomponentofunionFindofunionFindLink rekursiv aufgerufen wird\todo{Kom\-ma?} beziehungsweise, wie oft nach dem Parent gesucht wird.
+Ich nehme also statt Find Parent in die Query auf.
+Entsprechend brauche wieder einen Rückgabetyp, da es für die Funktion wichtig ist, zu wissen, dass der Parent in der Zeiger-Liste ist und dass sein Rang höher ist.
+Der höhere Rang ist wichtig, damit die Funktion terminiert.
 
 \begin{definition}[\Kruskalfoundparent]
-  
+  Ein Zeiger p, der Teil der Zeiger-Liste ist und einen höheren Rang hat als ein gegebener Zeiger uFL.
 \end{definition}
 \begin{lstlisting}
 structure (.\Kruskalfoundparent.) {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) : Type where
@@ -386,10 +418,8 @@ structure (.\Kruskalfoundparent.) {nodeList : List node} (uF : unionFind nodeLis
   rank_gt : p.rank > uFL.rank
 \end{lstlisting}
 
-
-
 \begin{definition}[\Kruskalfindquery]
-  
+  Eine Query mit den Funktionen Parent und Union, bei der Parent den Rückgabetyp \Kruskalfoundparent und Union den Rückgabetyp \KruskalunionFindstrict hat.
 \end{definition}
 \begin{lstlisting}
 inductive (.\Kruskalfindquery.) (nodeList : List node) : Type → Type _ where
@@ -397,10 +427,11 @@ inductive (.\Kruskalfindquery.) (nodeList : List node) : Type → Type _ where
   | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : find_query nodeList (unionFind_strict nodeList)
 \end{lstlisting}
 
-
+Als Nächstes habe ich \KruskalconnectedcomponentofunionFindofid als Programm dieser Query definiert.
+Auch hier bin ich so nah es geht an der bereits existierenden Definition geblieben.
 
 \begin{definition}[\KruskalconnectedcomponentofunionFindofunionFindLinkprog]
-  
+  Die Prog-Version von \KruskalconnectedcomponentofunionFindofunionFindLink für die Query \Kruskalfindquery.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalconnectedcomponentofunionFindofunionFindLinkprog.) {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) : Prog (find_query nodeList) (found nodeList uF) := do
@@ -418,33 +449,44 @@ termination_by nodeList.length - uFL.rank
   grind
 \end{lstlisting}
 
-
-
 \begin{definition}[\KruskalconnectedcomponentofunionFindofidprog]
-  
+  Die Prog-Version von \KruskalconnectedcomponentofunionFindofid für die Query \Kruskalfindquery.
 \end{definition}
+\begin{lstlisting}
+def connected_component_of_unionFind_of_id_prog {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) : Prog (find_query nodeList) (found nodeList uF) := do
+  let x : node := { id := id }
+  have h_x_in : x ∈ nodeList := by
+    rcases h with ⟨y, h_y_in, h_y⟩
+    cases y
+    simp at h_y
+    simp [h_y] at h_y_in
+    exact h_y_in
+  have h_ex_uFL : ∃ uFL ∈ uF.linkList, uFL.nodeId = id := by
+    have h' := uF.matching_nodeId x h_x_in
+    rcases h' with ⟨uFL, h_uFL, h_unique⟩
+    simp [x] at h_uFL
+    refine ⟨uFL, h_uFL.left, h_uFL.right.symm⟩
+  let uFL := List.choose _ uF.linkList h_ex_uFL
+  have h_uFL : List.choose _ uF.linkList h_ex_uFL = uFL := by
+    simp [uFL]
+  have h_uFL_in := List.choose_mem _ uF.linkList h_ex_uFL
+  have h_uFL_prop := List.choose_property _ uF.linkList h_ex_uFL
+  return ← connected_component_of_unionFind_of_unionFindLink_prog uF uFL h_uFL_in
+\end{lstlisting}
 
-
+Das passende Modell sieht dann wie folgt aus.
 
 \begin{definition}[\Kruskalfindmodel]
-  
+  Das Modell definiert Parent als Kombination von \Kruskalparent Lemma \ref{Kruskalparentin} und der matching\_rank Bedingung der Union-Find-Struktur mit Kosten (1, 0)
+  und Union als Kombination von \KruskalupdateunionFind und Lemma \ref{KruskalupdateunionFindrankInvariantstrict} mit Kosten (0, 1), falls dadurch Union-Find-Struktur verändert wird, sonst (0, 0).
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalfindmodel.) (nodeList : List node) : Model (find_query nodeList) (Nat × Nat) where
   evalQuery
     | .parent uFL h_in h_not_self_con =>
       let p := parent uFL h_in
-      have h_p_in := by
-        rename_i uF
-        have h_p_in : p ∈ uF.linkList := by
-          simp [p, parent, List.choose_mem]
-        exact h_p_in
-      have h_rank : p.rank > uFL.rank := by
-        rename_i uF
-        simp [p, parent]
-        have h := uF.matching_rank uFL h_in
-        simp [h_not_self_con] at h
-        exact h
+      have h_p_in := parent_in h_in
+      have h_rank : p.rank > uFL.rank := (unionFind.matching_rank _ uFL h_in).resolve_left h_not_self_con
       ⟨p, h_p_in, h_rank⟩
     | .union (uF : unionFind nodeList) x y h₁ h₂ h_rankInvariant => ⟨update_unionFind uF x y h₁ h₂, update_unionFind.rankInvariant_strict _ _ _ _ _ h_rankInvariant⟩
   cost
@@ -452,72 +494,91 @@ def (.\Kruskalfindmodel.) (nodeList : List node) : Model (find_query nodeList) (
     | .union _ x y _ _ _ => if x = y then (0, 0) else (0, 1)
 \end{lstlisting}
 
-
+Ich denke, das Muster ist jetzt klar.
+Ich zeige als Nächstes die Gleichheit und anschließend die Laufzeit.
 
 \begin{lemma}[\KruskalconnectedcomponentofunionFindofunionFindLinkprogeval]
-  
+  \KruskalconnectedcomponentofunionFindofunionFindLinkprog macht im Model \Kruskalfindmodel das Gleiche wie \KruskalconnectedcomponentofunionFindofunionFindLink.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis erfolgt per Induktion über die Funktion \KruskalconnectedcomponentofunionFindofunionFindLink.
+  Im Basisfall zeigt der Zeiger auf seinen eigenen Knoten und beide Funktionen machen dasselbe.
+  Im Induktionsschritt rufen sich beide Funktionen über ihre jeweilige Definition des Parents selbst auf.
+  Ich muss also nur zeigen, dass hinter beiden Varianten jeweils dasselbe steckt, dann greift die Induktionshypothese.
 \end{proof}
 
-
-
-\begin{lemma}[\KruskalconnectedcomponentofunionFindofidprogeval]
-  
+\begin{lemma}[\KruskalconnectedcomponentofunionFindofidprogeval]\label{KruskalconnectedcomponentofunionFindofidprogeval}
+  \KruskalconnectedcomponentofunionFindofidprog macht im Model \Kruskalfindmodel das Gleiche wie \KruskalconnectedcomponentofunionFindofid.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt direkt aus den entsprechenden Definitionen und dem vorangegangenen Lemma.
 \end{proof}
-
-
 
 \begin{lemma}[\KruskalconnectedcomponentofunionFindofunionFindLinkprogtimelog]
-  
+  Sei r der Rang eines beliebigen Zeigers uFL und gelte für die Union-Find-Struktur die strikte Rang-Invariante.
+  Dann ruft für uFL \KruskalconnectedcomponentofunionFindofunionFindLinkprog im Model \Kruskalfindmodel beim Ausführen Parent höchstens $\log_2|V| - r$ Mal und Union gar nicht auf.
+  Mit $|V|$ ist dabei die Länge der Knoten-Liste gemeint.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis erfolgt per Induktion über die Funktion \KruskalconnectedcomponentofunionFindofunionFindLinkprog.
+  Im Basisfall zeigt der Zeiger auf seinen eigenen Knoten und keine der Funktionen wird aufgerufen.
+  Im Induktionsschritt wird Parent einmal aufgerufen und für diesen Parent dann rekursiv \KruskalconnectedcomponentofunionFindofunionFindLinkprog.
+  Sei s der Rang des Parents.
+  Nach der Induktionshypothese wird Parent in diesem rekursiven Aufruf höchstens $\log_2|V| - r$ Mal aufgerufen.
+  Dann muss also gezeigt werden, dass $1 + (\log_2|V| - s) \le \log_2|V| - r$ ist.
+  Man könnte an dieser Stelle auf die Idee kommen, ist das der Fall, da $s \ge r$ ist, aber das reicht nicht ganz.
+  Denn so wie Minus für natürliche Zahlen in Lean definiert ist, gilt für alle Zahlen a und b mit $a \le b$, dass $a - b = 0$.
+  Das bedeutet, dass ich die 1 nicht einfach in die Klammer ziehen kann, denn $1 + (\log_2|V| - s) = (1 + \log_2|V|) - s$ gilt nur, falls $\log_2|V| \ge s$ ist.
+  Deshalb ist die strikte Rang-Invariante vorausgesetzt, denn damit liefert mir Lemma \ref{Kruskalmaxrank} den entsprechenden Nachweis.
+  Union kommt in der Funktion nicht vor, wird also auch nicht aufgerufen.
 \end{proof}
 
-
-
-\begin{lemma}[\KruskalconnectedcomponentofunionFindofidprogtimelog]
-  
+\begin{lemma}[\KruskalconnectedcomponentofunionFindofidprogtimelog]\label{KruskalconnectedcomponentofunionFindofidprogtimelog}
+  Gilt für die Union-Find-Struktur die strikte Rang-Invariante,
+  dann \KruskalconnectedcomponentofunionFindofidprog ruft im Model \Kruskalfindmodel beim Ausführen Parent höchstens $\log_2|V|$ Mal und Union gar nicht auf.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis folgt direkt aus dem vorherigen Lemma und daraus, dass für jeden Rang r gilt, dass $\log_2|V| - r \le \log_2|V|$.
 \end{proof}
 
 
 
 \subsection{Reduktion}\todo{sub\-section Reduktion}
 
-
+Um den Beweis jetzt den Beweis, dass\todo{hier}
 
 \begin{definition}[\Kruskalreduction]
-  
+  Die Reduktion der grundlegenden Funktionen, der Query \Kruskalkruskalquerystrict auf Programme der Query \Kruskalfindquery.
+  Find wird dabei auf \KruskalconnectedcomponentofunionFindofidprog gemappt und 
+  Union wird auf die Union Funktion \Kruskalfindquery gemappt.
 \end{definition}
 \begin{lstlisting}
 def (.\Kruskalreduction.) {nodeList : List node} : Reduction (kruskal_query_strict nodeList) (find_query nodeList) where
   reduce
     | .find uF id h _ => connected_component_of_unionFind_of_id_prog uF id h
-    | .union uF x y h₁ h₂ h_rankInvariant => do find_query.union uF x y h₁ h₂ h_rankInvariant
+    | .union uF x y h₁ h₂ h_rankInvariant => find_query.union uF x y h₁ h₂ h_rankInvariant
 \end{lstlisting}
 
 
 
 \begin{lemma}[\KruskalmodelevalQueryeq]
-  
+  Für alle grundlegenden Funktionen q der Query \Kruskalkruskalquerystrict ist die Reduktion von q, ausgewertet im Modell \Kruskalfindmodel,
+  das Gleiche, wie q, ausgewertet im Modell \Kruskalkruskalmodelthree.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis für Find folgt direkt aus dem Lemma \ref{KruskalconnectedcomponentofunionFindofidprogeval}
+
+  Der Beweis für Union folgt direkt daraus, dass Union in beiden Modellen gleich definiert ist.
 \end{proof}
 
 
 
 \begin{lemma}[\Kruskalmodelcostle]
-  
+  Für alle grundlegenden Funktionen q der Query \Kruskalkruskalquerystrict ist die Laufzeit von der Reduktion von q im Modell \Kruskalfindmodel,
+  kleiner gleich der Laufzeit von q im Modell \Kruskalkruskalmodelthree.
 \end{lemma}
 \begin{proof}
-  
+  Der Beweis für Find folgt direkt aus dem Lemma \ref{KruskalconnectedcomponentofunionFindofidprogtimelog}
+
+  Der Beweis für Union folgt direkt daraus, dass Union in beiden Modellen gleich definiert ist.
 \end{proof}

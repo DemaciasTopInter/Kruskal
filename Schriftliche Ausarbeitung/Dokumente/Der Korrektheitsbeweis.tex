@@ -453,7 +453,7 @@ def (.\Kruskalparent.)
 
 
 
-\begin{lemma}[\Kruskalparentin]
+\begin{lemma}[\Kruskalparentin]\label{Kruskalparentin}
   Der Parent eines Zeigers ist ebenfalls in der Zeiger-Liste.
 \end{lemma}
 \begin{proof}
@@ -805,3 +805,49 @@ Sie wäre also schon in edgeList' enthalten.
 % Dann muss es, damit edgeList$^*$ besser ist, eine Kante geben, die günstiger ist als ihr Pendant.
 % Eine solche Kante kann es aber nicht geben, denn sonst käme sie im Algorithmus vor ihrem Pendant dran und würde übernommen werden, da ihre Knoten noch nicht in derselben Zusammenhangskomponente sind.
 % Sie wäre also ihr eigenes Pendant und daher nicht günstiger.
+
+\subsection{Die strikte Rang-Invariante}\todo{sub\-sec\-tion strikte Rang-In\-va\-ri\-an\-te}
+
+\begin{definition}[\KruskalunionFindrankInvariantstrict]
+  Die strikte Rang-Invariante lautet wie folgt.
+  Für jeden Zeiger uFL mit Rang r gibt es in der Zeiger-Liste mindestens $2^r$ Zeiger, in deren Parentpath uFL enthalten ist.
+\end{definition}
+\begin{lstlisting}
+def (.\KruskalunionFindrankInvariantstrict.) {nodeList : List node} (uF : unionFind nodeList) := ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path h_x_in else False)).length ≥ 2^(uFL.rank.val)
+\end{lstlisting}
+
+\begin{lemma}[\KruskalunionFindrankInvariantofrankInvariantstrict]
+  Aus der strikten Rang-Invariante folgt die bisherige Rang-Invariante.
+\end{lemma}
+\begin{proof}
+  Sei uFL ein Zeiger und r sein Rang.
+  Ich führe den Beweis per Induktion über r.
+  Im Basisfall ist r null.
+  Im Induktionsschritt \todo{hier}
+\end{proof}
+
+\begin{lemma}[\KruskalinitunionFindrankInvariantstrict]\label{KruskalinitunionFindrankInvariantstrict}
+  Für die initialisierte Union-Find-Struktur gilt die strikte Rang-Invariante.
+\end{lemma}
+\begin{proof}
+  In der initialisierten Union-Find-Struktur haben alle Zeiger den Rang null und zwei hoch null ist eins.
+  Da jeder Zeiger Teil seines eigenen Parentpaths ist, gibt es also einen Zeiger in dessen Parentpath er vorkommt.
+\end{proof}
+
+\begin{lemma}[\KruskalupdateunionFindrankInvariantstrict]\label{KruskalupdateunionFindrankInvariantstrict}
+  Die strikte Rang-Invariante ist in \KruskalupdateunionFind tatsächlich invariant.
+\end{lemma}
+Beweisidee\todo{hier}
+
+\begin{lemma}[\Kruskalmaxrank]\label{Kruskalmaxrank}
+  Wenn die strikte Rang-Invariante gilt, dann ist der echte maximale Rang höchstens $\log_2|V|$.
+  Dabei ist $|V|$ die Länge der Kanten-Liste.
+\end{lemma}
+\begin{proof}
+  Angenommen, es gäbe einen Zeiger uFL mit einem höheren Rang r, also $r > \log_2|V|$, dann ist $r \ge \log_2|V| + 1$ und $2^r \ge 2^(\log_2|V| + 1)$.
+  Außerdem gibt es nach der strikte Rang-Invariante mindestens $2^r$ Zeiger in der Zeiger-Liste.
+  Da diese gleichlang sind, ist dann auch die Länger der Knoten-Liste mindestens $2^r$.
+  Für jede Zahl $n$ gilt $n < 2^(\log_2(n) + 1)$, also auch für $|V|$.
+  Das bedeutet $|V| < 2^(\log_2|V| + 1)$.
+  Daraus lässt sich dann der Widerspruch $2^(\log_2|V| + 1) < 2^(\log_2|V| + 1)$ ableiten.
+\end{proof}
