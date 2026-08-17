@@ -17,7 +17,7 @@ Ich habe dabei vorerst für die Union und die Find Funktion, also \Kruskalupdate
 \begin{lstlisting}
 inductive (.\Kruskalkruskalquery.) (nodeList : List node) : Type → Type _ where
   | find (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) : kruskal_query nodeList (found nodeList uF)
-  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : kruskal_query nodeList (unionFind nodeList)
+  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a) : kruskal_query nodeList (unionFind nodeList)
 \end{lstlisting}
 
 Da diese Funktionen nur deklariert aber nicht definiert sind, konnte ich als Rückgabetyp für Find nicht Nat benutzen, da ich in \Kruskalkruskal verwende,
@@ -25,13 +25,13 @@ dass es für das Ergebnis einen Zeiger gibt, der zum entsprechenden Knoten gehö
 Deshalb brauchte ich einen Typ, der diese Bedingung beinhaltet.
 
 \begin{definition}[\Kruskalfound]
-  Ein Typ, bestehend aus einer ID und dem Nachweis, dass es einen Zeiger gibt, der diese als nodeId und als ccId hat.
+  Ein Typ, bestehend aus einer ID und dem Nachweis, dass es einen Zeiger gibt, der diese als nodeId und als parentId hat.
 \end{definition}
 \begin{lstlisting}
 structure (.\Kruskalfound.) (nodeList : List node) (uF : unionFind nodeList) : Type where
   mk ::
   id : Nat
-  ex : ∃ (uFL : unionFindLink nodeList), uFL ∈ uF.linkList ∧ uFL.nodeId = id ∧ uFL.ccId = id
+  ex : ∃ (uFL : unionFindLink nodeList), uFL ∈ uF.linkList ∧ uFL.nodeId = id ∧ uFL.parentId = id
 \end{lstlisting}
 
 Da die Query nun definiert ist, kann ich nun den Kruskal Algorithmus als Programm dieser Query definierten.
@@ -289,7 +289,7 @@ structure (.\KruskalunionFindstrict.) (nodeList : List node) : Type where
 \begin{lstlisting}
 inductive (.\Kruskalkruskalquerystrict.) (nodeList : List node) : Type → Type _ where
   | find (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) (h_rankInvariant : uF.rankInvariant_strict) : kruskal_query_strict nodeList (found nodeList uF)
-  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : kruskal_query_strict nodeList (unionFind_strict nodeList)
+  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : kruskal_query_strict nodeList (unionFind_strict nodeList)
 \end{lstlisting}
 
 Für diese Query kann ich dann mein Modell und eine angepasste Form von \Kruskalkruskalprog definieren.
@@ -423,8 +423,8 @@ structure (.\Kruskalfoundparent.) {nodeList : List node} (uF : unionFind nodeLis
 \end{definition}
 \begin{lstlisting}
 inductive (.\Kruskalfindquery.) (nodeList : List node) : Type → Type _ where
-  | parent {uF : unionFind nodeList} (uFL : unionFindLink nodeList) (h_in : uFL ∈ uF.linkList) (h_not_self_con : uFL.nodeId ≠ uFL.ccId) : find_query nodeList (found_parent uF uFL)
-  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : find_query nodeList (unionFind_strict nodeList)
+  | parent {uF : unionFind nodeList} (uFL : unionFindLink nodeList) (h_in : uFL ∈ uF.linkList) (h_not_self_con : uFL.nodeId ≠ uFL.parentId) : find_query nodeList (found_parent uF uFL)
+  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : find_query nodeList (unionFind_strict nodeList)
 \end{lstlisting}
 
 Als Nächstes habe ich \KruskalconnectedcomponentofunionFindofid als Programm dieser Query definiert.
@@ -435,9 +435,9 @@ Auch hier bin ich so nah es geht an der bereits existierenden Definition geblieb
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalconnectedcomponentofunionFindofunionFindLinkprog.) {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) : Prog (find_query nodeList) (found nodeList uF) := do
-  if h_self_connected : uFL.ccId = uFL.nodeId
+  if h_self_connected : uFL.parentId = uFL.nodeId
     then
-      return ⟨uFL.ccId, by refine ⟨uFL, h_uFL_in, h_self_connected.symm, rfl⟩⟩
+      return ⟨uFL.parentId, by refine ⟨uFL, h_uFL_in, h_self_connected.symm, rfl⟩⟩
     else
       let f : (found_parent uF uFL) ← find_query.parent uFL h_uFL_in (ne_comm.mp h_self_connected)
       let p : unionFindLink nodeList := f.p

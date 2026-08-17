@@ -86,13 +86,13 @@ und somit der höchste Rang um eins kleiner ist als die Länge der Knoten-Liste.
 Dass dieser Fall tatsächlich nicht eintreten kann und die echte Schranke beim Logarithmus der Knoten-Liste liegt, zeige ich in Kapitel \ref{strikteRangInvariante}.
 
 \begin{definition}[\KruskalunionFindLink]
-  Ein Zeiger besteht aus der ID seines Knotens, der ID des Knotens, auf den er zeigt (ccId) und seinem Rang.
+  Ein Zeiger besteht aus der ID seines Knotens, der ID des Knotens, auf den er zeigt (parentId) und seinem Rang.
 \end{definition}
 \begin{lstlisting}
 structure (.\KruskalunionFindLink.) (nodeList : List node) : Type where
   mk ::
   nodeId : Nat
-  ccId : Nat
+  parentId : Nat
   rank : Fin nodeList.length
 \end{lstlisting}
 
@@ -119,11 +119,11 @@ structure (.\KruskalunionFind.) (nodeList : List node) : Type where
   mk ::
   linkList : List (unionFindLink nodeList)
   matching_nodeId : ∀ x ∈ nodeList, ∃! uFL ∈ linkList, x.id = uFL.nodeId
-  matching_ccId : ∀ uFL ∈ linkList, ∃! x ∈ nodeList, x.id = uFL.ccId
+  matching_parentId : ∀ uFL ∈ linkList, ∃! x ∈ nodeList, x.id = uFL.parentId
   matching_length : nodeList.length = linkList.length
-  matching_rank (uFLx : unionFindLink nodeList) (h : uFLx ∈ linkList) : uFLx.nodeId = uFLx.ccId ∨ uFLx.rank < (List.choose (fun uFLy => uFLy.nodeId = uFLx.ccId) linkList (exists_parent_link linkList matching_nodeId matching_ccId uFLx h)).rank
+  matching_rank (uFLx : unionFindLink nodeList) (h : uFLx ∈ linkList) : uFLx.nodeId = uFLx.parentId ∨ uFLx.rank < (List.choose (fun uFLy => uFLy.nodeId = uFLx.parentId) linkList (exists_parent_link linkList matching_nodeId matching_parentId uFLx h)).rank
   nodup : linkList.Nodup
-  rankInvariant (uFLx : unionFindLink nodeList) : uFLx ∈ linkList → (linkList.filter (fun uFLy => uFLy.rank < uFLx.rank ∧ ¬uFLy.nodeId = uFLy.ccId)).length ≥ uFLx.rank
+  rankInvariant (uFLx : unionFindLink nodeList) : uFLx ∈ linkList → (linkList.filter (fun uFLy => uFLy.rank < uFLx.rank ∧ ¬uFLy.nodeId = uFLy.parentId)).length ≥ uFLx.rank
 \end{lstlisting}
 
 Um in matching\_rank über den Zeiger des Knotens, auf den der ursprüngliche Zeiger zeigt, Aussagen treffen zu können,
@@ -131,17 +131,17 @@ braucht es den Beweis, dass ein solcher auch existiert.
 Der ist zwar nicht groß, aber zur besseren Übersicht habe ich ihn trotzdem in ein eigenes Lemma ausgelagert.
 
 \begin{lemma}[\Kruskalexistsparentlink]
-  Sei linkList eine Zeiger-Liste und gelte für linkList matching\_nodeId und matching\_ccId.
+  Sei linkList eine Zeiger-Liste und gelte für linkList matching\_nodeId und matching\_parentId.
   Dann gibt es für jeden Zeiger uFLx der Liste einen nachfolgenden Zeiger uFLy in der Liste, sodass uFLx auf den Knoten von uFLy zeigt.
 \end{lemma}
 \begin{proof}
-  Das folgt direkt aus matching\_nodeId und matching\_ccId.
+  Das folgt direkt aus matching\_nodeId und matching\_parentId.
   Nach match\-ing\_nodeId gibt es für uFLx einen eindeutigen Knoten y, auf den er zeigt
-  und nach matching\_ccId gibt es für y auch einen eindeutigen Zeiger uFLy.
+  und nach matching\_parentId gibt es für y auch einen eindeutigen Zeiger uFLy.
 \end{proof}
 \begin{lstlisting}
-theorem (.\Kruskalexistsparentlink.) {nodeList : List node} (linkList : List (unionFindLink nodeList)) (matching_nodeId : ∀ x ∈ nodeList, ∃! uFL ∈ linkList, x.id = uFL.nodeId) (matching_ccId : ∀ uFL ∈ linkList, ∃! x ∈ nodeList, x.id = uFL.ccId)
-    : ∀ uFLx ∈ linkList, ∃ uFLy ∈ linkList, uFLy.nodeId = uFLx.ccId
+theorem (.\Kruskalexistsparentlink.) {nodeList : List node} (linkList : List (unionFindLink nodeList)) (matching_nodeId : ∀ x ∈ nodeList, ∃! uFL ∈ linkList, x.id = uFL.nodeId) (matching_parentId : ∀ uFL ∈ linkList, ∃! x ∈ nodeList, x.id = uFL.parentId)
+    : ∀ uFLx ∈ linkList, ∃ uFLy ∈ linkList, uFLy.nodeId = uFLx.parentId
 \end{lstlisting}
 
 
@@ -165,7 +165,7 @@ def (.\KruskalinitunionFindlinkList.) (nodeList : List node) (h_nonempty : nodeL
   helper nodeList where
     helper : List node → List (unionFindLink (nodeList : List node))
       | [] => []
-      | x::xs => { nodeId := x.id, ccId := x.id, rank := ⟨0, zero_lt_iff.mpr h_nonempty⟩ } :: (helper xs)
+      | x::xs => { nodeId := x.id, parentId := x.id, rank := ⟨0, zero_lt_iff.mpr h_nonempty⟩ } :: (helper xs)
 \end{lstlisting}
 
 \begin{theorem}
@@ -209,13 +209,13 @@ theorem (.\KruskalinitunionFindlinkListmatchingnodeId.) {nodeList : List node} (
     rcases h_uFLy with ⟨h_uFLy_in, h_uFLy_eq_id⟩
     simp [init_unionFind.linkList] at h_uFLy_in
     have h_uFLy_eq_self := init_unionFind.linkList.helper_all_self_connected nodeList nodeList h_nonempty uFLy h_uFLy_in
-    have h_uFLy_eq_cc : x.id = uFLy.ccId := by
+    have h_uFLy_eq_parentId : x.id = uFLy.parentId := by
       rw [← h_uFLy_eq_self]
       exact h_uFLy_eq_id
     have h_uFLy_rank_zero := init_unionFind.linkList.helper_all_rank_zero nodeList nodeList h_nonempty uFLy h_uFLy_in
     simp [uFLx]
     nth_rewrite 1 [h_uFLy_eq_id]
-    rw [h_uFLy_eq_cc, ← h_uFLy_rank_zero]
+    rw [h_uFLy_eq_parentId, ← h_uFLy_rank_zero]
   \end{lstlisting}
 
 Um diesen Beweis so führen zu können, musste ich zuerst jedoch noch die folgenden drei Hilfslemmata aufstellen, die sich alle je durch eine einfache Listen-Induktion zeigen lassen,
@@ -240,7 +240,7 @@ Hier hängt der Typ zwar immer noch von der Knoten-Liste nodeList ab, aber eben 
   Alle Zeiger der Liste zeigen auf ihren eigenen Knoten.
 \end{lemma}
 % \begin{lstlisting}
-% theorem (.\KruskalinitunionFindlinkListhelperallselfconnected.) (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.nodeId = x.ccId
+% theorem (.\KruskalinitunionFindlinkListhelperallselfconnected.) (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.nodeId = x.parentId
 % \end{lstlisting}
 
 \begin{lemma}[\KruskalinitunionFindlinkListhelperallrankzero]
@@ -250,7 +250,7 @@ Hier hängt der Typ zwar immer noch von der Knoten-Liste nodeList ab, aber eben 
 % theorem (.\KruskalinitunionFindlinkListhelperallrankzero.) (nodeList l : List node) (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ (init_unionFind.linkList.helper nodeList h_nonempty l), x.rank = ⟨0, zero_lt_iff.mpr h_nonempty⟩
 % \end{lstlisting}
 
-Der Beweis für matching\_ccId wird größtenteils analog zum Beweis für mat\-ching\_nodeId geführt.
+Der Beweis für matching\_parentId wird größtenteils analog zum Beweis für mat\-ching\_nodeId geführt.
 Der Unterschied besteht im Wesentlichen in der Richtung, da ich jetzt für einen Zeiger den entsprechenden Knoten baue.
 Dementsprechend brauchte ich auch das Teilungs-Lemma in die andere Richtung.
 Das war jedoch komplexer als die Hinrichtung, da ich zuerst definieren musste, wie ich aus einer Zeiger-Liste auf eine Knoten-Liste schließe
@@ -308,8 +308,8 @@ Außerdem musste ich für das Teilungs-Lemma noch zeigen, dass die Funktion inje
 %   refine ⟨h_eq₁, h_eq₂, h_eq₃⟩
 % \end{lstlisting}
 
-\begin{lemma}[\KruskalinitunionFindlinkListmatchingccId]
-  Die Liste erfüllt mat\-ching\_ccId, also gibt es für jeden Zeiger aus \KruskalinitunionFindlinkList genau einen Knoten aus der Knoten-Liste, auf den er zeigt.
+\begin{lemma}[\KruskalinitunionFindlinkListmatchingparentId]
+  Die Liste erfüllt mat\-ching\_parentId, also gibt es für jeden Zeiger aus \KruskalinitunionFindlinkList genau einen Knoten aus der Knoten-Liste, auf den er zeigt.
 \end{lemma}
 \begin{proof}
   Sei nodeList eine Knoten-Liste, uFL ein Zeiger in init\_unionFind.linkList.\-helper nodeList und sei x sein Knoten, dann ist x der gesuchte Knoten.
@@ -323,7 +323,7 @@ Außerdem musste ich für das Teilungs-Lemma noch zeigen, dass die Funktion inje
   Also ist x in nodeList.
 \end{proof}
 % \begin{lstlisting}
-% theorem (.\KruskalinitunionFindlinkListmatchingccId.) {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ uFL ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = uFL.ccId
+% theorem (.\KruskalinitunionFindlinkListmatchingparentId.) {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ uFL ∈ (init_unionFind.linkList nodeList h_nonempty), ∃! x, x ∈ nodeList ∧ x.id = uFL.parentId
 % \end{lstlisting}
 
 Der Beweis für matching\_length lässt sich durch eine einfache Listen-Induktion zeigen, diese hat aber einen Haken.
@@ -363,17 +363,17 @@ def (.\KruskalinitunionFind.) (nodeList : List node) (h_nodup : nodeList.Nodup) 
       let linkList : List (unionFindLink nodeList) := (init_unionFind.linkList nodeList h)
       have h_matching_nodeId : ∀ x ∈ nodeList, ∃! y, y ∈ linkList ∧ x.id = y.nodeId := …
 
-      have h_matching_ccId : ∀ y ∈ linkList, ∃! x, x ∈ nodeList ∧ x.id = y.ccId := …
+      have h_matching_parentId : ∀ y ∈ linkList, ∃! x, x ∈ nodeList ∧ x.id = y.parentId := …
 
       have h_matching_length : nodeList.length = linkList.length := …
 
-      have h_matching_rank : ∀ (y : unionFindLink nodeList) (h : y ∈ linkList), y.nodeId = y.ccId ∨ y.rank < (List.choose (fun x => x.nodeId = y.ccId) linkList (exists_parent_link linkList h_matching_nodeId h_matching_ccId y h)).rank := …
+      have h_matching_rank : ∀ (y : unionFindLink nodeList) (h : y ∈ linkList), y.nodeId = y.parentId ∨ y.rank < (List.choose (fun x => x.nodeId = y.parentId) linkList (exists_parent_link linkList h_matching_nodeId h_matching_parentId y h)).rank := …
 
       have h_nodup : linkList.Nodup := …
 
-      have h_rankInvariant : (z : unionFindLink nodeList) → z ∈ linkList → (linkList.filter (fun y => y.rank < z.rank ∧ ¬y.nodeId = y.ccId)).length ≥ z.rank := …
+      have h_rankInvariant : (z : unionFindLink nodeList) → z ∈ linkList → (linkList.filter (fun y => y.rank < z.rank ∧ ¬y.nodeId = y.parentId)).length ≥ z.rank := …
 
-      ⟨linkList, h_matching_nodeId, h_matching_ccId, h_matching_length, h_matching_rank, h_nodup, h_rankInvariant⟩
+      ⟨linkList, h_matching_nodeId, h_matching_parentId, h_matching_length, h_matching_rank, h_nodup, h_rankInvariant⟩
 
     else
       let linkList : List (unionFindLink nodeList) := []
@@ -397,22 +397,22 @@ Das ist auch der Grund, warum ich den Rang überhaupt beschränke.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalconnectedcomponentofunionFindofunionFindLink.) {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList): Nat :=
-  if h_self_connected : uFL.ccId = uFL.nodeId
+  if h_self_connected : uFL.parentId = uFL.nodeId
     then
-      uFL.ccId
+      uFL.parentId
     else
-      let parent : unionFindLink nodeList := List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)
-      have h_parent_in : parent ∈ uF.linkList := List.choose_mem (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)
+      let parent : unionFindLink nodeList := List.choose (fun y => y.nodeId = uFL.parentId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_parentId uFL h_uFL_in)
+      have h_parent_in : parent ∈ uF.linkList := List.choose_mem (fun y => y.nodeId = uFL.parentId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_parentId uFL h_uFL_in)
       have h_r : parent.rank > uFL.rank := by
         rcases uF.matching_rank uFL h_uFL_in with h | h
         · simp [h] at h_self_connected
-        · have h_parent_eq : parent = List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in) := by rfl
+        · have h_parent_eq : parent = List.choose (fun y => y.nodeId = uFL.parentId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_parentId uFL h_uFL_in) := by rfl
           rw [← h_parent_eq] at h
           exact h
       connected_component_of_unionFind_of_unionFindLink uF parent h_parent_in
 termination_by nodeList.length - uFL.rank
   decreasing_by
-  have h : ↑(List.choose (fun y => y.nodeId = uFL.ccId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_ccId uFL h_uFL_in)).rank = parent.rank := by
+  have h : ↑(List.choose (fun y => y.nodeId = uFL.parentId) uF.linkList (exists_parent_link uF.linkList uF.matching_nodeId uF.matching_parentId uFL h_uFL_in)).rank = parent.rank := by
     simp [parent]
   simp [h]
   apply Nat.sub_lt_sub_left
@@ -477,7 +477,7 @@ brauchte ich zuerst den Nachweis, dass dadurch nicht die Rang-Obergrenze übersc
   Also ist der Rang von uFLx $+ 1 \le$ |M| + 1 < |M| + 2 $\le$ |N|.
 \end{proof}
 % \begin{lstlisting}
-% theorem unionFind.rank_succ_isLt  {nodeList : List node} (uF : unionFind nodeList) (uFLx uFLy : unionFindLink nodeList) : uFLx ≠ uFLy → uFLx ∈ uF.linkList → uFLy ∈ uF.linkList → uFLx.nodeId = uFLx.ccId → uFLy.nodeId = uFLy.ccId → uFLx.rank = uFLy.rank → uFLx.rank.val.succ < nodeList.length
+% theorem unionFind.rank_succ_isLt  {nodeList : List node} (uF : unionFind nodeList) (uFLx uFLy : unionFindLink nodeList) : uFLx ≠ uFLy → uFLx ∈ uF.linkList → uFLy ∈ uF.linkList → uFLx.nodeId = uFLx.parentId → uFLy.nodeId = uFLy.parentId → uFLx.rank = uFLy.rank → uFLx.rank.val.succ < nodeList.length
 % \end{lstlisting}
 
 Bei der union-Funktion, oder wie ich sie genannt habe \KruskalupdateunionFind, die zwei Zusammenhangskomponenten mit Repräsentanten x und y verbindet,
@@ -495,29 +495,29 @@ Danach muss ich noch zeigen, dass die Bedingungen aus \KruskalunionFind für die
   in der die beiden Zusammenhangskomponenten zu einer vereinigt sind.
 \end{definition}
 \begin{lstlisting}
-def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : unionFind nodeList :=
+def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a) : unionFind nodeList :=
   if h_eq : x = y
   then
     uF
   else
-    let uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₁
-    let uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h₂
+    let uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = x ∧ a.parentId = x) uF.linkList h₁
+    let uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = y ∧ a.parentId = y) uF.linkList h₂
     if h_rank_lt' : uFLy.rank < uFLx.rank
       then
         have h_rank_succ_le : uFLy.rank.val.succ ≤ uFLx.rank.val := …
         have h_rank_succ_isLt : uFLy.rank.val.succ < nodeList.length := …
-        let uFLy' : unionFindLink nodeList := ⟨uFLy.nodeId, uFLx.ccId, uFLy.rank⟩
-        let uFLx' : unionFindLink nodeList := ⟨uFLx.nodeId, uFLx.ccId, ⟨max uFLx.rank.val uFLy.rank.val.succ, by simp [h_rank_succ_isLt]⟩⟩
+        let uFLy' : unionFindLink nodeList := ⟨uFLy.nodeId, uFLx.parentId, uFLy.rank⟩
+        let uFLx' : unionFindLink nodeList := ⟨uFLx.nodeId, uFLx.parentId, ⟨max uFLx.rank.val uFLy.rank.val.succ, by simp [h_rank_succ_isLt]⟩⟩
         let linkList' : List (unionFindLink nodeList) := (uF.linkList.set (uF.linkList.idxOf uFLy) uFLy').set (uF.linkList.idxOf uFLx) uFLx'
         have h_uFLy'_in : uFLy' ∈ linkList' := …
         have h_uFLx'_in : uFLx' ∈ linkList' := …
         have matching_nodeId' : ∀ x ∈ nodeList, ∃! y ∈ linkList', x.id = y.nodeId := …
-        have matching_ccId' : ∀ y ∈ linkList', ∃! x ∈ nodeList, x.id = y.ccId := …
+        have matching_parentId' : ∀ y ∈ linkList', ∃! x ∈ nodeList, x.id = y.parentId := …
         have matching_length' : nodeList.length = linkList'.length := …
         have nodup' : linkList'.Nodup := …
-        have matching_rank' : (z : unionFindLink nodeList) → (h_z_in : z ∈ linkList') → z.nodeId = z.ccId ∨ z.rank < (List.choose (fun x => x.nodeId = z.ccId) linkList' (exists_parent_link linkList' matching_nodeId' matching_ccId' z h_z_in)).rank := …
-        have rankInvariant' : (z : unionFindLink nodeList) → z ∈ linkList' → (linkList'.filter (fun y => y.rank < z.rank ∧ ¬y.nodeId = y.ccId)).length ≥ z.rank := …
-        ⟨linkList', matching_nodeId', matching_ccId', matching_length', matching_rank', nodup', rankInvariant'⟩
+        have matching_rank' : (z : unionFindLink nodeList) → (h_z_in : z ∈ linkList') → z.nodeId = z.parentId ∨ z.rank < (List.choose (fun x => x.nodeId = z.parentId) linkList' (exists_parent_link linkList' matching_nodeId' matching_parentId' z h_z_in)).rank := …
+        have rankInvariant' : (z : unionFindLink nodeList) → z ∈ linkList' → (linkList'.filter (fun y => y.rank < z.rank ∧ ¬y.nodeId = y.parentId)).length ≥ z.rank := …
+        ⟨linkList', matching_nodeId', matching_parentId', matching_length', matching_rank', nodup', rankInvariant'⟩
       else
         -- Der Teil ist fast gleich aber mit x und y und uFLx und uFLy jeweils vertauscht
 \end{lstlisting}
@@ -574,8 +574,8 @@ Jetzt zu den eigentlichen Lemmata des Theorems:
   und y nicht zu z passen und dementsprechend der ursprüngliche Zeiger von z noch immer in der Liste sein muss, da er nicht ersetzt wurde.
 \end{proof}
 
-% update_unionFind_matching_ccId
-\begin{lemma}[\KruskalupdateunionFindmatchingccId]
+% update_unionFind_matching_parentId
+\begin{lemma}[\KruskalupdateunionFindmatchingparentId]
   Auch die Zeiger der neuen Liste zeigen noch immer auf genau einen Knoten.
 \end{lemma}
 \begin{proof}

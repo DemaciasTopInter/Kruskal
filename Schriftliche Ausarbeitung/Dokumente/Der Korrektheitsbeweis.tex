@@ -303,8 +303,8 @@ theorem (.\Kruskalkruskalhelpernotconinvariantappend.)
   {z : node}
   (h_z_in : z ∈ nodeList)
   (h_edgeList_not_con : ∀ e ∈ edgeList₁, ¬(e.node1 = z.id ∨ e.node2 = z.id))
-  (h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.ccId = z.id ↔ uFL.nodeId = z.id)
-  : ∃ uF', kruskal_helper (edgeList₁ ++ edgeList₂) nodeList uF edgesSoFar h_matching_edge h_nodup = kruskal_helper edgeList₂ nodeList uF' (kruskal_helper edgeList₁ nodeList uF [] … h_nodup ++ edgesSoFar) … h_nodup ∧ ∀ uFL ∈ uF'.linkList, uFL.ccId = z.id ↔ uFL.nodeId = z.id
+  (h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.parentId = z.id ↔ uFL.nodeId = z.id)
+  : ∃ uF', kruskal_helper (edgeList₁ ++ edgeList₂) nodeList uF edgesSoFar h_matching_edge h_nodup = kruskal_helper edgeList₂ nodeList uF' (kruskal_helper edgeList₁ nodeList uF [] … h_nodup ++ edgesSoFar) … h_nodup ∧ ∀ uFL ∈ uF'.linkList, uFL.parentId = z.id ↔ uFL.nodeId = z.id
 \end{lstlisting}
 \begin{proof}
   Für den Beweis führe ich eine Induktion über den ersten Teil der Liste, bei der ich uF und die ErgebnisKantenListe generalisiere.
@@ -448,7 +448,7 @@ def (.\Kruskalparent.)
   (uFL : unionFindLink nodeList)
   (h_in : uFL ∈ uF.linkList)
   : unionFindLink nodeList
-  := List.choose (fun a => a.nodeId = uFL.ccId) uF.linkList _
+  := List.choose (fun a => a.nodeId = uFL.parentId) uF.linkList _
 \end{lstlisting}
 
 
@@ -493,7 +493,7 @@ def (.\Kruskalgetparentpath.)
   {uFL : unionFindLink nodeList}
   (h_in : uFL ∈ uF.linkList)
   : List (unionFindLink nodeList) :=
-  if h_self_con : uFL.nodeId = uFL.ccId
+  if h_self_con : uFL.nodeId = uFL.parentId
     then
       (uFL :: [])
     else

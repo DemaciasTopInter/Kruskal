@@ -17,7 +17,7 @@ Dann hätte ich einmal gezeigt, dass für jeden Index i gilt, dass nodeArray[i] 
 Dadurch hätte das Herraussuchen von Elementen tatsächlich eine Laufzeit O(1), was bei Listen nicht der Fall ist.
 Diesen Teilaspekt habe ich allerdings bei der Laufzeitberechnung in dieser Arbeit unter den Tisch fallen lassen.
 Die Verwendung von Arrays würde natürlich auch weitere Folgen nach sich ziehen.
-Zum Beispiel müsste dann bei unionFindLink anstelle der ccId auch der ccIndex gespeichert werden,
+Zum Beispiel müsste dann bei unionFindLink anstelle der parentId auch der parentIndex gespeichert werden,
 während bei edge immer noch IDs gespeichert sind.
 Das bedeutet, dass man zweimal pro edge den richtigen Index finden muss,
 aber wenn man das nodeArray im Vorfeld einmal sortiert, lässt sich das zumindest mit binärer Suche in logarithmischer Zeit schaffen.

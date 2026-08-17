@@ -14,11 +14,11 @@ open Algolean Algorithms
 structure found (nodeList : List node) (uF : unionFind nodeList) : Type where
   mk ::
   id : Nat
-  ex : ∃ (uFL : unionFindLink nodeList), uFL ∈ uF.linkList ∧ uFL.nodeId = id ∧ uFL.ccId = id
+  ex : ∃ (uFL : unionFindLink nodeList), uFL ∈ uF.linkList ∧ uFL.nodeId = id ∧ uFL.parentId = id
 
 inductive kruskal_query (nodeList : List node) : Type → Type _ where
   | find (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) : kruskal_query nodeList (found nodeList uF)
-  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) : kruskal_query nodeList (unionFind nodeList)
+  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a) : kruskal_query nodeList (unionFind nodeList)
 
 def kruskal_helper_prog (edgeList : List edge) (nodeList : List node) (uF : unionFind nodeList) (edgesSoFar : List edge) (h_matching_edge : matching_edge edgeList nodeList) (h_nodup : nodeList.Nodup) : Prog (kruskal_query nodeList) (List edge) := do
   match edgeList with
@@ -248,7 +248,7 @@ structure unionFind_strict (nodeList : List node) : Type where
 
 inductive kruskal_query_strict (nodeList : List node) : Type → Type _ where
   | find (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) (h_rankInvariant : uF.rankInvariant_strict) : kruskal_query_strict nodeList (found nodeList uF)
-  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : kruskal_query_strict nodeList (unionFind_strict nodeList)
+  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : kruskal_query_strict nodeList (unionFind_strict nodeList)
 
 def kruskal_model3 (nodeList : List node) : Model (kruskal_query_strict nodeList) (Nat × Nat) where
   evalQuery
@@ -431,13 +431,13 @@ structure found_parent {nodeList : List node} (uF : unionFind nodeList) (uFL : u
   rank_gt : p.rank > uFL.rank
 
 inductive find_query (nodeList : List node) : Type → Type _ where
-  | parent {uF : unionFind nodeList} (uFL : unionFindLink nodeList) (h_in : uFL ∈ uF.linkList) (h_not_self_con : uFL.nodeId ≠ uFL.ccId) : find_query nodeList (found_parent uF uFL)
-  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : find_query nodeList (unionFind_strict nodeList)
+  | parent {uF : unionFind nodeList} (uFL : unionFindLink nodeList) (h_in : uFL ∈ uF.linkList) (h_not_self_con : uFL.nodeId ≠ uFL.parentId) : find_query nodeList (found_parent uF uFL)
+  | union (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : find_query nodeList (unionFind_strict nodeList)
 
 def connected_component_of_unionFind_of_unionFindLink_prog {nodeList : List node} (uF : unionFind nodeList) (uFL : unionFindLink nodeList) (h_uFL_in : uFL ∈ uF.linkList) : Prog (find_query nodeList) (found nodeList uF) := do
-  if h_self_connected : uFL.ccId = uFL.nodeId
+  if h_self_connected : uFL.parentId = uFL.nodeId
     then
-      return ⟨uFL.ccId, by refine ⟨uFL, h_uFL_in, h_self_connected.symm, rfl⟩⟩
+      return ⟨uFL.parentId, by refine ⟨uFL, h_uFL_in, h_self_connected.symm, rfl⟩⟩
     else
       let f : (found_parent uF uFL) ← find_query.parent uFL h_uFL_in (ne_comm.mp h_self_connected)
       let p : unionFindLink nodeList := f.p

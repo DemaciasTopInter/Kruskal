@@ -264,8 +264,8 @@ theorem kruskal_helper_not_con_invariant
   {h_nodup : nodeList.Nodup}
   {z : node}
   (h_edgeList_not_con : ∀ e ∈ edgeList, ¬(e.node1 = z.id ∨ e.node2 = z.id))
-  (h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.ccId = z.id ↔ uFL.nodeId = z.id)
-  : ∃ (uF' : unionFind nodeList), kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup = kruskal_helper [] nodeList uF' ((kruskal_helper edgeList nodeList uF [] h_matching_edge h_nodup) ++ edgesSoFar) (by simp [matching_edge]) h_nodup ∧ ∀ uFL ∈ uF'.linkList, uFL.ccId = z.id ↔ uFL.nodeId = z.id := by
+  (h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.parentId = z.id ↔ uFL.nodeId = z.id)
+  : ∃ (uF' : unionFind nodeList), kruskal_helper edgeList nodeList uF edgesSoFar h_matching_edge h_nodup = kruskal_helper [] nodeList uF' ((kruskal_helper edgeList nodeList uF [] h_matching_edge h_nodup) ++ edgesSoFar) (by simp [matching_edge]) h_nodup ∧ ∀ uFL ∈ uF'.linkList, uFL.parentId = z.id ↔ uFL.nodeId = z.id := by
   induction edgeList with
   | nil =>
     simp [kruskal_helper]
@@ -288,7 +288,7 @@ theorem connected_component_of_unionFind_of_id_not_con
   {uF : unionFind nodeList}
   {z : node}
   (h_z_in : z ∈ nodeList)
-  (h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.ccId = z.id ↔ uFL.nodeId = z.id)
+  (h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.parentId = z.id ↔ uFL.nodeId = z.id)
   : ∀ (x : node), (h_x_in : x ∈ nodeList) → connected_component_of_unionFind_of_id uF x.id ⟨x, h_x_in, rfl⟩ = z.id ↔ x = z := by
   intro x h_x_in
   constructor
@@ -312,7 +312,7 @@ theorem connected_component_of_unionFind_of_id_not_con
         rw [connected_component_of_unionFind_of_unionFindLink]
         simp [h_uFL_not_self_con]
         intro h_id
-        have h_uFLx_prop := List.choose_property (fun y => y.nodeId = uFL.ccId) uF.linkList (by grind)
+        have h_uFLx_prop := List.choose_property (fun y => y.nodeId = uFL.parentId) uF.linkList (by grind)
         simp [h_id, uFLy, h_uFLx_prop] at ih
         exact (h_uF_not_con uFL h_uFL_in).mp ih
     intro h_eq
@@ -346,8 +346,8 @@ theorem kruskal_helper_not_con_invariant_append
   {z : node}
   (h_z_in : z ∈ nodeList)
   (h_edgeList_not_con : ∀ e ∈ edgeList₁, ¬(e.node1 = z.id ∨ e.node2 = z.id))
-  (h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.ccId = z.id ↔ uFL.nodeId = z.id)
-  : ∃ (uF' : unionFind nodeList), kruskal_helper (edgeList₁ ++ edgeList₂) nodeList uF edgesSoFar h_matching_edge h_nodup = kruskal_helper edgeList₂ nodeList uF' ((kruskal_helper edgeList₁ nodeList uF [] (by simp [matching_edge] at h_matching_edge; simp [matching_edge]; grind) h_nodup) ++ edgesSoFar) (by simp [matching_edge] at h_matching_edge; simp [matching_edge]; grind) h_nodup ∧ ∀ uFL ∈ uF'.linkList, uFL.ccId = z.id ↔ uFL.nodeId = z.id := by
+  (h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.parentId = z.id ↔ uFL.nodeId = z.id)
+  : ∃ (uF' : unionFind nodeList), kruskal_helper (edgeList₁ ++ edgeList₂) nodeList uF edgesSoFar h_matching_edge h_nodup = kruskal_helper edgeList₂ nodeList uF' ((kruskal_helper edgeList₁ nodeList uF [] (by simp [matching_edge] at h_matching_edge; simp [matching_edge]; grind) h_nodup) ++ edgesSoFar) (by simp [matching_edge] at h_matching_edge; simp [matching_edge]; grind) h_nodup ∧ ∀ uFL ∈ uF'.linkList, uFL.parentId = z.id ↔ uFL.nodeId = z.id := by
   induction edgeList₁ generalizing uF edgesSoFar with
   | nil =>
     simp [kruskal_helper]
@@ -398,10 +398,10 @@ theorem kruskal_helper_not_con_invariant_append
           simp at h
           simp [h] at h_ny
           simp [h_ny] at h_edgeList_not_con
-        set uFLx := List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList _ with h_uFLx
-        set uFLy := List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList _ with h_uFLy
-        have h_uFLx_prop : uFLx.nodeId = x ∧ uFLx.ccId = x := List.choose_property (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList _
-        have h_uFLy_prop : uFLy.nodeId = y ∧ uFLy.ccId = y := List.choose_property (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList _
+        set uFLx := List.choose (fun a => a.nodeId = x ∧ a.parentId = x) uF.linkList _ with h_uFLx
+        set uFLy := List.choose (fun a => a.nodeId = y ∧ a.parentId = y) uF.linkList _ with h_uFLy
+        have h_uFLx_prop : uFLx.nodeId = x ∧ uFLx.parentId = x := List.choose_property (fun a => a.nodeId = x ∧ a.parentId = x) uF.linkList _
+        have h_uFLy_prop : uFLy.nodeId = y ∧ uFLy.parentId = y := List.choose_property (fun a => a.nodeId = y ∧ a.parentId = y) uF.linkList _
         simp [← h_uFLx, ← h_uFLy]
         by_cases h_rank_lt' : uFLy.rank < uFLx.rank
         · simp [h_rank_lt']
@@ -452,7 +452,7 @@ theorem nodeList_of_kruskal_perm (edgeList : List edge) : List.Perm (nodeList_of
     set uF := init_unionFind (nodeList_of_edgeList_helper edgeList []) h_nodup2
     have h_edgeList_not_con : ∀ e ∈ l₁, ¬(e.node1 = x.id ∨ e.node2 = x.id) := by
       exact h_l₁_not_con_x
-    have h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.ccId = x.id ↔ uFL.nodeId = x.id := by
+    have h_uF_not_con : ∀ uFL ∈ uF.linkList, uFL.parentId = x.id ↔ uFL.nodeId = x.id := by
       have h_nonempty : nodeList_of_edgeList_helper edgeList [] ≠ [] := by
         intro h_contra
         simp [h_contra] at h_x_in_nodeList_of_edgeList
@@ -746,7 +746,7 @@ def parent
   (uFL : unionFindLink nodeList)
   (h_in : uFL ∈ uF.linkList)
   : unionFindLink nodeList
-  := List.choose (fun a => a.nodeId = uFL.ccId) uF.linkList (by rcases (uF.matching_ccId uFL h_in) with ⟨x, h, _⟩; rcases (uF.matching_nodeId x h.left) with ⟨uFL', h', _⟩; simp [← h.right]; refine ⟨uFL', by simp [h']⟩)
+  := List.choose (fun a => a.nodeId = uFL.parentId) uF.linkList (by rcases (uF.matching_parentId uFL h_in) with ⟨x, h, _⟩; rcases (uF.matching_nodeId x h.left) with ⟨uFL', h', _⟩; simp [← h.right]; refine ⟨uFL', by simp [h']⟩)
 
 theorem parent_in
   {nodeList : List node}
@@ -763,7 +763,7 @@ theorem con_parent
   (h_in : uFL ∈ uF.linkList)
   (h_nodup : nodeList.Nodup)
   : connected_component_of_unionFind_of_unionFindLink uF uFL h_in = connected_component_of_unionFind_of_unionFindLink uF (parent uFL h_in) (parent_in h_in) := by
-  by_cases h_self_con : uFL.ccId = uFL.nodeId
+  by_cases h_self_con : uFL.parentId = uFL.nodeId
   · have h := uFL_choose_self h_in h_nodup
     simp [h_self_con, parent, h]
   · nth_rewrite 1 [connected_component_of_unionFind_of_unionFindLink]
@@ -774,8 +774,8 @@ theorem parent_nodeId
   {uF : unionFind nodeList}
   {uFL : unionFindLink nodeList}
   (h_in : uFL ∈ uF.linkList)
-  : (parent uFL h_in).nodeId = uFL.ccId := by
-  have h := List.choose_property (fun a => a.nodeId = uFL.ccId) uF.linkList (by rcases (uF.matching_ccId uFL h_in) with ⟨x, h, _⟩; rcases (uF.matching_nodeId x h.left) with ⟨uFL', h', _⟩; simp [← h.right]; refine ⟨uFL', by simp [h']⟩)
+  : (parent uFL h_in).nodeId = uFL.parentId := by
+  have h := List.choose_property (fun a => a.nodeId = uFL.parentId) uF.linkList (by rcases (uF.matching_parentId uFL h_in) with ⟨x, h, _⟩; rcases (uF.matching_nodeId x h.left) with ⟨uFL', h', _⟩; simp [← h.right]; refine ⟨uFL', by simp [h']⟩)
   simp [parent, h]
 
 -- unused 2
@@ -805,7 +805,7 @@ theorem eq_cc
   (h_path : parent_path uF p h_path_in)
   (h_path' : parent_path uF' p h_path_in')
   (h_path_start : ∃ p', p = a :: p')
-  (h_path_end : ∃ c ∈ p, c.nodeId = c.ccId)
+  (h_path_end : ∃ c ∈ p, c.nodeId = c.parentId)
   : connected_component_of_unionFind_of_unionFindLink uF a h_a_in = connected_component_of_unionFind_of_unionFindLink uF' b h_b_in := by
   induction a, h_a_in using connected_component_of_unionFind_of_unionFindLink.induct generalizing b p with
   | case1 x h_x_in h_x_self_con =>
@@ -834,7 +834,7 @@ theorem eq_cc
       have h_y_eq_parent' : y = parent b h_b_in := by
         simp [h_path_start, parent_path, h_eq] at h_path'
         simp [← h_path'.left]
-      have h_y : List.choose (fun y => y.nodeId = x.ccId) uF.linkList (connected_component_of_unionFind_of_unionFindLink._unary._proof_1 uF x h_x_in : ∃ y ∈ uF.linkList, y.nodeId = x.ccId) = y := by
+      have h_y : List.choose (fun y => y.nodeId = x.parentId) uF.linkList (connected_component_of_unionFind_of_unionFindLink._unary._proof_1 uF x h_x_in : ∃ y ∈ uF.linkList, y.nodeId = x.parentId) = y := by
         simp [y]
       simp [parent, ← h_eq] at h_y_eq_parent'
       simp [h_y, ← h_y_eq_parent']
@@ -859,7 +859,7 @@ def get_parent_path
   {uFL : unionFindLink nodeList}
   (h_in : uFL ∈ uF.linkList)
   : List (unionFindLink nodeList) :=
-  if h_self_con : uFL.nodeId = uFL.ccId
+  if h_self_con : uFL.nodeId = uFL.parentId
     then
       (uFL :: [])
     else
@@ -925,7 +925,7 @@ theorem get_parent_path_end
   {uF : unionFind nodeList}
   {uFL : unionFindLink nodeList}
   (h_in : uFL ∈ uF.linkList)
-  : ∃ a ∈ (get_parent_path h_in), a.nodeId = a.ccId := by
+  : ∃ a ∈ (get_parent_path h_in), a.nodeId = a.parentId := by
   fun_induction get_parent_path with
   | case1 uFL h_in h_self_con =>
     simp [h_self_con]
@@ -1050,7 +1050,7 @@ theorem get_parent_path_end_eq_last
   {uF : unionFind nodeList}
   {uFL : unionFindLink nodeList}
   (h_in : uFL ∈ uF.linkList)
-  : ∀ a ∈ (get_parent_path h_in), a.nodeId = a.ccId → a = (get_parent_path h_in).getLast (get_parent_path_nonempty h_in) := by
+  : ∀ a ∈ (get_parent_path h_in), a.nodeId = a.parentId → a = (get_parent_path h_in).getLast (get_parent_path_nonempty h_in) := by
   intro a h_a_in h_self_con
   fun_induction get_parent_path with
   | case1 uFL h_in h =>
@@ -1131,8 +1131,8 @@ theorem update_unionFind_reachable_parent
   (h_nonempty : nodeList ≠ [])
   (h_ex1 : ∃ x ∈ nodeList, x.id = e.node1)
   (h_ex2 : ∃ x ∈ nodeList, x.id = e.node2)
-  (h_e1_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node1 h_ex1 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node1 h_ex1)
-  (h_e2_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node2 h_ex2 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node2 h_ex2)
+  (h_e1_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node1 h_ex1 ∧ uFL.parentId = connected_component_of_unionFind_of_id uF e.node1 h_ex1)
+  (h_e2_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node2 h_ex2 ∧ uFL.parentId = connected_component_of_unionFind_of_id uF e.node2 h_ex2)
   (h_invariant : ∀ uFL, (h_in : uFL ∈ uF.linkList) → (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => G.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩) { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) })
   : ∀ uFL, (h_in : uFL ∈ (update_unionFind uF (connected_component_of_unionFind_of_id uF e.node1 h_ex1) (connected_component_of_unionFind_of_id uF e.node2 h_ex2) h_e1_self_con h_e2_self_con).linkList) → (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => G.Reachable ⟨uFL.nodeId, nodeId_lt_max h_in h_nodup h_nonempty⟩ ⟨(parent _ h_in).nodeId, nodeId_lt_max (parent_in h_in) h_nodup h_nonempty⟩) { Adj := fun a b => ∃ f ∈ update_edgesSoFar edgesSoFar e (connected_component_of_unionFind_of_id uF e.node1 h_ex1) (connected_component_of_unionFind_of_id uF e.node2 h_ex2), f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) } := by
   simp
@@ -1145,18 +1145,18 @@ theorem update_unionFind_reachable_parent
   · simp [h_cc_eq, update_edgesSoFar, update_unionFind]
     split_ifs with h_rank_lt
     · intro uFL h_uFL_in
-      set uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con with ← h_uFLx
-      set uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con with ← h_uFLy
-      have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con
-      have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con
-      have h_uFLx_prop : uFLx.nodeId = cce2 ∧ uFLx.ccId = cce2 := List.choose_property (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con
-      have h_uFLy_prop : uFLy.nodeId = cce1 ∧ uFLy.ccId = cce1 := List.choose_property (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con
+      set uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce2 ∧ a.parentId = cce2) uF.linkList h_e2_self_con with ← h_uFLx
+      set uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce1 ∧ a.parentId = cce1) uF.linkList h_e1_self_con with ← h_uFLy
+      have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce2 ∧ a.parentId = cce2) uF.linkList h_e2_self_con
+      have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce1 ∧ a.parentId = cce1) uF.linkList h_e1_self_con
+      have h_uFLx_prop : uFLx.nodeId = cce2 ∧ uFLx.parentId = cce2 := List.choose_property (fun a => a.nodeId = cce2 ∧ a.parentId = cce2) uF.linkList h_e2_self_con
+      have h_uFLy_prop : uFLy.nodeId = cce1 ∧ uFLy.parentId = cce1 := List.choose_property (fun a => a.nodeId = cce1 ∧ a.parentId = cce1) uF.linkList h_e1_self_con
       have h_idx_uFLx_lt : List.idxOf uFLx uF.linkList < uF.linkList.length := by
         exact List.idxOf_lt_length_of_mem h_uFLx_in
       have h_idx_uFLy_lt : List.idxOf uFLy uF.linkList < uF.linkList.length := by
         exact List.idxOf_lt_length_of_mem h_uFLy_in
       simp [h_uFLx, h_uFLy, h_rank_lt] at h_uFL_in
-      set uFLx' : unionFindLink nodeList := { nodeId := uFLx.nodeId, ccId := uFLy.ccId, rank := uFLx.rank } with ← h_uFLx'
+      set uFLx' : unionFindLink nodeList := { nodeId := uFLx.nodeId, parentId := uFLy.parentId, rank := uFLx.rank } with ← h_uFLx'
       have h_ne : uFLy ≠ uFLx' := by
         grind
       have h_ne_idx : List.idxOf uFLy uF.linkList ≠ List.idxOf uFLx uF.linkList := by
@@ -1223,18 +1223,18 @@ theorem update_unionFind_reachable_parent
         simp [H, update_edgesSoFar, h_cc_eq, h_cce1, h_cce2]
 
     · intro uFL h_uFL_in
-      set uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con with ← h_uFLx
-      set uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con with ← h_uFLy
-      have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con
-      have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con
-      have h_uFLx_prop : uFLx.nodeId = cce1 ∧ uFLx.ccId = cce1 := List.choose_property (fun a => a.nodeId = cce1 ∧ a.ccId = cce1) uF.linkList h_e1_self_con
-      have h_uFLy_prop : uFLy.nodeId = cce2 ∧ uFLy.ccId = cce2 := List.choose_property (fun a => a.nodeId = cce2 ∧ a.ccId = cce2) uF.linkList h_e2_self_con
+      set uFLx : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce1 ∧ a.parentId = cce1) uF.linkList h_e1_self_con with ← h_uFLx
+      set uFLy : unionFindLink nodeList := List.choose (fun a => a.nodeId = cce2 ∧ a.parentId = cce2) uF.linkList h_e2_self_con with ← h_uFLy
+      have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce1 ∧ a.parentId = cce1) uF.linkList h_e1_self_con
+      have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = cce2 ∧ a.parentId = cce2) uF.linkList h_e2_self_con
+      have h_uFLx_prop : uFLx.nodeId = cce1 ∧ uFLx.parentId = cce1 := List.choose_property (fun a => a.nodeId = cce1 ∧ a.parentId = cce1) uF.linkList h_e1_self_con
+      have h_uFLy_prop : uFLy.nodeId = cce2 ∧ uFLy.parentId = cce2 := List.choose_property (fun a => a.nodeId = cce2 ∧ a.parentId = cce2) uF.linkList h_e2_self_con
       have h_idx_uFLx_lt : List.idxOf uFLx uF.linkList < uF.linkList.length := by
         exact List.idxOf_lt_length_of_mem h_uFLx_in
       have h_idx_uFLy_lt : List.idxOf uFLy uF.linkList < uF.linkList.length := by
         exact List.idxOf_lt_length_of_mem h_uFLy_in
       simp [h_uFLx, h_uFLy, ] at h_uFL_in
-      set uFLx' : unionFindLink nodeList := { nodeId := uFLx.nodeId, ccId := uFLy.ccId, rank := uFLx.rank } with ← h_uFLx'
+      set uFLx' : unionFindLink nodeList := { nodeId := uFLx.nodeId, parentId := uFLy.parentId, rank := uFLx.rank } with ← h_uFLx'
       have h_ne : uFLy ≠ uFLx' := by
         grind
       have h_ne_idx : List.idxOf uFLy uF.linkList ≠ List.idxOf uFLx uF.linkList := by
@@ -1309,8 +1309,8 @@ theorem update_con_of_con
   {uF : unionFind nodeList}
   {h_a : ∃ x ∈ nodeList, x.id = a}
   {h_b : ∃ x ∈ nodeList, x.id = b}
-  {h_c : ∃ uFL ∈ uF.linkList, (fun uFL' => uFL'.nodeId = c ∧ uFL'.ccId = c) uFL}
-  {h_d : ∃ uFL ∈ uF.linkList, (fun uFL' => uFL'.nodeId = d ∧ uFL'.ccId = d) uFL}
+  {h_c : ∃ uFL ∈ uF.linkList, (fun uFL' => uFL'.nodeId = c ∧ uFL'.parentId = c) uFL}
+  {h_d : ∃ uFL ∈ uF.linkList, (fun uFL' => uFL'.nodeId = d ∧ uFL'.parentId = d) uFL}
   (h_con : connected_component_of_unionFind_of_id uF a h_a = connected_component_of_unionFind_of_id uF b h_b)
   : connected_component_of_unionFind_of_id (update_unionFind uF c d h_c h_d) a h_a = connected_component_of_unionFind_of_id (update_unionFind uF c d h_c h_d) b h_b := by
 
@@ -1324,8 +1324,8 @@ theorem new_edge_con
   {x y : Nat}
   (h_ex_x : ∃ a ∈ nodeList, a.id = x)
   (h_ex_y : ∃ a ∈ nodeList, a.id = y)
-  (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a)
-  (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a)
+  (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a)
+  (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a)
   : connected_component_of_unionFind_of_id (update_unionFind uF x y h₁ h₂) x h_ex_x = connected_component_of_unionFind_of_id (update_unionFind uF x y h₁ h₂) y h_ex_y := by
   sorry
 
@@ -1338,8 +1338,8 @@ theorem kruskal_helper_Reachable_iff_con
   (h_nonempty : nodeList ≠ [])
   (h_ex1 : ∃ x ∈ nodeList, x.id = e.node1)
   (h_ex2 : ∃ x ∈ nodeList, x.id = e.node2)
-  (h_e1_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node1 h_ex1 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node1 h_ex1)
-  (h_e2_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node2 h_ex2 ∧ uFL.ccId = connected_component_of_unionFind_of_id uF e.node2 h_ex2)
+  (h_e1_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node1 h_ex1 ∧ uFL.parentId = connected_component_of_unionFind_of_id uF e.node1 h_ex1)
+  (h_e2_self_con : ∃ uFL ∈ uF.linkList, uFL.nodeId = connected_component_of_unionFind_of_id uF e.node2 h_ex2 ∧ uFL.parentId = connected_component_of_unionFind_of_id uF e.node2 h_ex2)
   (h_invariant : (fun (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => ∀ (a b : Fin _), (h_ex_x : ∃ x ∈ nodeList, x.id = ↑a) → (h_ex_y : ∃ x ∈ nodeList, x.id = ↑b) → (G.Reachable a b ↔ connected_component_of_unionFind_of_id uF a.val h_ex_x = connected_component_of_unionFind_of_id uF b.val h_ex_y)) { Adj := fun a b => ∃ f ∈ edgesSoFar, f.node1 = ↑a ∧ f.node2 = ↑b ∨ f.node1 = ↑b ∧ f.node2 = ↑a, symm := (by simp [Symmetric]; intro a b e; grind), loopless := (by simp [irrefl_def]; intro a e _ h_eq₁ h_eq₂; have h_lt := e.nodesLt; simp [h_eq₁, h_eq₂] at h_lt) })
   : (fun
       (G : SimpleGraph (Fin (nodeList.max h_nonempty).id.succ)) => ∀ (a b : Fin _), (h_ex_x : ∃ x ∈ nodeList, x.id = ↑a) →
@@ -1997,7 +1997,7 @@ theorem not_self_con_of_mem_get_parent_path
   (h_in : uFL ∈ uF.linkList)
   (h_in' : uFL' ∈ get_parent_path h_in)
   (h_ne : uFL ≠ uFL')
-  : uFL.nodeId ≠ uFL.ccId := by
+  : uFL.nodeId ≠ uFL.parentId := by
   intro h_self_con
   rw [get_parent_path] at h_in'
   simp [h_self_con, ne_comm.mp h_ne] at h_in'
@@ -2017,7 +2017,7 @@ theorem le_two_pow_minus_one (n : Nat) : n ≤ 2^n-1 := by
 
 def unionFind.rankInvariant_strict {nodeList : List node} (uF : unionFind nodeList) := ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path h_x_in else False)).length ≥ 2^(uFL.rank.val)
 
-theorem unionFind.rankInvariant_of_rankInvariant_strict {nodeList : List node} {uF : unionFind nodeList} (h_rankInvariant : uF.rankInvariant_strict) : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => x.rank < uFL.rank ∧ ¬x.nodeId = x.ccId)).length ≥ uFL.rank := by
+theorem unionFind.rankInvariant_of_rankInvariant_strict {nodeList : List node} {uF : unionFind nodeList} (h_rankInvariant : uF.rankInvariant_strict) : ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => x.rank < uFL.rank ∧ ¬x.nodeId = x.parentId)).length ≥ uFL.rank := by
   intro uFL h_in
   set rank := uFL.rank.val with ← h_rank
   revert h_rank
@@ -2032,7 +2032,7 @@ theorem unionFind.rankInvariant_of_rankInvariant_strict {nodeList : List node} {
     have h : (2 ^ rank' - 1) + 1 = 2 ^ rank' := by
       grind
     simp only [h]
-    have h_length_lt : (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else decide False) uF.linkList).length ≤ (uFL :: List.filter (fun x => decide (x.rank < uFL.rank) && !decide (x.nodeId = x.ccId)) uF.linkList).length := by
+    have h_length_lt : (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else decide False) uF.linkList).length ≤ (uFL :: List.filter (fun x => decide (x.rank < uFL.rank) && !decide (x.nodeId = x.parentId)) uF.linkList).length := by
       apply nodup_length_le_length_all_mem (by simp [List.Nodup.filter, uF.nodup])
       intro x h_x_in_filter
       by_cases h_eq : x = uFL
@@ -2073,26 +2073,26 @@ theorem init_unionFind.rankInvariant_strict {nodeList : List node} (h_nodup : no
     simp [init_unionFind, init_unionFind.linkList, h_empty] at h_length
     exact h_length
 
-theorem update_unionFind.rankInvariant_strict {nodeList : List node} (uF : unionFind nodeList) (x y : ℕ) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.ccId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.ccId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : (update_unionFind uF x y h₁ h₂).rankInvariant_strict := by
+theorem update_unionFind.rankInvariant_strict {nodeList : List node} (uF : unionFind nodeList) (x y : ℕ) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a) (h_rankInvariant : uF.rankInvariant_strict) : (update_unionFind uF x y h₁ h₂).rankInvariant_strict := by
   simp [unionFind.rankInvariant_strict, update_unionFind]
   set linklist' := (update_unionFind uF x y h₁ h₂).linkList with ← h_linklist'
-  set uFLx := List.choose (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₁ with ← h_uFLx
-  set uFLy := List.choose (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h₂ with ← h_uFLy
-  have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₁
-  have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h₂
-  have h_uFLx_prop : uFLx.nodeId = x ∧ uFLx.ccId = x := List.choose_property (fun a => a.nodeId = x ∧ a.ccId = x) uF.linkList h₁
-  have h_uFLy_prop : uFLy.nodeId = y ∧ uFLy.ccId = y := List.choose_property (fun a => a.nodeId = y ∧ a.ccId = y) uF.linkList h₂
+  set uFLx := List.choose (fun a => a.nodeId = x ∧ a.parentId = x) uF.linkList h₁ with ← h_uFLx
+  set uFLy := List.choose (fun a => a.nodeId = y ∧ a.parentId = y) uF.linkList h₂ with ← h_uFLy
+  have h_uFLx_in : uFLx ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = x ∧ a.parentId = x) uF.linkList h₁
+  have h_uFLy_in : uFLy ∈ uF.linkList := List.choose_mem (fun a => a.nodeId = y ∧ a.parentId = y) uF.linkList h₂
+  have h_uFLx_prop : uFLx.nodeId = x ∧ uFLx.parentId = x := List.choose_property (fun a => a.nodeId = x ∧ a.parentId = x) uF.linkList h₁
+  have h_uFLy_prop : uFLy.nodeId = y ∧ uFLy.parentId = y := List.choose_property (fun a => a.nodeId = y ∧ a.parentId = y) uF.linkList h₂
 
   simp [h_uFLx, h_uFLy]--, h_uFLy', h_linklist']
   split_ifs with h_eq h_rank_lt
   · exact h_rankInvariant
   -- wegen h_rank_lt kürzung
-  -- · set uFLx' : unionFindLink nodeList := { nodeId := uFLx.nodeId, ccId := uFLy.ccId, rank := uFLx.rank } with ← h_uFLx'
+  -- · set uFLx' : unionFindLink nodeList := { nodeId := uFLx.nodeId, parentId := uFLy.parentId, rank := uFLx.rank } with ← h_uFLx'
   --   have h_rank_succ_le : uFLx.rank.val.succ ≤ uFLy.rank.val := by
   --     simp [h_rank_lt]
   --   have h_rank_succ_isLt : uFLx.rank.val.succ < nodeList.length := by
   --     simp [Nat.lt_of_le_of_lt h_rank_succ_le]
-  --   set uFLy' : unionFindLink nodeList := { nodeId := uFLy.nodeId, ccId := uFLy.ccId, rank := ⟨max (uFLy.rank.val) (uFLx.rank.val + 1), by simp [h_rank_succ_isLt]⟩ } with ← h_uFLy'
+  --   set uFLy' : unionFindLink nodeList := { nodeId := uFLy.nodeId, parentId := uFLy.parentId, rank := ⟨max (uFLy.rank.val) (uFLx.rank.val + 1), by simp [h_rank_succ_isLt]⟩ } with ← h_uFLy'
   --   simp [h_uFLy', h_uFLx']
   --   simp [update_unionFind, h_uFLx, h_uFLy, h_uFLx', h_uFLy'] at h_linklist'
   --   simp [h_eq, h_rank_lt] at h_linklist'
@@ -2106,7 +2106,7 @@ theorem update_unionFind.rankInvariant_strict {nodeList : List node} (uF : union
   --         · intro j h_j
   --           have h_not_in : ¬uFLx' ∈ uF.linkList := by
   --             intro h_contra
-  --             have h := uF.matching_ccId uFLx h_uFLx_in
+  --             have h := uF.matching_parentId uFLx h_uFLx_in
   --             rcases h with ⟨z, h_z, _⟩
   --             have h' := uF.matching_nodeId z h_z.left
   --             rcases h' with ⟨w, h_w, h_unique⟩
@@ -2163,8 +2163,8 @@ theorem update_unionFind.rankInvariant_strict {nodeList : List node} (uF : union
   --     · sorry
   --   · sorry
   · simp [h_rank_lt]
-    set uFLx' : unionFindLink nodeList := { nodeId := uFLy.nodeId, ccId := uFLx.ccId, rank := uFLy.rank } with ← h_uFLx'
-    -- set uFLy' : unionFindLink nodeList := { nodeId := uFLx.nodeId, ccId := uFLx.ccId, rank := uFLx.rank } with ← h_uFLy'
+    set uFLx' : unionFindLink nodeList := { nodeId := uFLy.nodeId, parentId := uFLx.parentId, rank := uFLy.rank } with ← h_uFLx'
+    -- set uFLy' : unionFindLink nodeList := { nodeId := uFLx.nodeId, parentId := uFLx.parentId, rank := uFLx.rank } with ← h_uFLy'
     intro uFL h_uFL_in
     have h_idx_uFLx_lt : List.idxOf uFLx uF.linkList < uF.linkList.length := by
       exact List.idxOf_lt_length_of_mem h_uFLx_in
