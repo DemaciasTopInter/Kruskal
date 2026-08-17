@@ -1,4 +1,4 @@
-\section{Die Implementation}
+\section{Die Implementation}\label{Implementation}
 Ich beginne damit, meine Definition der Union-Find-Struktur und des Algorithmus von Kruskal als normale Lean Funktionen vorzustellen.
 Zu der Prog Variante komme ich dann im Abschnitt zum Beweis über die Laufzeit.
 
@@ -74,12 +74,16 @@ Auf der anderen Seite habe ich festgelegt, dass eine Kante kleiner gleich ($\le$
 Das war notwendig, um die Kanten-Liste nach Kosten sortieren zu können.
 Das Problem, das sich daraus ergibt, ist, dass $\le$ jetzt nicht antisymmetrisch ist.
 Für zwei Kanten e und f gilt also nicht, dass aus e $\le$ f $\land$ f $\le$ e auch automatisch e = f folgt.
-Dadurch konnte ich manche Lemmata aus Mathlib über sortierte Listen nicht benutzen, da sie lineare Ordnung voraussetzen, was die Antisymmetrie von $\le$ beinhaltet.
+Dadurch konnte ich manche Lemmata aus Mathlib über sortierte Listen nicht benutzen, da sie lineare Ordnung voraussetzen, was die Antisymmetrie von $\le$ beinhaltet,
+und musste sie mir selbst neu schreiben.
 
 Die Zeiger müssen auf den ersten Blick keine Bedingungen erfüllen.
 Sie beinhalten nur die Information, zu welchem Knoten sie gehören, auf welchen sie zeigen und ihren Rang.
 Allerdings habe ich doch eine Bedingung eingebaut, indem ich den Rang nach oben auf die Länge der Knoten-Liste beschränke.
-Damit zeige ich, dass das Suchen des Repräsentanten der Zusammenhangskomponenten auch terminiert.
+Damit zeige ich später, dass das Suchen des Repräsentanten der Zusammenhangskomponenten auch terminiert.
+Diese Grenze schränkt die Funktionalität der Zeiger aber nicht ein, da im Worst Case die Verknüpfung der Zeiger eine lange Kette ergibt und die Ränge von null hochzählen
+und somit der höchste Rang um eins kleiner ist als die Länge der Knoten-Liste.
+Dass dieser Fall tatsächlich nicht eintreten kann und die echte Schranke beim Logarithmus der Knoten-Liste liegt, zeige ich in Kapitel \ref{strikteRangInvariante}.
 
 \begin{definition}[\KruskalunionFindLink]
   Ein Zeiger besteht aus der ID seines Knotens, der ID des Knotens, auf den er zeigt (ccId) und seinem Rang.
@@ -99,7 +103,7 @@ Die Union-Find-Struktur besteht eigentlich nur aus der Liste an Zeigern, aber f�
     \item Jeder Zeiger zeigt auf einen eindeutigen Knoten.
     \item Es gibt genau so viele Zeiger wie Knoten.
     \item Wenn ein Zeiger nicht auf seinen eigenen Knoten zeigt, dann hat der Zeiger des Knotens, auf den er zeigt, einen höheren Rang.
-    \item Es gibt keine Dopplungen.
+    \item Es gibt keine Dopplungen in der Zeiger-Liste.
     \item Es gilt die Rang-Invariante
 \end{itemize}
 
@@ -383,9 +387,9 @@ Um für einen Zeiger die Zusammenhangskomponente zu finden, geht man die Kette d
 Zeigt der aktuelle Zeiger auf seinen eigenen Knoten ist man am Ende angekommen und der Knoten repräsentiert die Zusammenhangskomponente,
 tut er das nicht, geht man weiter zum Zeiger des Knotens, auf den er zeigt.
 
-Da das eine rekursive Funktion ist, und es kein Element gibt, das in jedem Schritt kleiner wird, braucht Lean einen Nachweis, dass diese Funktion auch terminiert.
+Da das eine rekursive Funktion ist, und es kein direktes Element gibt, das in jedem Schritt kleiner wird, braucht Lean einen Nachweis, dass diese Funktion auch terminiert.
 Über matching\_rank zeige ich, dass der Rang des neuen Zeigers höher ist als der des aktuellen.
-Dadurch habe ich doch eine natürliche Zahl, die in jedem Schritt kleiner wird, nämlich die obere Schranke des Rangs, also |V|, minus der Rang des aktuellen Zeigers.
+Dadurch habe ich doch eine natürliche Zahl, die in jedem Schritt kleiner wird, nämlich die Differenz zwischen der oberen Schranke des Rangs, also |V|, und dem Rang des aktuellen Zeigers.
 Das ist auch der Grund, warum ich den Rang überhaupt beschränke.
 
 \begin{definition}[\KruskalconnectedcomponentofunionFindofunionFindLink]

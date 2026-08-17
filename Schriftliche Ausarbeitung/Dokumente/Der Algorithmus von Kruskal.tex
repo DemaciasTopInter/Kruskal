@@ -13,7 +13,7 @@ Man unterscheidet zwischen verschiedenen Arten von Graphen:
 \end{itemize}
 Ein \textbf{Kantenzug} (engl. Walk) ist eine Liste von Kanten $e_1, e_2, e_3, \dots, e_n \in E$, sodass für je zwei aufeinander folgende Kanten $e_i, e_{i+1}$ gilt, 
 dass es Knoten $u, v, w \in V$ gibt und $e_i = (u,v)$ geht und $e_{i+1}=(v,w)$, also jede Kante fängt da an, woh ihre Vorgängerin aufhört.
-Kommt in einem Kantenzug keine Kante doppelt vor, dann nennt man ihn einen \textbf{Pfad}.
+Kommt in einem Kantenzug keine Kante doppelt vor, dann nennt man ihn einen \textbf{einfachen Kantenzug}.
 
 Wenn es für zwei Knoten $u, v \in V$ einen Kantenzug von $u$ nach $v$ gibt, also die erste Kante bei $u$ anfängt und die letzte bei $v$ aufhört,
 dann sind $u$ und $v$ \textbf{verbunden} (engl. connected).
@@ -23,22 +23,22 @@ Die dadurch mit definierten Äquivalenzklassen heißen \textbf{Zusammenhangskomp
 Das bedeutet, alle Knoten, die miteinander verbunden sind, sind in derselben Zusammenhangskomponente.
 Sind in einem Graphen alle Knoten paarweise verbunden, also es nur eine Zusammenhangskomponente gibt, nennt man ihn \textbf{zusammenhängend}.
 
-Ein nicht leerer Pfad von $u$ nach $u$, also der beim selben Knoten anfängt und aufhört, heißt \textbf{Kreis}.
+Ein nicht leerer einfacher Kantenzug von $u$ nach $u$, also der beim selben Knoten anfängt und aufhört, heißt \textbf{Kreis}.
 Gibt es in einem Graphen keinen einzigen Kreis, so nennt man ihn \textbf{kreisfrei} oder \textbf{azyklisch} (engl. acyclic).
 
 \subsection{Was ist ein Spannbaum}
-Gegeben ein Graph G = (V, E) mit Knotenmenge V und Kantenmenge E, dann ist ein Graph T = (V, E') ein Spannbaum / Spannwald, wenn: 
+Gegeben ein Graph $G = (V, E)$ mit Knotenmenge $V$ und Kantenmenge $E$, dann ist ein Graph $T = (V, E')$ ein Spannbaum / Spannwald, wenn: 
 \begin{itemize}
-  \item T ein Subgraph von G, also E' $\subseteq$ E ist.
-  \item In T keine Kreise vorkommen.
-  \item Alle Knoten aus V, die in G durch einen Kantenzug verbunden sind, auch in T verbunden sind.
+  \item $T$ ein Subgraph von $G$, also $E' \subseteq E$ ist.
+  \item In $T$ keine Kreise vorkommen.
+  \item Alle Knoten aus $V$, die in $G$ durch einen Kantenzug verbunden sind, auch in $T$ verbunden sind.
 \end{itemize}
-Wenn dabei G vollständig verbunden ist, dann ist es auch T und man spricht tatsächlich von einem Spannbaum. 
-Besteht G hingegen aus mehreren Clustern von Knoten, zwischen denen es keine verbindende Kante gibt, dann gibt es in T entsprechend dieselben Cluster und  man  spricht von einem Spannwald.
+Wenn dabei $G$ vollständig verbunden ist, dann ist es auch $T$ und man spricht tatsächlich von einem Spannbaum. 
+Besteht $G$ hingegen aus mehreren Clustern von Knoten, zwischen denen es keine verbindende Kante gibt, dann gibt es in $T$ entsprechend dieselben Cluster und  man  spricht von einem Spannwald.
 Im Folgenden werde ich fast nur noch den Begriff Spannbaum benutzen, meine aber Spannwälder mit.
 
-Ein minimaler Spannbaum ist ein Spannbaum, der die Summe der Kantenkosten minimiert. Das heißt, wenn M = (V, E$^\ast$) ein minimaler Spannbaum von G ist, 
-dann muss für jeden anderen Spannbaum T = (V, E') von G die Summe der Kantenkosten mindestens so groß sein, wie die von M.
+Ein minimaler Spannbaum ist ein Spannbaum, der die Summe der Kantenkosten minimiert. Das heißt, wenn M = (V, E$^\ast$) ein minimaler Spannbaum von $G$ ist, 
+dann muss für jeden anderen Spannbaum $T = (V, E')$ von $G$ die Summe der Kantenkosten mindestens so groß sein, wie die von M.
 $$\sum_{e \in E^\ast} c(e) \le \sum_{e \in E'} c(e)$$
 
 \subsection{Der Algorithmus}
@@ -51,7 +51,7 @@ Zum Schluss gibt er die Liste der übernommenen Kanten zurück.
 
 In Kruskals Worten: 
 \begin{quotation}
-  Perform the following step as many times as possible: Among the edges of G not yet chosen, choose the shortest edge which does not form any loops with those edges already chosen.\cite{kruskal_article}
+  Perform the following step as many times as possible: Among the edges of $G$ not yet chosen, choose the shortest edge which does not form any loops with those edges already chosen.\cite{kruskal_article}
 \end{quotation}
 
 \subsection{Pseudocode}
@@ -83,11 +83,21 @@ Sei $G(V, E)$ ein Graph und $E'$ das Ergebnis von $Kruskal(V, E)$. Zu zeigen ist
 
 Dass $E'$ keine Kreise enthält, ist offensichtlich, da die leere Liste keine Kreise enthält und in jedem Schritt nur dann eine Kante dazugenommen wird, wenn dadurch kein Kreis entsteht.
 
-Wenn es Knoten $u, v \in V$ gibt, die in G verbunden sind aber nicht in T, dann gibt es per Definition einen Kantenzug $e_1, e_2, e_3, \dots, e_n \in E$, der $u$ und $v$ verbindet aber keinen in $E'$.
-Dann gibt es Knoten $w_0, w_1, \dots, w_n \in V$, sodass $\forall i, e_i$ eine Kante von $w_{i-1}$ nach $w_i$ ist. Demnach ist $u = w_0$ und $v = w_n$.
-Dann gibt es ein $j \le n$, sodass $\forall i < j, u$ mit $w_i$ verbunden ist, aber nicht mit $w_j$.
+Wenn es Knoten $u, v \in V$ gibt, die in $G$ verbunden sind aber nicht in $T$, dann gibt es per Definition einen Kantenzug $e_1, e_2, e_3, \dots, e_n \in E$, der $u$ und $v$ verbindet aber keinen in $E'$.
+Dann gibt es Knoten $w_0, w_1, \dots, w_n \in V$, sodass $\forall i, e_i$ eine Kante von $w_{i-1}$ nach $w_i$ ist.
+Demnach ist $u = w_0$ und $v = w_n$.
+Sei $w_j$ der erste Knoten in der Folge, der nicht mit u verbunden ist.
 Daraus folgt, $e_j \notin E'$ und $E'\cap\{e_j\}$ hat keinen Kreis.
 Das ist allerdings ein Widerspruch, denn in diesem Fall hätte der Algorithmus $e_j$ mit ins Ergebnis aufgenommen.
+
+Der Algorithmus liefert also einen Spannbaum.
+Dass dieser außerdem minimal ist, liegt daran, dass der Algorithmus greedy (deutsch gierig) bei der kleinsten Kante anfängt.
+Gäbe es einen besseren Spannbaum, könnte man Stück für Stück die Kanten in Kruskals Spannbaum austauschen, bis beide gleich sind.
+Das tut man so, dass man eine Kante aus dem besseren Spannbaum in den Kruskal Spannbaum einfügt,
+wodurch sich ein Kreis schließt und man dafür eine Kante aus dem Kreis, die nicht im besseren Spannbaum vorkommt, herausschmeißt.
+Dadurch bleibt die Spannbaum-Eigenschaft erhalten.
+Da der andere Spannbaum besser ist, muss es dabei zu einer Kante kommen, die eine teurere Kante ersetzt.
+Das kann aber nicht passieren, da in dem Fall die günstigere Kante im Algorithmus zuerst drangekommen wäre und da sie ohne die teure Kante keinen Kreis schließt wäre sie aufgenommen worden.
 
 \subsection{Die Union-Find-Struktur}
 Die Union-Find-Struktur bietet eine effiziente Möglichkeit, um festzustellen, ob zwei Knoten in derselben Zusammenhangskomponente liegen, also verbunden sind.
@@ -119,7 +129,8 @@ Um nicht jedes Mal nachzählen zu müssen, wird sich dafür die Länge der läng
 Werden zwei Zusammenhangskomponenten mit Repräsentanten mit unterschiedlichem Rang vereinigt, bleiben die Ränge unverändert.
 Nur wenn die Repräsentanten den gleichen Rang haben, wird der Rang des Repräsentanten, der jetzt die vereinigte Zusammenhangskomponente repräsentiert um eins erhöht,
 was man in Abbildung \ref{UnionFindRangInit} bis \ref{UnionFindRangErweiterung3} sieht.
-Daraus ergibt sich, dass der maximale Rang eines Knoten $\log_2(|V|)$ sein kann und bei jedem rekursiven Aufruf von Find ist der Rang des Folgeknotens höher als der des vorherigen.
+Daraus ergibt sich induktiv, dass der maximale Rang eines Knoten $\log_2(|V|)$ sein kann, da es für einen Knoten mit Rang r mindestens $2^r$ Knoten gibt, die an ihm dran hängen, ihn selbst mitgezählt.
+Außerdem folgt daraus, dass bei jedem rekursiven Aufruf von Find ist der Rang des Folgeknotens höher als der des vorherigen.
 Damit ist $O(\log_2(|V|))$ auch automatisch die Laufzeitschranke für Find.
 
 \input{Grafiken/UnionFindRangInit}

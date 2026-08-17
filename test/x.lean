@@ -74,3 +74,5 @@ def isZero' : Nat → Bool
 
 #check isZero' t
 #eval isZero' t
+
+#check Nat.gcd

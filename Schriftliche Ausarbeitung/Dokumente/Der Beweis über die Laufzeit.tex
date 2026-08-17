@@ -543,9 +543,11 @@ Ich zeige als Nächstes die Gleichheit und anschließend die Laufzeit.
 
 
 
-\subsection{Reduktion}\todo{sub\-section Reduktion}
+\subsection{Reduktion}
 
-Um den Beweis jetzt den Beweis, dass\todo{hier}
+Um jetzt die beiden Beweise zu verknüpfen, zeige ich, dass sich Programme, die für die Query \Kruskalkruskalquerystrict geschrieben wurden,
+auch als welche für die Query \Kruskalfindquery betrachtet werden können.
+Dafür benutze ich die Reduktion.
 
 \begin{definition}[\Kruskalreduction]
   Die Reduktion der grundlegenden Funktionen, der Query \Kruskalkruskalquerystrict auf Programme der Query \Kruskalfindquery.
@@ -559,7 +561,7 @@ def (.\Kruskalreduction.) {nodeList : List node} : Reduction (kruskal_query_stri
     | .union uF x y h₁ h₂ h_rankInvariant => find_query.union uF x y h₁ h₂ h_rankInvariant
 \end{lstlisting}
 
-
+Es bleibt noch zu zeigen, dass durch diese Reduktion sich die Funktionsweise nicht ändert und die Kosten nicht überschritten werden.
 
 \begin{lemma}[\KruskalmodelevalQueryeq]
   Für alle grundlegenden Funktionen q der Query \Kruskalkruskalquerystrict ist die Reduktion von q, ausgewertet im Modell \Kruskalfindmodel,
@@ -571,8 +573,6 @@ def (.\Kruskalreduction.) {nodeList : List node} : Reduction (kruskal_query_stri
   Der Beweis für Union folgt direkt daraus, dass Union in beiden Modellen gleich definiert ist.
 \end{proof}
 
-
-
 \begin{lemma}[\Kruskalmodelcostle]
   Für alle grundlegenden Funktionen q der Query \Kruskalkruskalquerystrict ist die Laufzeit von der Reduktion von q im Modell \Kruskalfindmodel,
   kleiner gleich der Laufzeit von q im Modell \Kruskalkruskalmodelthree.
@@ -582,3 +582,5 @@ def (.\Kruskalreduction.) {nodeList : List node} : Reduction (kruskal_query_stri
 
   Der Beweis für Union folgt direkt daraus, dass Union in beiden Modellen gleich definiert ist.
 \end{proof}
+
+Damit ist der Beweis über die Laufzeit abgeschlossen.

@@ -806,25 +806,48 @@ Sie wäre also schon in edgeList' enthalten.
 % Eine solche Kante kann es aber nicht geben, denn sonst käme sie im Algorithmus vor ihrem Pendant dran und würde übernommen werden, da ihre Knoten noch nicht in derselben Zusammenhangskomponente sind.
 % Sie wäre also ihr eigenes Pendant und daher nicht günstiger.
 
-\subsection{Die strikte Rang-Invariante}\todo{sub\-sec\-tion strikte Rang-In\-va\-ri\-an\-te}
+\subsection{Die strikte Rang-Invariante}\label{strikteRangInvariante}
+
+Bei der strikten Rang-Invariante war ich mir zunächst unsicher, wo ich sie einordne.
+Ich habe sie nicht als Ziel des Korrektheitsbeweises angeführt und benutze sie erst im Laufzeitbeweis.
+Allerdings gehört sie nach meinem empfinden zu einer korrekt implementierten Union-Find-Struktur, weshalb ich sie in diesem Kapitel verordne.
+
+In Kapitel \ref{Implementation} habe ich bei der Definition von \KruskalunionFind, wie bereits erwähnt, eine schwächere Version implementiert.
+Die strikte Rang-Invariante besagt, dass es für jeden Zeiger uFL mit Rang r mindestens $2^r-1$ Zeiger gibt, die direkt oder indirekt auf ihn zeigen, also von denen uFL ein Vorfahre ist.
+Dabei bedeutet es für einen Zeiger, dass uFL ein Vorfahre ist, dass uFL in seinem Parentpath vorkommt.
+Da uFL auch selbst ein Zeiger ist, in dessen Parentpath er vorkommt, muss er selbst auch mit gezählt werden.
+Die strikte Rang-Invariante lautet also wie folgt.
 
 \begin{definition}[\KruskalunionFindrankInvariantstrict]
-  Die strikte Rang-Invariante lautet wie folgt.
   Für jeden Zeiger uFL mit Rang r gibt es in der Zeiger-Liste mindestens $2^r$ Zeiger, in deren Parentpath uFL enthalten ist.
 \end{definition}
 \begin{lstlisting}
 def (.\KruskalunionFindrankInvariantstrict.) {nodeList : List node} (uF : unionFind nodeList) := ∀ uFL ∈ uF.linkList, (uF.linkList.filter (fun x => if h_x_in : x ∈ uF.linkList then uFL ∈ get_parent_path h_x_in else False)).length ≥ 2^(uFL.rank.val)
 \end{lstlisting}
 
+Ich kann zeigen, dass diese Rang-Invariante mindestens so streng ist, wie die vorherige.
+
 \begin{lemma}[\KruskalunionFindrankInvariantofrankInvariantstrict]
-  Aus der strikten Rang-Invariante folgt die bisherige Rang-Invariante.
+  Aus der strikten Rang-Invariante folgt die schwache Rang-Invariante.
 \end{lemma}
 \begin{proof}
   Sei uFL ein Zeiger und r sein Rang.
+  Sei weiter l die Liste der Zeiger, die bei der schwachen Rang-Invariante gezählt werden, also die nicht auf ihren eigenen Knoten zeigen und einen kleineren Rang als r haben,
+  und l' die Liste der Zeiger, die bei der strikten Rang-Invariante gezählt werden, also die, bei denen uFL im Parentpath vorkommt.
   Ich führe den Beweis per Induktion über r.
   Im Basisfall ist r null.
-  Im Induktionsschritt \todo{hier}
+  Im Induktionsschritt gibt es ein r', sodass $r = r' + 1$ ist.
+  Für natürliche Zahlen gilt $r' \le 2^{r'} - 1$ und damit auch $r' + 1 \le 2^{r'}$.
+  Es reicht also zu zeigen, dass es mindestens $2^{r'}$ Zeiger in l gibt.
+  Wenn man jetzt l und l' vergleicht, dann lässt sich zeigen, dass bis auf uFL selbst alle Zeiger aus l' auch in l enthalten sind.
+  Denn, da uFL nach ihnen in ihrem Parentpath kommt, sind sie noch nicht der letzte Zeiger, zeigen also nicht auf ihren eigenen Knoten und uFL hat einen höheren Rang.
+  Das bedeutet, l' ist höchstens um einen länger als l.
+  Wenn ich das auf das Ziel anwende, bleibt zu zeigen, dass es mindestens $2^{r'} + 1$ Zeiger in l' gibt.
+  Nach der strikten Rang-Invariante hat l' mindestens $2^r$ Zeiger.
+  Das entspricht $2^{r'+1}$ also $2^{r'}\cdot2$, ist also mindestens so groß wie $2^{r'} + 1$.
 \end{proof}
+
+Außerdem muss ich zeigen, dass die strikte Rang-Invariante von den Funktionen \KruskalinitunionFind und \KruskalupdateunionFind auch eingehalten werden.
 
 \begin{lemma}[\KruskalinitunionFindrankInvariantstrict]\label{KruskalinitunionFindrankInvariantstrict}
   Für die initialisierte Union-Find-Struktur gilt die strikte Rang-Invariante.
@@ -834,10 +857,19 @@ def (.\KruskalunionFindrankInvariantstrict.) {nodeList : List node} (uF : unionF
   Da jeder Zeiger Teil seines eigenen Parentpaths ist, gibt es also einen Zeiger in dessen Parentpath er vorkommt.
 \end{proof}
 
+
+
 \begin{lemma}[\KruskalupdateunionFindrankInvariantstrict]\label{KruskalupdateunionFindrankInvariantstrict}
   Die strikte Rang-Invariante ist in \KruskalupdateunionFind tatsächlich invariant.
 \end{lemma}
-Beweisidee\todo{hier}
+Meine Idee für diesen Beweis war es für einen beliebigen Zeiger uFL die Fälle durchzugehen, ob er einer der ersetzenden Zeiger und wenn ja, welcher, oder einer der anderen Zeiger ist.
+Wenn es der ersetzenden mit kleinerem Rang ist, ändert sich in seiner Liste nur er selbst.
+Wenn es der ersetzenden mit höherem Rang ist, wird seine Liste mit der des anderen kombiniert, ist also doppelt so lang.
+Für alle anderen ändert sich in der Liste gar nichts, da die ersetzten Zeiger nicht Teil ihre Liste waren.
+Diese zeigen schließlich auf ihren eigenen Zeiger, sind also die einzigen Zeiger in ihrem jeweiligen Parentpath.
+
+Mit der strikten Rang-Invariante lässt sich außerdem zeigen, dass die Beschränkung des Ranges durch die Länge der Knoten-Liste mehr als großzügig ist,
+da die eigentliche Grenze beim Logarithmus dessen liegt.
 
 \begin{lemma}[\Kruskalmaxrank]\label{Kruskalmaxrank}
   Wenn die strikte Rang-Invariante gilt, dann ist der echte maximale Rang höchstens $\log_2|V|$.

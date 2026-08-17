@@ -2029,6 +2029,9 @@ theorem unionFind.rankInvariant_of_rankInvariant_strict {nodeList : List node} {
     have h : rank' + 1 ≤ 2^rank'-1+1 := by
       simp [le_two_pow_minus_one rank']
     apply le_trans h
+    have h : (2 ^ rank' - 1) + 1 = 2 ^ rank' := by
+      grind
+    simp only [h]
     have h_length_lt : (List.filter (fun x => if h_x_in : x ∈ uF.linkList then decide (uFL ∈ get_parent_path h_x_in) else decide False) uF.linkList).length ≤ (uFL :: List.filter (fun x => decide (x.rank < uFL.rank) && !decide (x.nodeId = x.ccId)) uF.linkList).length := by
       apply nodup_length_le_length_all_mem (by simp [List.Nodup.filter, uF.nodup])
       intro x h_x_in_filter
@@ -2049,9 +2052,7 @@ theorem unionFind.rankInvariant_of_rankInvariant_strict {nodeList : List node} {
     apply le_trans ?_ h_length_lt
     apply le_trans ?_ (h_rankInvariant uFL h_in)
     simp [h_rank']
-    have h : (2 ^ rank' - 1) + 1 = 2 ^ rank' := by
-      grind
-    simp [h, pow_add]
+    simp [pow_add]
 
 theorem init_unionFind.rankInvariant_strict {nodeList : List node} (h_nodup : nodeList.Nodup) : (init_unionFind nodeList h_nodup).rankInvariant_strict := by
   simp [unionFind.rankInvariant_strict, init_unionFind, init_unionFind.linkList]

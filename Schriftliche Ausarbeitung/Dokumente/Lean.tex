@@ -50,7 +50,7 @@ def myType : Type := Nat × String
 def f (x : Nat) : Nat := 3*x^2 - 4*x + 5
 
 structure edge : Type where
-  mk ::
+  make_edge ::
   node1 : Nat
   node2 : Nat
   nodesLt : node1 < node2
@@ -238,15 +238,30 @@ Das sieht dann zum Beispiel so aus:
 -- Kontext vorher
 id : Nat
 nodeList : List node
-h : ∃ x ∈ nodeList, x.id = id
+h_ex : ∃ x ∈ nodeList, x.id = id
 --
-rcases h with ⟨x, h_x_in, h_eq⟩
+rcases h_ex with ⟨x, h_x_in, h_x_eq⟩
 -- Kontext danach
 id : Nat
 nodeList : List node
 x : node
 h_x_in : x ∈ nodeList
-h_eq : x.id = id
+h_x_eq : x.id = id
+--
+\end{lstlisting}
+
+Ein Beispiel für das Zerlegen von $\land$-Aussagen wäre das Folgende:
+
+\begin{lstlisting}
+-- Kontext vorher
+a b c : Nat
+h_and : a = b ∧ a ≠ c
+--
+rcases h_and with ⟨h_a_eq, h_a_ne⟩
+-- Kontext danach
+a b c : Nat
+h_a_eq : a = b
+h_a_ne : a ≠ c
 --
 \end{lstlisting}
 
@@ -277,7 +292,7 @@ let x : α := List.choose _ _ hp
 \end{lstlisting}
 
 Außerdem gibt es da noch die \textbf{sorry} Taktik, die jedes Ziel sofort schließt.
-Diese ist allerdings nur zum Vorläufig verhindern von Fehlermeldungen gedacht.
+Diese ist allerdings nur zum Vorläufigen verhindern von Fehlermeldungen gedacht.
 Man kann sie zum Beispiel verwenden, wenn man für einen Beweis ein Lemma benötigt und dieses kurz definiert,
 aber noch nicht beweisen möchte, da man erst den ursprünglichen Beweis beenden möchte,
 oder wenn man ein Lemma benutzen möchte, das einen Existenznachweis verlangt, den man gerade nicht zur Hand hat.
