@@ -56,6 +56,10 @@ structure edge : Type where
   nodesLt : node1 < node2
 \end{lstlisting}
 
+Beim letzten Beispiel ist mit nodesLt die Bedingung, dass der kleiner knoten zuerst genannt wird, direkt in den Typ mit eingebaut.
+Es ist also nicht möglich eine zwischen den Knoten 1 und 3 Kanten in zwei verschiedene Richtungen zu definieren.
+Es handelt sich hierbei also um eine Kante für einen ungerichteten Graphen.
+
 Wenn man möchte, kann man vor den Attributen noch den Namen des Konstruktors angeben, gefolgt von zwei Doppelpunkten.
 Tut man das nicht, dann ist der standardmäßige Name mk.
 Um nun ein Element des Typs zu erzeugen, hat man nun verschiedene Möglichkeiten.
@@ -63,7 +67,7 @@ Man kann den Konstruktor mit seinem Namen aufrufen, man kann den Konstruktor ano
 oder man kann mit geschweiften Klammern den einzelnen Feldern über ihren Namen Werte zuweisen, anstatt über ihre Position.
 
 \begin{lstlisting}
-edge.mk 1 3 (by omega) : edge
+edge.make_edge 1 3 (by omega) : edge
 ⟨1, 3, (by omega)⟩ : edge
 { node1 := 1, node2 := 3, nodesLt := (by omega)} : edge
 \end{lstlisting}
@@ -387,7 +391,7 @@ Tail.sumHelper 6 []
 Es sind also nie mehr als zwei Aufrufe (+ und Tail.sumHelper) auf dem Stack.
 
 \subsection{Anwendung}
-\todo{Bei\-spie\-le}% Anmerkung Tantow: Ein paar Beispiele wären hilfreich. Such dir bei DBLP z.B. aus ITP 2025/2024 etwas aus
+% Anmerkung Tantow: Ein paar Beispiele wären hilfreich. Such dir bei DBLP z.B. aus ITP 2025/2024 etwas aus
 Die häufigsten Anwendungen von Lean sind zum einen maschinenlesbare Formalisierungen von Mathematik und zum anderen die Validierung von Software.
 
 Es bringt diverse Vorteile, mathematische Aussagen und Beweise zu formalisieren.

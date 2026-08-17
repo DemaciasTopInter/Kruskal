@@ -1,3 +1,8 @@
+import Algolean.QueryModel
+-- import Mathlib.Algebra.Order.Monoid.Prod
+
+open Algolean Algorithms
+
 #check "Hello World!"
 #check 16
 def t : Fin 32 := { val := 16, isLt := by omega }
@@ -15,12 +20,12 @@ def myType : Type := Nat × String
 def f (x : Nat) : Nat := 3*x^2 - 4*x + 5
 
 structure edge : Type where
-  mk ::
+  make_edge ::
   node1 : Nat
   node2 : Nat
   nodesLt : node1 < node2
 
-#check edge.mk
+#check edge.make_edge
 
 class Group (α : Type) (add : α → α → α) where
   e : α
@@ -76,3 +81,55 @@ def isZero' : Nat → Bool
 #eval isZero' t
 
 #check Nat.gcd
+
+def List.search {α : Type} [BEq α] (l : List α) (x : α) : Bool :=
+  match l with
+  | [] => false
+  | head :: tail =>
+    if head == x
+    then true
+    else search tail x
+
+inductive ListSearch (α : Type) : Type → Type _ where
+  | compare (x y : α) : ListSearch α Bool
+
+def ListSearch.natCost {α : Type} [BEq α] : Model (ListSearch α) ℕ where
+  evalQuery
+    | compare x y => x == y
+  cost _ := 1
+
+def listLinearSearch {α : Type} (l : List α) (x : α) : Prog (ListSearch α) Bool := do
+  match l with
+  | [] => return false
+  | head :: tail =>
+    let cmp : Bool ← ListSearch.compare head x
+    if cmp then
+      return true
+    else
+      listLinearSearch tail x
+
+lemma listLinearSearch_eval {α : Type} [BEq α] (l : List α) (x : α) :
+    (listLinearSearch l x).eval ListSearch.natCost = l.search x := by
+  fun_induction l.search x with
+  | case1 =>
+    simp [listLinearSearch]
+  | case2 head tail h =>
+    simp [listLinearSearch, ListSearch.natCost]
+    simp [h]
+  | case3 head tail h ih =>
+    unfold listLinearSearch
+    simp [ListSearch.natCost] at ⊢ ih
+    simp [h]
+    rw [← ih]
+
+lemma listLinearSearchM_time_complexity_upper_bound {α : Type} [BEq α] (l : List α) (x : α) :
+    (listLinearSearch l x).time ListSearch.natCost ≤ l.length := by
+  fun_induction l.search x with
+  | case1 =>
+    simp [listLinearSearch]
+  | case2 head tail h =>
+    simp [listLinearSearch, ListSearch.natCost]
+    simp [h]
+  | case3 head tail h ih =>
+    simp [listLinearSearch, ListSearch.natCost, h] at ⊢ ih
+    lia

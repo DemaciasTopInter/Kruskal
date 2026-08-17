@@ -100,23 +100,34 @@ Da der andere Spannbaum besser ist, muss es dabei zu einer Kante kommen, die ein
 Das kann aber nicht passieren, da in dem Fall die günstigere Kante im Algorithmus zuerst drangekommen wäre und da sie ohne die teure Kante keinen Kreis schließt wäre sie aufgenommen worden.
 
 \subsection{Die Union-Find-Struktur}
-Die Union-Find-Struktur bietet eine effiziente Möglichkeit, um festzustellen, ob zwei Knoten in derselben Zusammenhangskomponente liegen, also verbunden sind.
-Dafür merkt sie sich für jeden Knoten einen Zeiger, der auf die jeweilige Zusammenhangskomponente zeigt, welche wiederum durch einen ihrer Knoten repräsentiert wird.
+Union-Find ist eigentlich der Name der Problemstellung.
+Also die Verwaltung von Partition einer Menge, in diesem Fall Zusammenhangskomponenten, indem folgende Funktionen bereitgestellt werden:
+\begin{itemize}
+  \item \textbf{Init}, mit der die anfängliche Partitionierung erstellt wird.
+  \item \textbf{Union}, mit der zwei Teilmengen zu einer zusammengeführt werden.
+  \item \textbf{Find}, die für ein Element die Teilmenge zurückgibt, in der es sich befindet.
+\end{itemize}
 
-Die Abfrage, in welcher Zusammenhangskomponente sich ein Knoten befindet (\textbf{Find}), wird rekursiv wie folgt beantwortet: 
+Was ich im Folgenden als Union-Find-Struktur bezeichne, ist eigentlich eine mögliche Variante, wie Union-Find gelöst wird, nämlich Union-by-Rank.
+Diese bietet eine effiziente Möglichkeit, um festzustellen, ob zwei Knoten in derselben Zusammenhangskomponente liegen, also verbunden sind.
+Dafür wird jede Zusammenhangskomponente durch einen ihrer Knoten repräsentiert.
+Die Struktur merkt sich für jeden Knoten einen Zeiger, der auf einen Knoten in seiner Zusammenhangskomponente zeigt.
+Dabei zeigen alle direkt oder indirekt auf den Repräsentanten und dieser dementsprechend auf sich selbst.
+
+Die Abfrage, in welcher Zusammenhangskomponente sich ein Knoten befindet (Find), wird rekursiv wie folgt beantwortet: 
 Zeigt der Knoten auf sich selbst, wird er als Repräsentant zurückgegeben.
 Falls nicht, wird der Knoten, auf den er zeigt abgefragt und dessen Ergebnis zurückgegeben.
 
 Eine Kante erzeugt genau dann keinen Kreis, wenn ihre beiden Knoten noch nicht verbunden sind, also in verschiedenen Zusammenhangskomponenten sind.
 
-Am Anfang, wenn die Union-Find-Struktur initialisiert wird, ist die ErgebnisKantenListe leer.
+Am Anfang, wenn die Union-Find-Struktur initialisiert (Init) wird, ist die ErgebnisKantenListe leer.
 Das bedeutet es ist noch kein Knoten verbunden, also ist jeder Knoten der Repräsentant seiner eigenen kleinen Zusammenhangskomponente, in der nur er selbst ist.
 Es zeigt also jeder auf sich selbst.
 Ein Beispiel dafür sieht man in Abbildung \ref{UnionFindInit}.
 
 \input{Grafiken/UnionFindInit}
 
-Wenn jetzt eine Kante hinzugefügt wird, dann verbindet sie die beiden Zusammenhangskomponenten ihrer Knoten zu einer (\textbf{Union}).
+Wenn jetzt eine Kante hinzugefügt wird, dann verbindet sie die beiden Zusammenhangskomponenten ihrer Knoten zu einer (Union).
 Dafür zeigt nun der Zeiger des Repräsentanten der einen Zusammenhangskomponente auf den Repräsentanten der anderen.
 Siehe Abbildung \ref{UnionFindErweiterung1} bis \ref{UnionFindErweiterung3}.
 

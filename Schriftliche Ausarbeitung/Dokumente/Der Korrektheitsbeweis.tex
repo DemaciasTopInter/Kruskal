@@ -284,9 +284,9 @@ theorem kruskal_helper.edgesSoFar_append
 
 
 
-\begin{lemma}[\Kruskalkruskalhelpernotconinvariantappend]\todo{schöner Satz}
-  Wenn es einen Knoten z gibt, der im ersten Teil der Kanten-Liste bei keiner Kante als verbundener Knoten vorkommt und dessen Zeiger in der aktuellen Union-Find-Struktur uF der einzige ist,
-  der auf ihn zeigt, dann gibt es eine weitere Union-Find-Struktur uF', in der immer noch sein eigener Zeiger der einzige ist, der auf z zeigt
+\begin{lemma}[\Kruskalkruskalhelpernotconinvariantappend]
+  Sei z ein Knoten, der im ersten Teil der Kanten-Liste bei keiner Kante als verbundener Knoten vorkommt und dessen Zeiger in der aktuellen Union-Find-Struktur uF der einzige ist, der auf ihn zeigt.
+  Dann gibt es eine weitere Union-Find-Struktur uF', in der immer noch sein eigener Zeiger der einzige ist, der auf z zeigt
   und mit der der Aufruf von \Kruskalkruskalhelper mit der ganzen Kanten-Liste und uF gleich ist, zu einem Aufruf mit dem zweiten Teil der Kanten-Liste und uF',
   bei dem das Ergebnis eines Aufrufs mit leerer ErgebnisKantenListe, dem ersten Teil der Kanten-Liste und uF, der an die ErgebnisKantenListe vorne angehängt wurde.
 

@@ -34,25 +34,36 @@ Was außerdem sehr für dieses Framework spricht, ist wie einfach man bestimmen 
 Man möchte in der theoretischen Informatik ja nicht immer die bloße Anzahl der aufrufe einer Funktion zählen.
 Je nachdem, was einen interessiert, kann man beispielsweise arithmetische Operationen ignorieren, als ein Aufruf zählen oder einen Wert anhand ihrer bitweisen Komplexität zuweisen.
 
-Die für meine Arbeit am relevantesten Elemente von Algolean erkläre ich im Folgenden anhand des Beispiels listLinearSearch aus dem Algolean Repository von Shreyas Srinivas und Eric Wieser:
+Die für meine Arbeit am relevantesten Elemente von Algolean erkläre ich im Folgenden anhand des Beispiels listLinearSearch aus dem Algolean Repository von Shreyas Srinivas und Eric Wieser,
+welches ich etwas angepasst habe, damit es anschaulicher wird.
+Es zeigt die Laufzeitanalyse für die lineare Suche.
+\begin{lstlisting}
+def List.search {α : Type} [BEq α] (l : List α) (x : α) : Bool :=
+  match l with
+  | [] => false
+  | head :: tail =>
+    if head == x
+    then true
+    else search tail x
+\end{lstlisting}
 
 Die grundlegenden Funktionen, die man zählen möchte, werden in einer \textbf{Query} deklariert.
 Eine Query ist eine induktive Funktion von Type nach Type.
 Jede grundlegende Funktion bekommt dabei einen eigenen Konstruktor und hat als Typ die Query angewendet auf den Rückgabetyp der Funktion.
 Im Beispiel hat die Query, ListSearch $\alpha$ nur einen Konstruktor, nämlich den, für das Vergleichen von einem Element a und einer Liste l und da der Rückgabetyp eines Vergleich Bool ist, ist der Typ des Konstruktors ListSearch $\alpha$ von Bool.
 \begin{lstlisting}
-inductive ListSearch (α : Type*) : Type → Type _ where
-  | compare (a : List α) (val : α) : ListSearch α Bool
+inductive ListSearch (α : Type) : Type → Type _ where
+  | compare (x y : α) : ListSearch α Bool
 \end{lstlisting}
 
 Ein Modell (engl. \textbf{Model}) einer Query definiert dann, wie sich die Funktionen verhalten und was die jeweiligen Kosten sind.
 Dabei ist es möglich mehrere verschiedene Modelle für dieselbe Query zu definieren.
 Der Typ eines Modells für eine Query Q und einen Kostentyp c ist dann Model Q c.
-Im Beispiel vergleicht die Funktion, ob es sich um das erste Element der Liste handelt und die Kosten für einen solchen Vergleich sind konstant 1.
+Im Beispiel vergleicht die Funktion, ob zwei Elemente gleich sind und die Kosten für einen solchen Vergleich sind konstant 1.
 \begin{lstlisting}
-def ListSearch.natCost [BEq α] : Model (ListSearch α) ℕ where
+def ListSearch.natCost {α : Type} [BEq α] : Model (ListSearch α) ℕ where
   evalQuery
-    | .compare l x => some x == l.head?
+    | compare x y => x == y
   cost _ := 1
 \end{lstlisting}
 
@@ -69,15 +80,15 @@ Wenn man also keine Queryaufrufe verwendet, wird man als Ergebnis bekommen, dass
 Im Beispiel ist der Algorithmus die lineare Suche.
 Er iteriert also über die Liste und prüft in jedem Schritt mit der Vergleichsfunktion der Query, ob das aktuelle Element dem gesuchten entspricht.
 \begin{lstlisting}
-def listLinearSearch (l : List α) (x : α) : Prog (ListSearch α) Bool := do
+def listLinearSearch {α : Type} (l : List α) (x : α) : Prog (ListSearch α) Bool := do
   match l with
   | [] => return false
-  | l :: ls =>
-    let cmp : Bool ← compare (l :: ls) x
+  | head :: tail =>
+    let cmp : Bool ← ListSearch.compare head x
     if cmp then
       return true
     else
-      listLinearSearch ls x
+      listLinearSearch tail x
 \end{lstlisting}
 
 Wenn man einen Algorithmus jetzt ausführen will, oder seine Laufzeit berechnen, dann kann man sich nun ein zur Query passendes Modell wählen und den Algorithmus für dieses Modell auswerten.
@@ -86,48 +97,56 @@ Da der ganze Aufbau mit Query, Modell und Monade einen großen Overhead bedeuten
 dass man zu dem Algorithmus als Prog den Algorithmus noch ein weiteres Mal als normale Lean Funktion implementiert,
 und anschließend zeigt, dass für das entsprechende Modell die beiden äquivalent sind.
 Dadurch ist es möglich, die ganzen Beweise zur Korrektheit ohne diesen Overhead zu führen.
-Im Beispiel wird als erstes gezeigt, dass die als Prog geschriebene lineare Suche äquivalent zur bereits existierenden Funktion List.contains ist.
-Da List.contains als abbrev von List.elem definiert ist, wird die Aussage hier per Induktion über die Funktion List.elem gezeigt.
-Sie ist allerdings so kompakt geschrieben, dass sich Basisfall, Induktionsschritt und Induktionshypothese nicht erkennen lassen,
-was funktioniert, da List.elem dem Algorithmus im Aufbau sehr stark ähnelt.
-Das Lemma wird dabei mit simp markiert, sodass in den folgenden Lemmata bei der Benutzung von simp eine automatische Ersetzung vorgenommen wird.
-Anschließend wird gezeigt, dass der Algorithmus korrekt funktioniert, also true zurückgibt, falls das Element in der Liste enthalten ist, und false, falls nicht.
-Da beides für List.contains bereits bekannt ist, werden diese Lemmata direkt von simp gelöst.
+Im Beispiel wird als erstes gezeigt, dass die als Prog geschriebene lineare Suche äquivalent zur Funktion List.search ist.
+Die Aussage hier per Induktion über die Funktion List.search gezeigt.
+Dabei gibt es zwei Basisfälle und einen Induktionsschritt.
+Im ersten Basisfall ist die Liste leer, was in beiden Funktionen false bewirkt.
+Im zweiten Basisfall ist der Kopf der Liste das gesuchte Element.
+Die compare Funktion gibt nach der Definition im Modell also true aus und damit auch die Funktion listLinearSearch.
+Das passt also auch zu List.search.
+Im Induktionsschritt sind der Kopf der Liste und das gesuchte Element verschieden.
+Es rufen sich also beide Funktionen rekursiv auf.
+Damit entspricht das Ziel genau der Induktionshypothese.
 \begin{lstlisting}
-@[simp, grind =]
-lemma listLinearSearch_eval [BEq α] (l : List α) (x : α) :
-    (listLinearSearch l x).eval ListSearch.natCost = l.contains x := by
-  fun_induction l.elem x with simp_all [listLinearSearch]
-
-lemma listLinearSearchM_correct_true [BEq α] [LawfulBEq α] (l : List α)
-    {x : α} (x_mem_l : x ∈ l) : (listLinearSearch l x).eval ListSearch.natCost = true := by
-  simp [x_mem_l]
-
-lemma listLinearSearchM_correct_false [BEq α] [LawfulBEq α] (l : List α)
-    {x : α} (x_mem_l : x ∉ l) : (listLinearSearch l x).eval ListSearch.natCost = false := by
-  simp [x_mem_l]
+lemma listLinearSearch_eval {α : Type} [BEq α] (l : List α) (x : α) :
+    (listLinearSearch l x).eval ListSearch.natCost = l.search x := by
+  fun_induction l.search x with
+  | case1 =>
+    simp [listLinearSearch]
+  | case2 head tail h =>
+    simp [listLinearSearch, ListSearch.natCost]
+    simp [h]
+  | case3 head tail h ih =>
+    unfold listLinearSearch
+    simp [ListSearch.natCost] at ⊢ ih
+    simp [h]
+    rw [← ih]
 \end{lstlisting}
 
-Im Beweis, dass die Laufzeit maximal der Länge der Liste entspricht, ist der Aufbau der Induktion schon besser zu erkennen.
-Im ersten Fall ist die Liste leer und die Laufzeit 0, im zweiten Fall wird das Element gefunden.
-Es wird also ein Vergleich angestellt, aber die Liste enthält auch mindestens ein Element
-und im dritten und rekursiven Fall wird das Element nicht gefunden.
+Anschließend wird gezeigt, dass die Laufzeit maximal der Länge der Liste entspricht, ebenfalls per Induktion.
+Im ersten Fall ist die Liste leer und die Laufzeit 0, da compare nie aufgerufen wird.
+Im zweiten Fall wird das Element gefunden.
+Es wird also ein Vergleich angestellt, aber die Liste enthält auch mindestens ein Element.
+Im dritten Fall, also dem Induktionsschritt wird das Element nicht gefunden.
 Nach dem Vergleich wird also weiter gesucht.
 In dem Fall ist die Laufzeit dann 1 + die Zeit für die Suche über die Restliste, aber die Länge der Liste ist auch 1 + die Länge der Restliste.
 Wenn man also auf beiden Seiten 1 abzieht, entspricht das der Induktionshypothese.
 \begin{lstlisting}
-lemma listLinearSearchM_time_complexity_upper_bound [BEq α] (l : List α) (x : α) :
+lemma listLinearSearchM_time_complexity_upper_bound {α : Type} [BEq α] (l : List α) (x : α) :
     (listLinearSearch l x).time ListSearch.natCost ≤ l.length := by
-  fun_induction l.elem x with
-  | case1 => simp [listLinearSearch]
-  | case2 => simp_all [listLinearSearch]
-  | case3 =>
+  fun_induction l.search x with
+  | case1 =>
     simp [listLinearSearch]
+  | case2 head tail h =>
+    simp [listLinearSearch, ListSearch.natCost]
+    simp [h]
+  | case3 head tail h ih =>
+    simp [listLinearSearch, ListSearch.natCost, h] at ⊢ ih
     lia
 \end{lstlisting}
 
 Ein weiteres Konzept ist die Reduktion (\textbf{Reduction}).
-Diese bietet die Möglichkeit, für zwei Querys Q$_1$ und Q$_2$ Programme, die für Query Q$_1$ geschrieben wurden, als Programme für Q$_2$ zu betrachten,
+Diese bietet, für zwei Querys Q$_1$ und Q$_2$, die Möglichkeit Programme, die für Query Q$_1$ geschrieben wurden, als Programme für Q$_2$ zu betrachten,
 indem sie jede Funktion aus Q$_1$ als ein für Q$_2$ geschriebenes Programm definiert.
 Hierfür gibt es allerdings noch kein Beispiel, da Reduktionen im Framework zwar schon definiert sind, aber nach meinem Kenntnisstand, ich der erste bin, der sie in einem Projekt verwendet.
 

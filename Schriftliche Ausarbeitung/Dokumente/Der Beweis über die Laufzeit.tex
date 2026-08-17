@@ -1,4 +1,4 @@
-\section{Der Beweis über die Laufzeit}\todo{section Laufzeit}
+\section{Der Beweis über die Laufzeit}
 Was ich zeigen möchte, ist, dass die Laufzeit $O(E\log_2|V|)$ ist.
 Besser kann sie nicht werden, da bereits das Sortieren der Kanten-Liste am Anfang eine Laufzeit von $O(E\log_2|E|)$ hat, was dasselbe ist wie $O(E\log_2|V|)$, da $|E| \le |V|^2$.
 Ich zeige also, dass ich Union und Find $O(|E|)$ Mal aufrufe und diese wiederum eine Laufzeit von höchsten $O(\log|V|)$ haben.
@@ -151,7 +151,8 @@ Damit ist das Theorem gezeigt.
 
 Wie gesagt, habe ich mich an die Laufzeit herangetastet.
 Bei meinem zweiten Modell war mein Gedanke, dass ich das Updaten nur zählen möchte, wenn sich dadurch die Zeiger-Liste auch tatsächlich verändert.
-Abgesehen davon ist es gleich.
+Damit kann ich zeigen, dass Union nur $|V|$ Mal gezählt wird.
+Das spielt zwar im Zusammenhang der gesamten Laufzeit keine signifikante Rolle, aber ich wollte es trotzdem einmal gezeigt haben.
 
 \begin{definition}[\Kruskalkruskalmodeltwo]
   Das Modell definiert Find als Kombination von \KruskalconnectedcomponentofunionFindofid und Lemma \ref{KruskalexistunionFindLinkofconnectedcomponentofunionFindofid} mit Kosten (1, 0)
@@ -234,10 +235,11 @@ Jetzt nutze ich aus, dass ich Union und Find separat zähle, und zeige die Laufz
   Damit passt es dann zur Hypothese und ich kann die Induktionshypothese anwenden.
 \end{proof}
 
-In den folgenden beiden Lemmata benutze ich für $|E|$ die Länge der Kanten-Liste, aber für $|V|$ die Anzahl der Knoten im SimpleGraph.\todo{warum}
+In den folgenden drei Lemmata benutze ich für $|E|$ die Länge der Kanten-Liste, aber für $|V|$ die Anzahl der Knoten im SimpleGraph.
 
-\begin{lemma}[\Kruskalkruskalhelpertimetwo]
-  \Kruskalkruskalhelperprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens $2|E|$ Mal auf und Union höchstens $|V|$ Mal.
+\begin{lemma}[\Kruskalkruskalhelpertimetwo]\label{Kruskalkruskalhelpertimetwo}
+  Wenn die Ergebnisliste des Algorithmus höchstens so viele Kanten hat, wie der daraus entstehende Graph Knoten, 
+  dann ruft \Kruskalkruskalhelperprog im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens $2|E|$ Mal auf und Union höchstens $|V|$ Mal.
 \end{lemma}
 \begin{proof}
   Sei n die Anzahl der Knoten, also die ID des höchsten Knotens plus eins.
@@ -250,18 +252,27 @@ In den folgenden beiden Lemmata benutze ich für $|E|$ die Länge der Kanten-Lis
   Ich kann also auf beiden Seiten zwei abziehen, dann greift die Induktionshypothese
 \end{proof}
 
+Vor dem nächsten Schritt brauche ich noch ein Hilfslemma.
 
+\begin{lemma}[\SimpleGraphIsAcycliccardedgeFinsetle]
+  Ein azyklischer Graph hat mindestens einen Knoten mehr als Kanten.
+\end{lemma}
+\begin{proof}
+  Der Beweis wurde mir von Johannes Tantow gezeigt und basiert darauf, dass die Aussage in Mathlib bereits für Graphen, die azyklisch und zusammenhängend sind, gezeigt ist.
+  Außerdem ist gezeigt, dass es für jeden azyklischen Graphen G, es einen azyklisch zusammenhängenden Graphen H gibt, sodass G ein Subgraph von H ist und ein Subgraph hat höchstens gleich viele Kanten.
+\end{proof}
 
 \begin{lemma}[\Kruskalkruskaltimetwo]
   \Kruskalkruskalprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens $2|E|$ Mal auf und Union höchstens $|V|$ Mal.
 \end{lemma}
 \begin{proof}
-  Der Beweis folgt direkt aus dem vorherigen Lemma.
+  Aus dem vorherigen Lemma lässt sich zeigen, dass die Ergebnisliste des Algorithmus höchstens so viele Kanten hat, wie der daraus entstehende Graph Knoten.
+  Der Beweis folgt direkt aus dem Lemma \ref{Kruskalkruskalhelpertimetwo}.
 \end{proof}
 
 
 
-\subsection{Die tatsächliche Laufzeit}\todo{sub\-section 3 und find}
+\subsection{Die tatsächliche Laufzeit}
 
 Bisher zähle ich die Aufrufe von Union und Find und verwende für beide den konstanten Wert eins.
 Allerdings wird bei Union nur einmal etwas ersetzt, während Find sich immer wieder rekursiv selbst aufruft.
@@ -272,7 +283,7 @@ Ich habe mir überlegt, dass ich mir Beweisarbeit spare, wenn ich die strikte Ra
 Dafür brauchte ich eine neue Query, die garantiert, dass das Ergebnis von Union die strikte Rang-Invariante einhält.
 
 \begin{definition}[\KruskalunionFindstrict]
-  Die Union-Find-Struktur mit strikter Rang-Invariante.
+  Die Union-Find-Struktur mit strikter Rang- Invariante.
 \end{definition}
 \begin{lstlisting}
 structure (.\KruskalunionFindstrict.) (nodeList : List node) : Type where
@@ -387,22 +398,24 @@ Auch die Beweise zur Laufzeit entsprechen größten Teils denen von Modell 2.
 \end{lemma}
 
 In den folgenden beiden Lemmata benutze ich im Ausdruck für Find für $|E|$ die Länge der Kanten-Liste und für $|V|$ die Länge der Knoten-Liste,
-aber im Ausdruck für Union benutze ich für $|V|$ die Anzahl der Knoten im SimpleGraph.\todo{warum}
+aber im Ausdruck für Union benutze ich für $|V|$ die Anzahl der Knoten im SimpleGraph.
+Das liegt daran, dass ich im Späteren für den einen Ausdruck die Begrenzung des Ranges nach Lemma \ref{Kruskalmaxrank} verwende und für den anderen mich am Beweis für Modell 2 orientiere.
 
 Der Unterschied hier zu den Lemmata von Modell 2 ist bei Find der konstante Faktor $\log_2|V|$.
 Ich ziehe also zum Beispiel an der entsprechenden Stelle nicht auf beiden Seiten zwei ab, sondern $2\log_2|V|$.
 Abgesehen davon sind aber auch diese Lemmata gleich.
 
 \begin{lemma}[\Kruskalkruskalhelpertimethree]
-  \Kruskalkruskalhelperprogstrict zählt im Model \Kruskalkruskalmodelthree beim Ausführen für Find höchstens $2E\log_2|V|$ auf und für Union höchstens $|V|$.
+  Wenn die Ergebnisliste des Algorithmus höchstens so viele Kanten hat, wie der daraus entstehende Graph Knoten, 
+  dann zählt \Kruskalkruskalhelperprogstrict im Model \Kruskalkruskalmodelthree beim Ausführen für Find höchstens $2E\log_2|V|$ auf und für Union höchstens $|V|$.
 \end{lemma}
 \begin{lemma}[\Kruskalkruskaltimethree]
   \Kruskalkruskalprogstrict zählt im Model \Kruskalkruskalmodelthree beim Ausführen für Find höchstens $2E\log_2|V|$ auf und für Union höchstens $|V|$.
 \end{lemma}
 
-Damit ist die Laufzeit, die ich zeigen wollte, gezeigt.
+Damit ist die Laufzeit, die ich zeigen wollte, nachgewiesen.
 Was noch fehlt, ist der Beweis, dass die Laufzeit von Find wirklich höchstens $\log_2|V|$ ist.
-Dafür möchte ich nun zählen, wie oft \KruskalconnectedcomponentofunionFindofunionFindLink rekursiv aufgerufen wird\todo{Kom\-ma?} beziehungsweise, wie oft nach dem Parent gesucht wird.
+Dafür möchte ich nun zählen, wie oft \KruskalconnectedcomponentofunionFindofunionFindLink rekursiv aufgerufen wird, beziehungsweise, wie oft nach dem Parent gesucht wird.
 Ich nehme also statt Find Parent in die Query auf.
 Entsprechend brauche wieder einen Rückgabetyp, da es für die Funktion wichtig ist, zu wissen, dass der Parent in der Zeiger-Liste ist und dass sein Rang höher ist.
 Der höhere Rang ist wichtig, damit die Funktion terminiert.

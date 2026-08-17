@@ -663,7 +663,7 @@ theorem length_of_filter_mem [DecidableEq α] (h_mem : a ∈ l) : l.length ≥ 1
       simp
       simp [h_eq]
       simp [ne_comm.mp h_eq] at h_mem
-      simp [h_mem, Nat.add_comm] at ih
+      simp [h_mem] at ih
       rw [Nat.add_comm] at ih
       exact ih
 
