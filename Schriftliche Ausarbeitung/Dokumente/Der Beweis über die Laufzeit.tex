@@ -1,7 +1,7 @@
 \section{Der Beweis über die Laufzeit}
 Was ich zeigen möchte, ist, dass die Laufzeit $O(E\log_2|V|)$ ist.
 Besser kann sie nicht werden, da bereits das Sortieren der Kanten-Liste am Anfang eine Laufzeit von $O(E\log_2|E|)$ hat, was dasselbe ist wie $O(E\log_2|V|)$, da $|E| \le |V|^2$.
-Ich zeige also, dass ich Union und Find $O(|E|)$ Mal aufrufe und diese wiederum eine Laufzeit von höchsten $O(\log|V|)$ haben.
+Ich zeige also, dass ich Union und Find $O(|E|)$-mal aufrufe und diese wiederum eine Laufzeit von höchsten $O(\log|V|)$ haben.
 
 Um jetzt den Aussagen über die Laufzeit zu treffen, muss ich, wie in Kapitel \ref{Algolean} beschrieben, den Algorithmus ein weiteres Mal definieren und dieses Mal als Prog.
 
@@ -151,7 +151,7 @@ Damit ist das Theorem gezeigt.
 
 Wie gesagt, habe ich mich an die Laufzeit herangetastet.
 Bei meinem zweiten Modell war mein Gedanke, dass ich das Updaten nur zählen möchte, wenn sich dadurch die Zeiger-Liste auch tatsächlich verändert.
-Damit kann ich zeigen, dass Union nur $|V|$ Mal gezählt wird.
+Damit kann ich zeigen, dass Union nur $|V|$-mal gezählt wird.
 Das spielt zwar im Zusammenhang der gesamten Laufzeit keine signifikante Rolle, aber ich wollte es trotzdem einmal gezeigt haben.
 
 \begin{definition}[\Kruskalkruskalmodeltwo]
@@ -263,7 +263,7 @@ Vor dem nächsten Schritt brauche ich noch ein Hilfslemma.
 \end{proof}
 
 \begin{lemma}[\Kruskalkruskaltimetwo]
-  \Kruskalkruskalprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens $2|E|$ Mal auf und Union höchstens $|V|$ Mal.
+  \Kruskalkruskalprog ruft im Model \Kruskalkruskalmodeltwo beim Ausführen Find höchstens $2|E|$-mal auf und Union höchstens $|V|$-mal.
 \end{lemma}
 \begin{proof}
   Aus dem vorherigen Lemma lässt sich zeigen, dass die Ergebnisliste des Algorithmus höchstens so viele Kanten hat, wie der daraus entstehende Graph Knoten.
@@ -529,7 +529,7 @@ Ich zeige als Nächstes die Gleichheit und anschließend die Laufzeit.
 
 \begin{lemma}[\KruskalconnectedcomponentofunionFindofunionFindLinkprogtimelog]
   Sei r der Rang eines beliebigen Zeigers uFL und gelte für die Union-Find-Struktur die strikte Rang-Invariante.
-  Dann ruft für uFL \KruskalconnectedcomponentofunionFindofunionFindLinkprog im Model \Kruskalfindmodel beim Ausführen Parent höchstens $\log_2|V| - r$ Mal und Union gar nicht auf.
+  Dann ruft für uFL \KruskalconnectedcomponentofunionFindofunionFindLinkprog im Model \Kruskalfindmodel beim Ausführen Parent höchstens $\log_2|V| - r$-mal und Union gar nicht auf.
   Mit $|V|$ ist dabei die Länge der Knoten-Liste gemeint.
 \end{lemma}
 \begin{proof}
@@ -537,7 +537,7 @@ Ich zeige als Nächstes die Gleichheit und anschließend die Laufzeit.
   Im Basisfall zeigt der Zeiger auf seinen eigenen Knoten und keine der Funktionen wird aufgerufen.
   Im Induktionsschritt wird Parent einmal aufgerufen und für diesen Parent dann rekursiv \KruskalconnectedcomponentofunionFindofunionFindLinkprog.
   Sei s der Rang des Parents.
-  Nach der Induktionshypothese wird Parent in diesem rekursiven Aufruf höchstens $\log_2|V| - r$ Mal aufgerufen.
+  Nach der Induktionshypothese wird Parent in diesem rekursiven Aufruf höchstens $\log_2|V| - r$-mal aufgerufen.
   Dann muss also gezeigt werden, dass $1 + (\log_2|V| - s) \le \log_2|V| - r$ ist.
   Man könnte an dieser Stelle auf die Idee kommen, ist das der Fall, da $s \ge r$ ist, aber das reicht nicht ganz.
   Denn so wie Minus für natürliche Zahlen in Lean definiert ist, gilt für alle Zahlen a und b mit $a \le b$, dass $a - b = 0$.
@@ -548,7 +548,7 @@ Ich zeige als Nächstes die Gleichheit und anschließend die Laufzeit.
 
 \begin{lemma}[\KruskalconnectedcomponentofunionFindofidprogtimelog]\label{KruskalconnectedcomponentofunionFindofidprogtimelog}
   Gilt für die Union-Find-Struktur die strikte Rang-Invariante,
-  dann \KruskalconnectedcomponentofunionFindofidprog ruft im Model \Kruskalfindmodel beim Ausführen Parent höchstens $\log_2|V|$ Mal und Union gar nicht auf.
+  dann \KruskalconnectedcomponentofunionFindofidprog ruft im Model \Kruskalfindmodel beim Ausführen Parent höchstens $\log_2|V|$-mal und Union gar nicht auf.
 \end{lemma}
 \begin{proof}
   Der Beweis folgt direkt aus dem vorherigen Lemma und daraus, dass für jeden Rang r gilt, dass $\log_2|V| - r \le \log_2|V|$.

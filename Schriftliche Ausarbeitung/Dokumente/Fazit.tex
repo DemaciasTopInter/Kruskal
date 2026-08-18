@@ -1,42 +1,97 @@
 \section{Fazit}
 
 Mein Ziel war die Formalisierung des Korrektheits- und Laufzeitbeweises des Algorithmus von Kruskal im Beweisassistenten Lean unter der Benutzung des Algolean Frameworks.
-Das ist mir insgesamt nur zu Teilen gelungen, da die Ausmaße des Projekts meinen zeitlichen Rahmen gesprengt haben.
+Das ist mir insgesamt nur in Teilen gelungen, da die Ausmaße des Projekts meinen zeitlichen Rahmen gesprengt haben.
 
 
 
-In Bezug auf die Laufzeit habe ich verschiedene Versionen des Algorithmus von Kruskal als Funktionen in der Prog Monade des Algolean Frameworks definiert und eine Version als normale Lean Funktion.
-Für diese habe ich gezeigt, dass diese äquivalent sind.
-Weiter habe ich gezeigt, dass im Algorithmus die Aufrufe von Union durch $O(|V|)$ und die Aufrufe von Find durch $O(|E|)$ beschränkt sind.
-Außerdem, dass es in Find zu höchstens $\log_2|V|$ Aufrufen von Parent kommt.
-Darüber habe ich mittels Reduktion die Laufzeit $O(|E|\log_2|V|)$ hergeleitet.
+% In Bezug auf die Laufzeit habe ich verschiedene Versionen des Algorithmus von Kruskal als Funktionen in der Prog Monade des Algolean Frameworks definiert und eine Version als normale Lean Funktion.
+% Für diese habe ich gezeigt, dass diese äquivalent sind.
+% Weiter habe ich gezeigt, dass im Algorithmus die Aufrufe von Union durch $O(|V|)$ und die Aufrufe von Find durch $O(|E|)$ beschränkt sind.
+% Außerdem, dass es in Find zu höchstens $\log_2|V|$ Aufrufen von Parent kommt.
+% Darüber habe ich mittels Reduktion die Laufzeit $O(|E|\log_2|V|)$ hergeleitet.
 
 
 
+% In Bezug auf die Korrektheit habe ich definiert, wie man aus Kanten-Listen Graphen erzeugt und gezeigt, wie man diese vergleicht.
+% Des Weiteren habe ich bewiesen, dass meine Implementierung des Algorithmus einen Subgraphen in Bezug auf seinen Input liefert.
+% Außerdem habe ich einen Großteil des Beweises geliefert, dass das Ergebnis des Algorithmus kreisfrei ist.
+
+% Wofür es leider nicht mehr gereicht hat:
+% \begin{itemize}
+%     \item den vollständigen Beweis der Kreisfreiheit,
+%     \item den Beweis für die Verbundenheit,
+%     \item den Beweis für die Minimalität,
+%     \item den Nachweis, dass die strikte Rang-Invariante auf update\_unionFind invariant ist.
+% \end{itemize}
+
+
+
+% Bei dieser Arbeit habe ich folgende Erkentnisse gewonnene:
+% Der Umfang eines Beweises lässt sich im Vorhinein kaum abschätzen.
+% Wie schon am Anfang von Kapitel \ref{Korrektheitsbeweis} erwähnt, habe ich den Umfang des Korrektheitsbeweis unterschätzt, sodass ich nicht alle Bereiche der ursprünglichen Aufgabenstellung im Zeitrahmen bearbeiten konnte.
+
+% Es ist sehr wichtig, bei der Wahl der Darstellungsform vorauszuplanen und sich bereits Gedanken zu machen, welche Aussagen später darüber getroffen werden sollen.
+% Bei der Definition der Zeiger mit ihrem durch die Länge der Knoten-Liste beschränkten Rang, habe ich zum Beispiel bereits daran gedacht, dass damit gezeigt werden kann, dass die Suche nach der Zusammenhangskomponente terminiert.
+% Ich hätte mir allerdings eine Menge Arbeit erspart, wenn mir zu diesem Zeitpunkt bereits eine Möglichkeit eingefallen wäre, wie es auch ohne die Beschränkung geht.
+% Eine Möglichkeit wäre zum Beispiel, die Beschränktheit zu zeigen, ohne sie in der Struktur zu verankern.
+% Da es eine endliche Liste an Zeigern handelt, gibt es einen, mit dem höchsten Rang.
+% Alle Zeiger sind in ihrem Rang also ohnehin beschränkt, da sie nicht größer sein können, als der höchste Rang.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Im Rahmen dieser Arbeit konnte ich zeigen, dass sich der Algorithmus von Kruskal mit Lean und dem Algolean-Framework detailliert formal analysieren lässt.
+Zunächst habe ich den Algorithmus sowohl als normale Lean-Funktion als auch als Prog implementiert.
+Für die Prog-Variante konnte ich formal nachweisen, dass sie in den verwendeten Modellen dasselbe Ergebnis wie die normale Implementierung liefert.
+Damit konnte ich, die eine Implementierung für den Korrektheitsnachweis und die andere für die Laufzeitanalyse verwenden.
+
+Ein wesentlicher Erfolg der Arbeit ist die Formalisierung der Laufzeitanalyse.
+Zunächst habe ich gezeigt, dass der Algorithmus für eine Kanten-Liste der Länge $|E|$ höchstens $2|E|$-mal Find und höchstens $|V|$-mal Union aufruft.
+Anschließend habe ich mithilfe der strikten Rang-Invariante der Union-Find-Struktur den maximalen Rang eines Zeigers durch $\log_2|V|$ beschränkt.
+Damit konnte ich formal nachweisen, dass die Find-Funktion höchstens logarithmische Kosten verursacht.
+Über eine Reduktion im Algolean-Framework konnten ich diese Ergebnisse schließlich miteinander verbinden und die Laufzeit des Algorithmus mit $O(|E|\log_2|V|)$ herleiten.
+Des Weiteren hat die Formalisierung gezeigt, dass die Wahl geeigneter Datenstrukturen und Definitionen einen erheblichen Einfluss auf den Aufwand späterer Beweise hat.
+Insbesondere sind die Invarianten der Union-Find-Struktur zentral für die Laufzeitanalyse.
+Gleichzeitig wurde deutlich, dass der Umfang eines formalen Beweises im Vorhinein nur schwer abzuschätzen ist.
+Eigenschaften, die sich mathematisch in wenigen Sätzen formulieren lassen, können, wie in Kapitel \ref{Korrektheitsbeweis} erwähnt, in Lean einen erheblichen zusätzlichen Formalisierungsaufwand erfordern.
+Die Arbeit hat mir geholfen praktische Erkenntnisse darüber zu gewinnen, wie algorithmische Formalisierungen in Lean strukturiert werden sollten und was dabei zu beachten ist.
+
+Den Korrektheitsnachweis konnte ich hingegen nicht vollständig abschließen.
 In Bezug auf die Korrektheit habe ich definiert, wie man aus Kanten-Listen Graphen erzeugt und gezeigt, wie man diese vergleicht.
 Des Weiteren habe ich bewiesen, dass meine Implementierung des Algorithmus einen Subgraphen in Bezug auf seinen Input liefert.
 Außerdem habe ich einen Großteil des Beweises geliefert, dass das Ergebnis des Algorithmus kreisfrei ist.
+Dies ist mir leider nicht komplett gelungen.
 
-Wofür es leider nicht mehr gereicht hat:
+Wofür es leider nicht mehr gereicht hat, sind die folgenden Aspekte:
 \begin{itemize}
-    \item den vollständigen Beweis der Kreisfreiheit,
-    \item den Beweis für die Verbundenheit,
-    \item den Beweis für die minimalität,
-    \item den Nachweis, dass die strikte Rang-Invariante auf update\_unionFind invariant ist.
+    \item der Beweis für die Verbundenheit,
+    \item der Beweis für die Minimalität
+    \item sowie der Nachweis, dass die strikte Rang-Invariante auf update\_unionFind invariant ist.
 \end{itemize}
 
 
+Trotz dieser Einschränkung zeigen die erzielten Ergebnisse, dass Lean und Algolean grundsätzlich geeignet sind, sowohl die funktionale Korrektheit als auch die Komplexität eines klassischen Algorithmus formal zu untersuchen.
 
-Bei dieser Arbeit habe ich folgende Erkentnisse gewonnene:
-Der Umfang eines Beweises lässt sich im Vorhinein kaum abschätzen.
-Wie schon am Anfang von Kapitel \ref{Korrektheitsbeweis} erwähnt, habe ich den Umfang des Korrektheitsbeweis unterschätzt, sodass ich nicht alle Bereiche der ursprünglichen Aufgabenstellung im Zeitrahmen bearbeiten konnte.
 
-Es ist sehr wichtig, bei der Wahl der Darstellungsform vorauszuplanen und sich bereits Gedanken zu machen, welche Aussagen später darüber getroffen werden sollen.
-Bei der Definition der Zeiger mit ihrem durch die Länge der konnte-Liste beschränkten Rang, habe ich zum Beispiel bereits daran gedacht, das damit gezeigt werden kann, dass die Suche nach der Zusammenhangskomponente terminiert.
-Ich hätte mir allerdings eine Menge Arbeit erspart, wenn mir zu diesem Zeitpunkt bereits eine Möglichkeit eingefallen wäre, wie es auch ohne die Beschränkung geht.
-Eine Möglichkeit wäre zum Beispiel, die Beschränktheit zu zeigen, ohne sie in der Struktur zu verankern.
-Da es eine endliche Liste an Zeigern handelt, gibt es einen, mit dem höchsten Rang.
-Alle Zeiger sind in ihrem Rang also beschränkt, als dass er nicht größer sein kann, als der höchste Rang.
+
+
+
+
+
+
 
 
 
