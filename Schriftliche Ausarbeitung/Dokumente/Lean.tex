@@ -21,6 +21,7 @@ Fin : Nat → Type
 Type : Type 1
 Type 1 : Type 2
 \end{lstlisting}
+\footnote{Das Languagefile für das Syntax Highlighting per listings kommt von hier \cite{syntax} und wurde von mir leicht angepasst.}
 
 Ein String ist eine Zeichenkette und Nat oder auch $\mathbb{N}$ der Typ der natürlichen Zahlen.
 Fin n mit einer natürlichen Zahl n ist die Menge der natürlichen Zahlen, die kleiner als n sind.
@@ -238,6 +239,7 @@ Sie kann aus einen $\exists$ ein spezifisches Element machen, eine $\land$-Aussa
 und aus einer $\lor$-Aussage zwei Unterziele erzeugen in denen je die eine oder die andere Aussage als Hypothese existiert.
 Diese Taktik benutze ich zum Beispiel häufiger, um eine Existenzaussage in ihre Einzelteile zu zerlegen.
 Das sieht dann zum Beispiel so aus:
+\newpage
 \begin{lstlisting}
 -- Kontext vorher
 id : Nat
@@ -368,6 +370,7 @@ def Tail.sum (xs : List Nat) : Nat :=
 
 Für die gleiche Liste [1, 2, 3] sieht die schrittweise Auswertung so aus:
 
+\newpage
 \begin{lstlisting}
 Tail.sum [1, 2, 3]
 ===>

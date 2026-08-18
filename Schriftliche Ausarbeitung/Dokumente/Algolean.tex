@@ -37,6 +37,7 @@ Je nachdem, was einen interessiert, kann man beispielsweise arithmetische Operat
 Die für meine Arbeit am relevantesten Elemente von Algolean erkläre ich im Folgenden anhand des Beispiels listLinearSearch aus dem Algolean Repository von Shreyas Srinivas und Eric Wieser,
 welches ich etwas angepasst habe, damit es anschaulicher wird.
 Es zeigt die Laufzeitanalyse für die lineare Suche.
+\newpage
 \begin{lstlisting}
 def List.search {α : Type} [BEq α] (l : List α) (x : α) : Bool :=
   match l with
@@ -79,6 +80,7 @@ denn nur die Queryaufrufe werden am Ende gezählt.
 Wenn man also keine Queryaufrufe verwendet, wird man als Ergebnis bekommen, dass der Algorithmus eine Laufzeit von 0 hat.
 Im Beispiel ist der Algorithmus die lineare Suche.
 Er iteriert also über die Liste und prüft in jedem Schritt mit der Vergleichsfunktion der Query, ob das aktuelle Element dem gesuchten entspricht.
+\newpage
 \begin{lstlisting}
 def listLinearSearch {α : Type} (l : List α) (x : α) : Prog (ListSearch α) Bool := do
   match l with

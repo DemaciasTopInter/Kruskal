@@ -190,7 +190,9 @@ Hier einmal der Code zum Veranschaulichen.
 Für alle weiteren Lemmata werde ich hier aber nur noch die Deklaration aufführen und auch nur, wenn es dem Verständnis hilft.
 Wer der den Code in Gänze lesen möchte, kann dies in meinem Repository\cite{mein_repo} auf Github tun.
 Alle in blau geschriebenen Definitionen und Lemmata sind anklickbar und habe Links zu den entsprechenden Stellen im Code hinterlegt.
+Die Idee für diese automatisch generierten Links stammt von Johannes Tantow und wurde von ihm bereits in seiner Diplomarbeit\cite{tantow_diplomarbeit} verwendet.
 
+\newpage
 \begin{lstlisting}
 theorem (.\KruskalinitunionFindlinkListmatchingnodeId.) {nodeList : List node} (h_nonempty : nodeList.length ≠ 0) : ∀ x ∈ nodeList, ∃! uFL, uFL ∈ (init_unionFind.linkList nodeList h_nonempty) ∧ x.id = uFL.nodeId := by
   intro x h_in
@@ -356,6 +358,7 @@ Durch das Auslagern der Beweise wurde die eigentliche Funktion deutlich schlanke
 \begin{definition}[\KruskalinitunionFind]
   Diese Funktion gibt die Union-Find-Struktur zurück, fasst also die Liste und die Nachweise zusammen.
 \end{definition}
+\newpage
 \begin{lstlisting}
 def (.\KruskalinitunionFind.) (nodeList : List node) (h_nodup : nodeList.Nodup) : unionFind (nodeList : List node) :=
   if h : nodeList.length ≠ 0
@@ -426,6 +429,7 @@ Dafür ich muss nur einmal zeigen, dass es den dazugehörigen Zeiger in der Zeig
 \begin{definition}[\KruskalconnectedcomponentofunionFindofid]
   Die Funktion nimmt eine Knoten-ID und gibt die Knoten-ID des Repräsentanten der Zusammenhangskomponente zurück.
 \end{definition}
+\newpage
 \begin{lstlisting}
 def (.\KruskalconnectedcomponentofunionFindofid.) {nodeList : List node} (uF : unionFind nodeList) (id : Nat) (h : ∃ x ∈ nodeList, x.id = id) : Nat :=
   have h_ex_uFL : ∃ uFL ∈ uF.linkList, uFL.nodeId = id := by
@@ -494,6 +498,7 @@ Danach muss ich noch zeigen, dass die Bedingungen aus \KruskalunionFind für die
   Die Funktion nimmt eine Union-Find-Struk\-tur und die IDs der Repräsentanten zweier Zusammenhangskomponenten und gibt eine Union-Find-Struktur zurück,
   in der die beiden Zusammenhangskomponenten zu einer vereinigt sind.
 \end{definition}
+\newpage
 \begin{lstlisting}
 def (.\KruskalupdateunionFind.) {nodeList : List node} (uF : unionFind nodeList) (x y : Nat) (h₁ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = x ∧ a.parentId = x) a) (h₂ : ∃ a ∈ uF.linkList, (fun a => a.nodeId = y ∧ a.parentId = y) a) : unionFind nodeList :=
   if h_eq : x = y
